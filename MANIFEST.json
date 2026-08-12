@@ -1,0 +1,818 @@
+{
+  "release": "v2026.08.12",
+  "generated": "2026-08-12",
+  "docs": [
+    {
+      "id": "architecture",
+      "path": "context/architecture.md",
+      "title": "Архитектура AIO",
+      "doc_type": "context",
+      "builds": [
+        "erp",
+        "mtk"
+      ],
+      "updated": "2026-08-12",
+      "sha256": "a8dc51278efa88b2ee3c9fcb226cc30d6015bf3a7a0762796a31ab5310a0c3f3"
+    },
+    {
+      "id": "general",
+      "path": "faq/general.md",
+      "title": "FAQ — частые вопросы",
+      "doc_type": "faq",
+      "builds": [
+        "erp",
+        "mtk"
+      ],
+      "updated": "2026-08-12",
+      "sha256": "1e7776b88ead250440a62822612848d2ba62cfc6f762f56241f77fd963715884"
+    },
+    {
+      "id": "campaign-defaults",
+      "path": "heuristics/campaign-defaults.md",
+      "title": "Эвристики по Campaign Template и дефолтам",
+      "doc_type": "heuristic",
+      "builds": [
+        "erp",
+        "mtk"
+      ],
+      "updated": "2026-07-03",
+      "sha256": "9a8e1f21db8f8e477c1cc47b02cfe2b0ffa33c3024c42b4ce383f4596f330cc0"
+    },
+    {
+      "id": "conversion-ai-testing",
+      "path": "heuristics/conversion-ai-testing.md",
+      "title": "Эвристики по Conversions AI, тестированию и AI-оптимизации",
+      "doc_type": "heuristic",
+      "builds": [
+        "erp",
+        "mtk"
+      ],
+      "updated": "2026-08-11",
+      "sha256": "9143ab3c1c5e3d4585412e2643ac5c9c38fe613880656114c293d6238e1c11b1"
+    },
+    {
+      "id": "domain-launch",
+      "path": "heuristics/domain-launch.md",
+      "title": "Эвристики запуска и защиты домена",
+      "doc_type": "heuristic",
+      "builds": [
+        "erp",
+        "mtk"
+      ],
+      "updated": "2026-08-12",
+      "sha256": "4ac7b540c6a26ee21aa9b86623e8d0e805def7298684e7b74ef7153bcf270da8"
+    },
+    {
+      "id": "trial-discovery",
+      "path": "heuristics/trial-discovery.md",
+      "title": "Эвристики онбординга — свой стек, Domain Checkers, точный запрос в саппорт",
+      "doc_type": "heuristic",
+      "builds": [
+        "erp",
+        "mtk"
+      ],
+      "updated": "2026-08-12",
+      "sha256": "3f43eada9091d16c74b48dbcf97151e5bed1e68ce8cba733877f0f97dc5a940f"
+    },
+    {
+      "id": "ai-chat",
+      "path": "how-to/ai-chat.md",
+      "title": "AIO Chat — ассистент по трафику в интерфейсе",
+      "doc_type": "how-to",
+      "builds": [
+        "erp",
+        "mtk"
+      ],
+      "updated": "2026-08-11",
+      "sha256": "1a33da4deeaea85a31fbfa0259fd5fa7c4a6038d971014d70f757af6fe7b0596"
+    },
+    {
+      "id": "analytics",
+      "path": "how-to/analytics.md",
+      "title": "Analytics / Reports (How-to)",
+      "doc_type": "how-to",
+      "builds": [
+        "erp",
+        "mtk"
+      ],
+      "updated": "2026-08-12",
+      "sha256": "d48c6ec729607112c67bc8451de75f75511768a69846eac6fb6a7a24f9438cf1"
+    },
+    {
+      "id": "api",
+      "path": "how-to/api.md",
+      "title": "API / External Integrations (How-to)",
+      "doc_type": "how-to",
+      "builds": [
+        "erp",
+        "mtk"
+      ],
+      "updated": "2026-08-11",
+      "sha256": "5ce8a662c6a5d7db11aebdc46c872a32e98234fffbb26a28ca09e7b66622de25"
+    },
+    {
+      "id": "bi-builder",
+      "path": "how-to/bi-builder.md",
+      "title": "BI Builder — свой дашборд из виджетов",
+      "doc_type": "how-to",
+      "builds": [
+        "erp"
+      ],
+      "updated": "2026-08-11",
+      "sha256": "3ea5e15b1ea1668ff4bc620688045fddeff114f17ceaabd1b38a2ed4a572ed10"
+    },
+    {
+      "id": "campaigns",
+      "path": "how-to/campaigns.md",
+      "title": "Campaigns (How-to)",
+      "doc_type": "how-to",
+      "builds": [
+        "erp",
+        "mtk"
+      ],
+      "updated": "2026-08-12",
+      "sha256": "b582b788c130d176d91e1cdf6c9095e415029de3c5ac2b75ef49721eaa9ca243"
+    },
+    {
+      "id": "custom-fields",
+      "path": "how-to/custom-fields.md",
+      "title": "Custom Fields (How-to)",
+      "doc_type": "how-to",
+      "builds": [
+        "erp"
+      ],
+      "updated": "2026-08-12",
+      "sha256": "ad457d1f05228673c82b25b625a79a5adb4327234a32ae3a2bb7544353029ec8"
+    },
+    {
+      "id": "debug-with-logs",
+      "path": "how-to/debug-with-logs.md",
+      "title": "Debug с логами AIO (How-to)",
+      "doc_type": "how-to",
+      "builds": [
+        "erp",
+        "mtk"
+      ],
+      "updated": "2026-08-12",
+      "sha256": "85996ab9b2e68b99dc1ffdf969b7faaa5eb2ee6f0a0e61ce870dd35c5eba5fc8"
+    },
+    {
+      "id": "destinations",
+      "path": "how-to/destinations.md",
+      "title": "Destinations / Advertisers / Caps (How-to)",
+      "doc_type": "how-to",
+      "builds": [
+        "erp",
+        "mtk"
+      ],
+      "updated": "2026-08-11",
+      "sha256": "327c8fb333fab72606a566b9219ec1e260c069e45738a0f27ae234e9ddf428cc"
+    },
+    {
+      "id": "distributions",
+      "path": "how-to/distributions.md",
+      "title": "Distributions (How-to)",
+      "doc_type": "how-to",
+      "builds": [
+        "erp",
+        "mtk"
+      ],
+      "updated": "2026-08-12",
+      "sha256": "55bef931d96c320329c08d2589b7e75a648edc749206e63d8c64131cb1198b79"
+    },
+    {
+      "id": "domains",
+      "path": "how-to/domains.md",
+      "title": "Domains (How-to)",
+      "doc_type": "how-to",
+      "builds": [
+        "erp",
+        "mtk"
+      ],
+      "updated": "2026-08-12",
+      "sha256": "a059c39cc3e1fffa413f200b625f05ef6e073b30a411c7b5593143b9cf9add98"
+    },
+    {
+      "id": "events-exporter",
+      "path": "how-to/events-exporter.md",
+      "title": "Events Exporter — выгрузка больших таблиц событий (Visits / Trash Visits / Conversions) в файл",
+      "doc_type": "how-to",
+      "builds": [
+        "erp"
+      ],
+      "updated": "2026-08-11",
+      "sha256": "c7a2ac615ea65aac2d385fc1a72ddbdbf4e68bf61096a1f544bbfb290264c42e"
+    },
+    {
+      "id": "flow-editor",
+      "path": "how-to/flow-editor.md",
+      "title": "Flow Editor (How-to)",
+      "doc_type": "how-to",
+      "builds": [
+        "erp"
+      ],
+      "updated": "2026-08-11",
+      "sha256": "7929cb7850797ab8aea58dba71d386375447accbf5b9b287aec501fd77d19d43"
+    },
+    {
+      "id": "forms",
+      "path": "how-to/forms.md",
+      "title": "Forms (How-to)",
+      "doc_type": "how-to",
+      "builds": [
+        "erp",
+        "mtk"
+      ],
+      "updated": "2026-08-12",
+      "sha256": "aa734ca2e9ae0a5e3ef230890423f4bbf4f57df9623c13af01696b30bf667e53"
+    },
+    {
+      "id": "google-ads",
+      "path": "how-to/google-ads.md",
+      "title": "Как в AIO смотрят рекламу Google Ads — модуль Google (кабинет Google Ads внутри платформы)",
+      "doc_type": "how-to",
+      "builds": [
+        "erp"
+      ],
+      "updated": "2026-08-11",
+      "sha256": "d9e5ea2433437ec543d900d6a50d4cfafd5fe65a5af9440ef805541107c20c6e"
+    },
+    {
+      "id": "landing-qa",
+      "path": "how-to/landing-qa.md",
+      "title": "Landing QA (AI-ревью кода лэнда)",
+      "doc_type": "how-to",
+      "builds": [
+        "erp",
+        "mtk"
+      ],
+      "updated": "2026-07-07",
+      "sha256": "1bf31314750d634164a34e3a58052dff58ae1d5d0983369bc73fa2b863682fe4"
+    },
+    {
+      "id": "landings",
+      "path": "how-to/landings.md",
+      "title": "Landings (How-to)",
+      "doc_type": "how-to",
+      "builds": [
+        "erp",
+        "mtk"
+      ],
+      "updated": "2026-08-12",
+      "sha256": "3ecf18486cc2dcd47546e96c545d12d290f0ac11c05220f6d3cd13290478368f"
+    },
+    {
+      "id": "live-pulse",
+      "path": "how-to/live-pulse.md",
+      "title": "Live Pulse — живой поток визитов и конверсий",
+      "doc_type": "how-to",
+      "builds": [
+        "erp"
+      ],
+      "updated": "2026-08-12",
+      "sha256": "c807d88a03651de8ea0498de70cea6ff6bf966e1013fc45722b47b163535202f"
+    },
+    {
+      "id": "meta-ads",
+      "path": "how-to/meta-ads.md",
+      "title": "Как в AIO управляют рекламой Meta/Facebook — модуль Meta (Ad-Manager внутри платформы)",
+      "doc_type": "how-to",
+      "builds": [
+        "erp",
+        "mtk"
+      ],
+      "updated": "2026-08-11",
+      "sha256": "7aaa4a6bd8a5abf242762dadc44d5cfd4a100473caac861fe82e7ce1128e5eb2"
+    },
+    {
+      "id": "onboarding-tours",
+      "path": "how-to/onboarding-tours.md",
+      "title": "Подсказки в интерфейсе — чеклист запуска и туры по страницам",
+      "doc_type": "how-to",
+      "builds": [
+        "erp",
+        "mtk"
+      ],
+      "updated": "2026-08-11",
+      "sha256": "4de658a6a5361df19d4a33d25a324a018e6673914ab34e0b1b3924c49a36b367"
+    },
+    {
+      "id": "permissions",
+      "path": "how-to/permissions.md",
+      "title": "Permissions / Users / Sharing (How-to)",
+      "doc_type": "how-to",
+      "builds": [
+        "erp",
+        "mtk"
+      ],
+      "updated": "2026-08-11",
+      "sha256": "f799be2217dd0226656da37c6a4b755200bc7c00f76bd1942a7fad8cfa6121e5"
+    },
+    {
+      "id": "postback-generator",
+      "path": "how-to/postback-generator.md",
+      "title": "Postback generator — сборка ссылки постбэка для рекламодателя",
+      "doc_type": "how-to",
+      "builds": [
+        "erp",
+        "mtk"
+      ],
+      "updated": "2026-08-11",
+      "sha256": "6a30443e97d7efad535991eff09b7b60f959abf2b979bde5d3ce0b3a1da53edb"
+    },
+    {
+      "id": "push-notifications",
+      "path": "how-to/push-notifications.md",
+      "title": "Push / Notifications Flow (How-to)",
+      "doc_type": "how-to",
+      "builds": [
+        "erp"
+      ],
+      "updated": "2026-08-11",
+      "sha256": "1c484071fa12dd63bdcec62b2a02731a3e957b3418fd8d02c8380e8f704a798c"
+    },
+    {
+      "id": "how-to-pwa",
+      "path": "how-to/pwa.md",
+      "title": "Как создать и настроить AIO PWA (внутреннюю)",
+      "doc_type": "how-to",
+      "builds": [
+        "erp"
+      ],
+      "updated": "2026-08-11",
+      "sha256": "e14afd31409835e5e87a10865d66aea74ab6793f8f475ae24158d04cd677858a"
+    },
+    {
+      "id": "registration",
+      "path": "how-to/registration.md",
+      "title": "Регистрация и онбординг",
+      "doc_type": "how-to",
+      "builds": [
+        "erp",
+        "mtk"
+      ],
+      "updated": "2026-08-11",
+      "sha256": "6dd55d998640ab9a7211f8a456ad4607853be118194baddfd704d844582a469a"
+    },
+    {
+      "id": "session-analytics",
+      "path": "how-to/session-analytics.md",
+      "title": "Session Analytics — записи сессий и сравнение карт лэндов",
+      "doc_type": "how-to",
+      "builds": [
+        "erp"
+      ],
+      "updated": "2026-08-11",
+      "sha256": "585a6fedc9aa77e0233901c638abf32503ee765b7afe8ff4147ddfbd5905d897"
+    },
+    {
+      "id": "source-trackers",
+      "path": "how-to/source-trackers.md",
+      "title": "Sources / Trackers / Postbacks (How-to)",
+      "doc_type": "how-to",
+      "builds": [
+        "erp",
+        "mtk"
+      ],
+      "updated": "2026-08-11",
+      "sha256": "55ebf8625fc343ee632f9a6365e3d636e880e14bf7b234b9872b783c8a449dac"
+    },
+    {
+      "id": "user-fields",
+      "path": "how-to/user-fields.md",
+      "title": "User fields — поля визита прямо в карточках Source, Campaign, лендинга и Destination",
+      "doc_type": "how-to",
+      "builds": [
+        "erp",
+        "mtk"
+      ],
+      "updated": "2026-08-11",
+      "sha256": "935e6e25d7be11f74d5e6c75e1cadd73304eeb586d9defd81d53582f4fa632b6"
+    },
+    {
+      "id": "virtual-metrics",
+      "path": "how-to/virtual-metrics.md",
+      "title": "Virtual Metrics (Custom Formulas) — своя колонка-формула в таблицах аналитики",
+      "doc_type": "how-to",
+      "builds": [
+        "erp",
+        "mtk"
+      ],
+      "updated": "2026-08-11",
+      "sha256": "8be9382f738eb57a2bde732975105c9428b24c561ce7f0ee3909592c046ad17d"
+    },
+    {
+      "id": "visit-timeline",
+      "path": "how-to/visit-timeline.md",
+      "title": "Visit timeline — хронология событий визита (How-to)",
+      "doc_type": "how-to",
+      "builds": [
+        "erp"
+      ],
+      "updated": "2026-08-12",
+      "sha256": "b1f4bb67e6755445b194db6175f11e7a7e7d856ba8c2364c160584ec93a97a97"
+    },
+    {
+      "id": "meta-spend-allocation",
+      "path": "mechanics/meta-spend-allocation.md",
+      "title": "Meta Spend Allocation — как AIO раскладывает рекламный spend по трафику (механика)",
+      "doc_type": "mechanic",
+      "builds": [
+        "erp",
+        "mtk"
+      ],
+      "updated": "2026-08-11",
+      "sha256": "ea45e2e718fbaa13addd1c6d6ad8b27656660fe25564756f21e0f4e7c14e60d6"
+    },
+    {
+      "id": "notification-center",
+      "path": "mechanics/notification-center.md",
+      "title": "Notification Center — нотификации и алерты о своём аккаунте (колокольчик)",
+      "doc_type": "mechanic",
+      "builds": [
+        "erp",
+        "mtk"
+      ],
+      "updated": "2026-08-11",
+      "sha256": "ce93d019f5816dad03cf48645f7e580c92c5e588309c6c5ebbe47be21ea9a53d"
+    },
+    {
+      "id": "notifications-flow",
+      "path": "mechanics/notifications-flow.md",
+      "title": "Notifications Flow / Push / Marketing",
+      "doc_type": "mechanic",
+      "builds": [
+        "erp"
+      ],
+      "updated": "2026-08-11",
+      "sha256": "d118b44f153647113150cd0c21946961162f77b9ec6254cfd760be50273a240b"
+    },
+    {
+      "id": "mechanics-pwa",
+      "path": "mechanics/pwa.md",
+      "title": "PWA в AIO",
+      "doc_type": "mechanic",
+      "builds": [
+        "erp",
+        "mtk"
+      ],
+      "updated": "2026-08-11",
+      "sha256": "151aaa7cda8f6691e82f507958d7c7058c1621a0b8db0f1fe432c6b9cde92678"
+    },
+    {
+      "id": "visit-lifecycle",
+      "path": "mechanics/visit-lifecycle.md",
+      "title": "Жизнь визита в AIO",
+      "doc_type": "mechanic",
+      "builds": [
+        "erp",
+        "mtk"
+      ],
+      "updated": "2026-08-12",
+      "sha256": "49fc83c34137bbf459b2356bec38ad49ef6c8f9b9fce7830535ba92a2b763266"
+    },
+    {
+      "id": "advertiser",
+      "path": "models/advertiser.md",
+      "title": "Advertiser — концепт (модель)",
+      "doc_type": "model",
+      "builds": [
+        "erp",
+        "mtk"
+      ],
+      "updated": "2026-08-11",
+      "sha256": "e7f2e49bea6d395de15744dc005cb06f20f5dd4bfe79a5fcb655cc555ff54c9e"
+    },
+    {
+      "id": "business-model",
+      "path": "models/business-model.md",
+      "title": "Business Model (формула Revenue/Payout) — концепт (модель)",
+      "doc_type": "model",
+      "builds": [
+        "erp"
+      ],
+      "updated": "2026-08-11",
+      "sha256": "77267180bf5979c34b5ca2d6d29490d5d7e9909481e4216624f553f964cde9d9"
+    },
+    {
+      "id": "campaign",
+      "path": "models/campaign.md",
+      "title": "Campaign — концепт",
+      "doc_type": "model",
+      "builds": [
+        "erp",
+        "mtk"
+      ],
+      "updated": "2026-08-12",
+      "sha256": "5ee4e96574231aea4b46192dd54958c2e9ee40701e6efa38e3f0edb3e8af4000"
+    },
+    {
+      "id": "content-library",
+      "path": "models/content-library.md",
+      "title": "Content Library — концепт (модель)",
+      "doc_type": "model",
+      "builds": [
+        "erp"
+      ],
+      "updated": "2026-08-11",
+      "sha256": "dca5b6fabdd9124b32fa3311cb7c2fb69f7dc7197ca50dcb002adf84d35ccc2a"
+    },
+    {
+      "id": "conversion-model",
+      "path": "models/conversion-model.md",
+      "title": "Модель конверсий в AIO",
+      "doc_type": "model",
+      "builds": [
+        "erp",
+        "mtk"
+      ],
+      "updated": "2026-08-12",
+      "sha256": "10df2e66c450b31017d082f8210fc3cfb631a3ca9740ee9617993b99eabaeec7"
+    },
+    {
+      "id": "destination",
+      "path": "models/destination.md",
+      "title": "Destination — концепт",
+      "doc_type": "model",
+      "builds": [
+        "erp",
+        "mtk"
+      ],
+      "updated": "2026-08-11",
+      "sha256": "4b9971c794a60f93d91c2589cad5ef9806a94a5b4de3114b04771fd66f4af1f3"
+    },
+    {
+      "id": "distributions-model",
+      "path": "models/distributions-model.md",
+      "title": "Distributions Model AIO",
+      "doc_type": "model",
+      "builds": [
+        "erp",
+        "mtk"
+      ],
+      "updated": "2026-08-12",
+      "sha256": "2d346ce4cf379fd4735cbdb05a09bb51bacf8b251cab8f0f6dfe3c9d8f876fd0"
+    },
+    {
+      "id": "domain-model",
+      "path": "models/domain-model.md",
+      "title": "Доменная модель AIO — карта сущностей и связей",
+      "doc_type": "model",
+      "builds": [
+        "erp",
+        "mtk"
+      ],
+      "updated": "2026-08-12",
+      "sha256": "34a2c1d94c330ca1cfd571cf94d85e95c51e0a1f83e58c6e8a6862ee4cdcdb6c"
+    },
+    {
+      "id": "domain",
+      "path": "models/domain.md",
+      "title": "Domain — концепт (модель)",
+      "doc_type": "model",
+      "builds": [
+        "erp",
+        "mtk"
+      ],
+      "updated": "2026-08-11",
+      "sha256": "e498e20809826490e247282d2c925a77e482b34d360d77647ee16c92a7a14b7b"
+    },
+    {
+      "id": "flow-model",
+      "path": "models/flow-model.md",
+      "title": "Flow Model AIO",
+      "doc_type": "model",
+      "builds": [
+        "erp",
+        "mtk"
+      ],
+      "updated": "2026-08-12",
+      "sha256": "9394a4f7ed7e1ee084dd00dc98c8ca2b6377c8405531d2082645600b7f0133b5"
+    },
+    {
+      "id": "form",
+      "path": "models/form.md",
+      "title": "Form (захват лида) — концепт (модель)",
+      "doc_type": "model",
+      "builds": [
+        "erp",
+        "mtk"
+      ],
+      "updated": "2026-08-12",
+      "sha256": "dfd54f0c8f989c12e4d370aeb86f534f7e4d4830ce901f7bfb0203584103efdb"
+    },
+    {
+      "id": "landing",
+      "path": "models/landing.md",
+      "title": "Landing — концепт",
+      "doc_type": "model",
+      "builds": [
+        "erp",
+        "mtk"
+      ],
+      "updated": "2026-08-12",
+      "sha256": "fcb64771032696592f3be42606ed0c1edd8fec68734834f7a784440e975095a1"
+    },
+    {
+      "id": "marketing-flow",
+      "path": "models/marketing-flow.md",
+      "title": "Marketing / Notifications Flow (отдельный тип флоу) — концепт (модель)",
+      "doc_type": "model",
+      "builds": [
+        "erp"
+      ],
+      "updated": "2026-08-11",
+      "sha256": "a500fd8c892d257a2d33ee94496c1b7eb08396d6bce4261deb8a06e238bcddff"
+    },
+    {
+      "id": "metric",
+      "path": "models/metric.md",
+      "title": "Metric / Custom Metric — концепт (модель)",
+      "doc_type": "model",
+      "builds": [
+        "erp"
+      ],
+      "updated": "2026-08-11",
+      "sha256": "567f06bcf2d6c267e41a812b48219da889fd796df41c7f3580ba66254267e75d"
+    },
+    {
+      "id": "permissions-model",
+      "path": "models/permissions-model.md",
+      "title": "Permissions Model AIO",
+      "doc_type": "model",
+      "builds": [
+        "erp",
+        "mtk"
+      ],
+      "updated": "2026-08-11",
+      "sha256": "ecbd0e9071688778d7672b369b91a42a9450852bca2a3b00c7fba7f4bfc313f1"
+    },
+    {
+      "id": "server",
+      "path": "models/server.md",
+      "title": "Server / Agent — концепт (модель)",
+      "doc_type": "model",
+      "builds": [
+        "erp",
+        "mtk"
+      ],
+      "updated": "2026-08-12",
+      "sha256": "e941e1ef648ec088a4abf71adbf789a61fe0111ddda751b7630d9c102924b0d3"
+    },
+    {
+      "id": "source",
+      "path": "models/source.md",
+      "title": "Source — концепт",
+      "doc_type": "model",
+      "builds": [
+        "erp",
+        "mtk"
+      ],
+      "updated": "2026-08-11",
+      "sha256": "c9175807bf490f02095ccc825a0372ed7573bb4b3d0b7ede74a86535221ed1e7"
+    },
+    {
+      "id": "tenant",
+      "path": "models/tenant.md",
+      "title": "Tenant — концепт",
+      "doc_type": "model",
+      "builds": [
+        "erp",
+        "mtk"
+      ],
+      "updated": "2026-07-07",
+      "sha256": "8dcbd218a8d9a9b254579ff5e420eb308e06e2caddf848d5cd6d86cf9629ef7f"
+    },
+    {
+      "id": "tracker",
+      "path": "models/tracker.md",
+      "title": "Tracker (Tracker → Trackers — исходящая отбивка событий/конверсий) — концепт (модель)",
+      "doc_type": "model",
+      "builds": [
+        "erp",
+        "mtk"
+      ],
+      "updated": "2026-07-07",
+      "sha256": "9279b04741c190250e4fa7449a9115db31dfe44bb2bd7b31785e2851dd3b2571"
+    },
+    {
+      "id": "user",
+      "path": "models/user.md",
+      "title": "User — концепт (модель)",
+      "doc_type": "model",
+      "builds": [
+        "erp",
+        "mtk"
+      ],
+      "updated": "2026-07-07",
+      "sha256": "2cb9ffb092a6711516e058a4ce524e3157c7aac4f25c384ea6637bee3e2ff304"
+    },
+    {
+      "id": "visit-field",
+      "path": "models/visit-field.md",
+      "title": "Visit Field — концепт",
+      "doc_type": "model",
+      "builds": [
+        "erp",
+        "mtk"
+      ],
+      "updated": "2026-08-12",
+      "sha256": "189ec4319d6203425e58488a409866bb46842e82c04002d0e00c303230ead4f1"
+    },
+    {
+      "id": "visit",
+      "path": "models/visit.md",
+      "title": "Visit — концепт (модель)",
+      "doc_type": "model",
+      "builds": [
+        "erp",
+        "mtk"
+      ],
+      "updated": "2026-08-11",
+      "sha256": "8dbe9f34ecb89ea1423039b07672c195675c1d810b8eb270d73db52a003414a6"
+    },
+    {
+      "id": "glossary",
+      "path": "reference/glossary.md",
+      "title": "AIO Glossary",
+      "doc_type": "reference",
+      "builds": [
+        "erp",
+        "mtk"
+      ],
+      "updated": "2026-08-12",
+      "sha256": "8df27545f8f15bae09945ec31670c726e888b81ab6f2b21a4293c8744f3808c8"
+    },
+    {
+      "id": "limits",
+      "path": "reference/limits.md",
+      "title": "Лимиты и дефолты AIO — размеры, попытки, окна, потолки экспорта",
+      "doc_type": "reference",
+      "builds": [
+        "erp"
+      ],
+      "updated": "2026-08-11",
+      "sha256": "a852f571a25ba69d55913a972c9d9e00c5fa2151b74587f8a05b9072403387ea"
+    },
+    {
+      "id": "placeholders",
+      "path": "reference/placeholders.md",
+      "title": "Placeholders в AIO",
+      "doc_type": "reference",
+      "builds": [
+        "erp",
+        "mtk"
+      ],
+      "updated": "2026-08-11",
+      "sha256": "0fc7357583e845ee197dea6b3f553710e3500ab98d099b176171ae09149673db"
+    },
+    {
+      "id": "profile-settings",
+      "path": "reference/profile-settings.md",
+      "title": "Profile Settings (настройки профиля пользователя)",
+      "doc_type": "reference",
+      "builds": [
+        "erp",
+        "mtk"
+      ],
+      "updated": "2026-08-11",
+      "sha256": "3bbf1aa48b892af130f9add6485a29fd3b56729cde1484d6509b0e7660d7e13f"
+    },
+    {
+      "id": "sdk",
+      "path": "reference/sdk.md",
+      "title": "AIO SDK — устройство, встроенные макросы и работа с ним",
+      "doc_type": "reference",
+      "builds": [
+        "erp",
+        "mtk"
+      ],
+      "updated": "2026-08-12",
+      "sha256": "e588b047453f7c979e696eada845e3f757b56f3c7ce85fa520a668083c4ccff0"
+    },
+    {
+      "id": "ui-common",
+      "path": "reference/ui-common.md",
+      "title": "Общий UI таблиц и экшенов AIO",
+      "doc_type": "reference",
+      "builds": [
+        "erp",
+        "mtk"
+      ],
+      "updated": "2026-08-11",
+      "sha256": "ac1740de6a471dbc398e0171a74138ca8acb82e835268b4e6c575db19de03b4b"
+    },
+    {
+      "id": "ui-map",
+      "path": "reference/ui-map.md",
+      "title": "Карта интерфейса AIO (где что лежит)",
+      "doc_type": "reference",
+      "builds": [
+        "erp",
+        "mtk"
+      ],
+      "updated": "2026-08-12",
+      "sha256": "8e2c495863d9903a0cc5e044444176ea1c314c10af58bf955101fceaf788e154"
+    }
+  ]
+}
