@@ -1,10 +1,10 @@
 ---
 id: metric
 title: Metric / Custom Metric — концепт (модель)
-description: Что такое Metric в AIO как сущность — настраиваемый числовой показатель-колонка в отчётах аналитики; 3 типа (Conversions count = штуки, Computable = формула, Data feed = фид событий; деньги = Data feed + source Conversions By Type Revenue/Payout), адресация по UUID, ось всех отчётов. Концепт; где и как используются метрики — how-to/analytics.md.
+description: Что такое Metric в AIO как сущность — настраиваемый числовой показатель-колонка в отчётах аналитики; 4 типа (Conversions count = штуки, Remarketing count = события рассылок, Computable = формула, Data feed = фид событий; деньги = Data feed + source Conversions By Type Revenue/Payout), адресация по UUID, ось всех отчётов; Remarketing count считает события отправок, а не визиты (Delivered/Opened только у пушей remarketing-кампании, по SMS/Email событий не бывает вовсе), заводится руками и правится диалогом Edit data feed metric под правом settings.metrics.edit.data-feed; процент по рассылкам (CTR/open-rate) — формула над Remarketing count, и на страницах раздела Marketing (рассылки) видны только такие метрики и формулы целиком над ними; список метрик в Settings → Metrics — папками, два вида Groups / Order, колонка Definition (из чего метрика собрана), порядок перетаскиванием в Order под правом settings.metrics.edit. Концепт; где и как используются метрики — how-to/analytics.md.
 doc_type: model
 builds: [erp]
-related: [analytics, conversion-model, visit-field, custom-fields, glossary, api, visit-lifecycle, campaigns, conversion-ai-testing, ui-map]
+related: [analytics, conversion-model, visit-field, custom-fields, remarketing-campaigns, debug-with-logs, permissions-model, glossary, api, visit-lifecycle, campaigns, conversion-ai-testing, ui-map]
 language: ru
 updated: 2026-08-11
 ---
@@ -15,26 +15,60 @@ updated: 2026-08-11
 
 ## Что такое Metric в AIO и какие типы бывают
 
-**Metric — это настраиваемый числовой показатель, который отображается колонкой в отчётах аналитики (Roll Up / Cohorts / Comparative).** Набор доступных метрик per-tenant: системные метрики + заведённые кастомные. Кастомные заводятся в `Settings → Metrics → + Metric` выбором типа (считать число конверсий / считать деньги конверсий / вычислять формулой / считать по фиду событий). Метрика — это **ось колонок** отчёта: то, что измеряется в каждой строке. Каждая метрика имеет **UUID** и адресуется по нему и в формулах, и в API.
+**Metric — это настраиваемый числовой показатель, который отображается колонкой в отчётах аналитики (Roll Up / Cohorts / Comparative).** Набор доступных метрик per-tenant: системные метрики + заведённые кастомные. Кастомные заводятся в `Settings → Metrics → + Metric` выбором типа (считать число конверсий / считать события рассылок / вычислять формулой / считать по фиду событий; деньги конверсий — через `Data feed metric`). Метрика — это **ось колонок** отчёта: то, что измеряется в каждой строке. Каждая метрика имеет **UUID** и адресуется по нему и в формулах, и в API.
 
 Имя метрики произвольное — в `Settings → Metrics` его свободно создают, переименовывают и редактируют. Поэтому одна и та же метрика в разных тенантах может называться по-разному (напр. earnings per lead — `EPL` или `EPL$`, разница только в приставке), и на само имя опираться нельзя: адрес метрики — её UUID, а не подпись колонки.
 
-## Типы метрики (`+ Metric`) — Conversions count, Computable, Data feed
+## Типы метрики (`+ Metric`) — Conversions count, Remarketing count, Computable, Data feed
 
-При создании тип-чузер `+ Metric` предлагает **ровно 3 типа**: `Conversions count` (число конверсий), `Computable metric` (формула) и `Data feed metric` (фид событий). Отдельного «денежного» типа НЕТ — **денежные суммы конверсий (revenue/payout) считаются через `Data feed metric`**, выбрав в нём источник `Conversions By Type Revenue` / `Conversions By Type Payout` (см. секцию «`Data feed metric`» ниже). Детали полей форм и каталог — [how-to/analytics.md](../how-to/analytics.md):
+При создании тип-чузер `+ Metric` (заголовок диалога — `Add metric to AIO`) предлагает **ровно 4 типа**: `Conversions count` (число конверсий), `Remarketing count` (события рассылок), `Computable metric` (формула) и `Data feed metric` (фид событий). Отдельного «денежного» типа НЕТ — **денежные суммы конверсий (revenue/payout) считаются через `Data feed metric`**, выбрав в нём источник `Conversions By Type Revenue` / `Conversions By Type Payout` (см. секцию «`Data feed metric`» ниже). Детали полей форм и каталог — [how-to/analytics.md](../how-to/analytics.md):
 
-- **`Conversions count`** (помечен *Most used*) — считает **только число конверсий** по условию (штуки, не деньги). Конфиг: `Name` + `Conversion type` (какой тип конверсий считать). Так заводятся метрики вроде «Registration Count», «Lead Count». Флоу: `Settings → Metrics → +Metric → Conversions Count`, задать `Name` (опц. `Description`) и выбрать ранее созданный тип из дропдауна `Conversion Type` ([models/conversion-model.md](conversion-model.md)). Для **денежных** сумм конверсий (revenue/payout) `Conversions count` не годится — берётся `Data feed metric` с источником `Conversions By Type Revenue` / `Conversions By Type Payout` (см. секцию «`Data feed metric`» ниже).
+- **`Conversions count`** (помечен *Most used*) — считает **только число конверсий** по условию (штуки, не деньги). Конфиг: `Name` + `Conversion type` (какой тип конверсий считать). Так заводятся метрики вроде «Registration Count», «Lead Count». Флоу: `Settings → Metrics → +Metric → Conversions Count`, задать `Name` (опц. `Description`) и выбрать ранее созданный тип из дропдауна `Conversion Type` ([models/conversion-model.md](conversion-model.md)).
+- **`Remarketing count`** — считает **события рассылок** (в UI тип подписан «Sends, errors and deliveries of remarketing messages»): два необязательных мультиселекта `Events` и `Channels`, пустой список = все. Форма, как читать колонку и кто может её править — секции «`Remarketing count`» ниже.
 - **`Computable metric`** — вычисляет значение **формулой** из чисел и других метрик (напр. ratio двух метрик).
 - **`Data feed metric`** — считает по внутреннему **фиду событий AIO**: базовая системная метрика-источник + опц. `Flag`-фильтр. Через него же считаются **денежные** суммы: источник `Conversions By Type Revenue` (сумма Revenue) / `Conversions By Type Payout` (сумма Payout). Полная структура (варианты источника, `Flag`-enum, `values`) — в секции «`Data feed metric` — базовая метрика-источник + `Flag`-фильтр» ниже.
 
-Колонки списка метрик в `Settings → Metrics`: `Metric`, `Formula` (у формульных — формула с именами метрик), `Access Type`, `Owner`, `Order`, `Main For`, `Visible`, `Created`.
+### `Remarketing count` — счётчик событий рассылок (`Events` / `Channels`)
+
+**`Remarketing count` считает события рассылок, а не визиты.** Форма: `Name`, `Description` и два необязательных мультиселекта — `Events` (`Sent` / `Failed` / `Delivered` / `Opened`, плейсхолдер пустого выбора `All events`) и `Channels` (каналы подписаны `WebPush` / `Telegram` / `SMS` / `Email`, плейсхолдер `All channels`). Пустой список = без фильтра, то есть «все». Модификатора `Flag` у этого типа нет — он к нему неприменим.
+
+**Готовых метрик рассылок в системе нет — их заводят руками.** Новый тенант создаётся из тенанта-шаблона и метрики копируются вместе с ним, поэтому «набор из коробки» — это набор шаблона, а не системный набор AIO. Нет колонки по рассылкам в отчёте — сначала проверь, заведена ли метрика в `Settings → Metrics`.
+
+Тот же счётчик собирается и вторым путём — `Data feed metric` с источником `Remarketing Count` (секция «`Data feed metric`» ниже). Метрика получается одна и та же; разница в том, что пресет `Remarketing count` зашивает служебные поля (формат `Number`, порядок, видимость), а в `Data feed metric` они задаются руками.
+
+### Как читать колонку `Remarketing count` — считаются события, а не визиты
+
+**Колонка считает события отправки, а не уникальные визиты:** повторные отправки одному и тому же визиту не схлопываются, каждая отправка — своё событие. В строках, где рассылок не было, стоит 0; фильтры и групперы отчёта применяются к метрике как к любой другой.
+
+- **`Delivered` и `Opened` есть только у пушей remarketing-кампании** — их присылает сервис-воркер лэнда. У `Telegram` таких событий не бывает вовсе: по нему наполняются только `Sent` и `Failed` ([how-to/remarketing-campaigns.md](../how-to/remarketing-campaigns.md)).
+- **По каналам `SMS` и `Email` колонка всегда пустая** — отправителей под эти каналы в системе нет, поэтому по ним не возникает ни `Sent`, ни `Failed`. Отказ молчаливый: нули здесь не признак сбоя доставки, отправки просто не было.
+- **`Failed` внутри метрики не разбит по причине** — в него попадают и отправки, срезанные лимитом, и мёртвые push-подписки, и обычные сбои. Разложить по причине — группировкой `Send Result` ([how-to/remarketing-campaigns.md](../how-to/remarketing-campaigns.md)); текст ошибки — в логах namespace `Remarketing` ([how-to/debug-with-logs.md](../how-to/debug-with-logs.md)).
+
+**В отчётах трекера колонка рассылок ставится рядом с обычными метриками.** В Roll Up и Tracker-таблицах `Remarketing count` считается вместе с визитными и конверсионными метриками, и трекерные фильтры, скоупы и групперы применяются к ней так же, как к остальным. Обратное неверно: на страницах раздела `Marketing` метрики других источников не показываются вовсе — см. секцию про формулы ниже.
+
+### Процент по рассылкам (CTR, open-rate) — формула над `Remarketing count`
+
+**Готовой колонки-процента у рассылок нет: CTR / open-rate собирается `Computable metric`-формулой над метриками `Remarketing count`** — например метрика с событием `Opened`, делённая на метрику с событием `Delivered`. Сам тип `Remarketing count` даёт только счётчики событий, отношение он не считает.
+
+**Ограничение, из-за которого формула может не появиться.** На страницах раздела `Marketing` (`/app/remarketing` — рассылки) показываются **только** метрики типа `Remarketing count` и формулы, построенные **целиком** над ними: формула проходит, если все её зависимости — в том числе через вложенные формулы — сами такие же. Формула, в которую подмешана метрика любого другого источника (визиты, конверсии, метрики `Meta`), просто **не появится колонкой** — без ошибки и без объяснения. Отсюда типичный симптом: «формулу завёл, а колонки на страницах рассылок нет» → проверить, что каждая метрика формулы — `Remarketing count`.
+
+Формула отсеивается ещё в двух случаях: если у неё нет ни одной метрики-зависимости и если метрика, на которую она ссылается, **заархивирована** — архивные метрики в отбор не попадают.
+
+Пошаговый рецепт под рассылку — [how-to/remarketing-campaigns.md](../how-to/remarketing-campaigns.md).
+
+### Метрику `Remarketing count` завёл, а изменить её не могу — какие нужны права
+
+**Отдельного права под тип `Remarketing count` нет: он живёт под общими правами метрик** — создание и правка `settings.metrics.edit`, просмотр списка `settings.metrics.view` ([models/permissions-model.md](permissions-model.md)). Сама карточка `Remarketing count` в диалоге `Add metric to AIO` отдельно не гейтится: её видит любой, кто дошёл до кнопки создания метрики.
+
+**Правка уже созданной метрики требует другого права.** Своего диалога редактирования у этого типа нет — созданная метрика открывается диалогом `Edit data feed metric`, а он гейтится правом `settings.metrics.edit.data-feed`. Отсюда симптом «метрику завёл, а поменять `Events` / `Channels` не могу»: не хватает именно `settings.metrics.edit.data-feed`, а не общего права на метрики.
 
 ## `Data feed metric` — базовая метрика-источник + `Flag`-фильтр
 
-`Data feed metric` в живой форме = **базовая системная метрика-источник + опциональный `Flag`-фильтр**, а не агрегация median/sum/average. Структура формы:
+`Data feed metric` в живой форме = **базовая системная метрика-источник + опциональный `Flag`-фильтр**, а не агрегация median/sum/average. Правило не универсально: у источника `Remarketing Count` `Flag` не предлагается вовсе (см. буллет ниже). Структура формы:
 
-- **Источник** — базовая системная метрика (дефолт `Visits`). Прочих вариантов **~29** (полный список приходит с бэка) — среди них `Conversions By Type Payout`, `Conversions By Type Revenue`, `Conversions By Type Count`, `Once Conversions By Type Count`, `Events By Group Count`. Денежные суммы делаются именно здесь: источник `Conversions By Type Revenue` (Revenue) / `Conversions By Type Payout` (Payout).
+- **Источник** — базовая системная метрика (дефолт `Visits`); полный список вариантов приходит с бэка — среди них `Conversions By Type Payout`, `Conversions By Type Revenue`, `Conversions By Type Count`, `Once Conversions By Type Count`, `Events By Group Count`. Денежные суммы делаются именно здесь: источник `Conversions By Type Revenue` (Revenue) / `Conversions By Type Payout` (Payout).
 - **`values`** — адрес под источник: UUID `Conversion Type` для источников `... By Type ...` либо id групп событий для `Events By Group Count`.
+- **Источник `Remarketing Count`** — особый случай: при его выборе форма показывает вместо блока `Flag` те же два мультиселекта `Events` и `Channels`, что у типа `Remarketing count` (секция выше). `Flag` для этого источника не предлагается вовсе.
 - **`Flag`-фильтр** (опц.) — сужает выборку по флагу визита. Enum — **8 дискретных значений**: `Trash` / `BackFix` / `Interested` / `Qualified` / `Engaged` + три предопределённых `Interested BackFix` / `Qualified BackFix` / `Engaged BackFix`. Выбирается **один** флаг из списка (свободного комбинирования нет — комбинации существуют только как эти 3 готовых `X BackFix`); `noFlag` = без фильтра по флагу.
 
 Так строятся метрики вида «Qualified-визиты», «конверсии типа X по payout», «события группы Y» — источник задаёт что считать, `Flag` сужает по состоянию визита.
@@ -47,6 +81,33 @@ updated: 2026-08-11
 - **`Main for`** (select) — служебное поле механизма approximation (`Approximate metrics` — пропорция от более полной метрики).
 - **`Hidden at groupers`** (multi-select) — список групперов, при разбивке по которым колонка метрики **скрывается**. Объясняет практику «метрика в списке есть, а в конкретной разбивке колонки нет»: при чтении отчёта проверь `Hidden at groupers` метрики, прежде чем считать колонку пропавшей.
 - **`Categories`** (multi-select) — теги-категории метрики; справочник категорий **per-tenant**. Служит для группировки/фильтрации метрик в списке.
+
+## Как устроен список метрик в `Settings → Metrics` — папки и два вида, `Groups` / `Order`
+
+**Список метрик — не плоская таблица: по умолчанию он раскладывается по папкам, а переключатель вверху справа даёт два вида — `Groups` и `Order`.**
+
+- **`Groups`** — метрики разложены по папкам, режим под поиск нужной метрики. Верхний уровень — тип метрики, как он хранится: `Database` и `Formula`. Папка `Formula` — это `Computable metric`; `Conversions count`, `Remarketing count` и `Data feed metric` все хранятся как `Database`. Внутри типа — папки по базовой метрике-источнику: у самых частых источников подпись короткая (`Conversions`, `Revenue`, `Payout`, `Events`, `Remarketing`), у остальных подпапка называется именем источника целиком (`Visits`, `Cost`, `Clicks`, `Formula` и т.д.). В `Ungrouped` попадают только метрики, у которых источник не задан вовсе.
+- **`Order`** — тот же список одной сплошной дорожкой, без папок. Только здесь строки перетаскиваются мышью.
+
+Быстрый фильтр **`Type`** над списком фильтрует по метрике-источнику, а не по папке: метрики рассылок в нём собраны под пунктом `Remarketing Count`.
+
+Вид не запоминается: следующий заход снова открывает `Groups`. Свёрнутые папки запоминаются в браузере, поэтому в другом браузере список снова раскрыт целиком.
+
+### Какие колонки в списке метрик и что показывает `Definition`
+
+Колонки по умолчанию: `Metric`, `Definition`, `Access Type`, `Owner`, `Main For`, `Visible`, `Created`. Колонки `UUID`, `Type`, `Order`, `Categories`, `Business value`, `Shares`, `Hidden at groupers`, `Archived`, `Updated` тоже есть, но выключены и включаются в настройке колонок.
+
+**`Definition` показывает, из чего метрика собрана.** У `Computable metric` — сама формула, где вместо UUID подставлены имена метрик-слагаемых (числа, операторы `+ − × ÷` и скобки остаются как есть). У остальных типов — имя источника (`Conversions By Type Count`, `Remarketing Count`, `Events By Group Count`, …) и в скобках его аргументы: тип конверсии, группа событий, событие рассылки (`Sent` / `Delivered` / `Opened` / `Failed`), канал, `Flag`.
+
+Имена подставляются по **всем** метрикам тенанта — в том числе по тем, которых нет в твоей видимости. Если в формуле стоит `Unknown` — метрику, на которую она ссылается, разрешить не удалось: она удалена или заархивирована. UUID такой ссылки виден в тултипе чипа.
+
+### Как поменять порядок метрик — перетаскивание в виде `Order`
+
+**Порядок меняется перетаскиванием строк в виде `Order`; в `Groups` строки не таскаются.** Сохраняется сразу, без диалога подтверждения, и весь список перенумеровывается с 1. Это тот же порядок, что задаётся полем `Order` в форме метрики, и он же определяет, в каком порядке метрики идут колонками в отчётах. `order` — атрибут метрики, а не личная настройка смотрящего: порядок один на тенант и меняется у всех.
+
+Перетаскивание требует права `settings.metrics.edit` ([models/permissions-model.md](permissions-model.md)) — без него список читается, но не переставляется.
+
+**Порядок не сохранился, пришла ошибка `Some UUIDs were not found in this model. No access to: '<uuid>'`.** Сохранение уходит **одним запросом на весь список**, поэтому одна метрика, которую тебе нельзя редактировать, роняет сохранение целиком — не сохраняется ничего. В списке видны все метрики, доступные на просмотр, а редактировать можно не все: это определяет `Access Type` метрики.
 
 ## `Conversions count` vs `Conversion Type` — Metric считает, Type — это событие
 
@@ -94,7 +155,7 @@ updated: 2026-08-11
 - **Metric смежна с Visit Field / групперами** — метрики считаются по данным полей визита; `Availability as grouper` и `Make analytic` — про поля, не про метрики ([models/visit-field.md](visit-field.md), [how-to/custom-fields.md](../how-to/custom-fields.md)).
 - **Metric питает `Metrics AI`** — на уровне кампании AI оптимизирует под произвольную числовую метрику за `TimeFrame` ([reference/glossary.md](../reference/glossary.md)).
 - **Metric адресуется по UUID** — в Pivot Report API (`metric_<uuid>`) и в формулах `Computable metric` ([reference/glossary.md](../reference/glossary.md) → Pivot Report API).
-- **`Data feed metric` считает по внутреннему фиду событий AIO** — форма = базовая метрика-источник (дефолт `Visits`) + опц. `Flag`-фильтр (один из 8) + адрес в `values`; денежные суммы = источник `Conversions By Type Revenue`/`Payout`. Полный список источников и `Flag`-enum — в секции «`Data feed metric` — базовая метрика-источник + `Flag`-фильтр» выше.
+- **`Data feed metric` считает по внутреннему фиду событий AIO** — форма = базовая метрика-источник (дефолт `Visits`) + опц. `Flag`-фильтр (один из 8; у источника `Remarketing Count` вместо `Flag` — `Events`/`Channels`) + адрес в `values`; денежные суммы = источник `Conversions By Type Revenue`/`Payout`. Полный список источников и `Flag`-enum — в секции «`Data feed metric`» выше.
 
 ## Metric vs Conversion Type, vs Grouper, vs Approximate — где путают
 
@@ -115,7 +176,7 @@ updated: 2026-08-11
 ## Подводные камни чтения значений метрики
 
 - **Approximate (подчёркнутые) метрики — не точные значения, а пропорция** — стоит предупреждать, что подчёркивание = аппроксимация.
-- **`Data feed metric` = источник + `Flag`-фильтр** — в живой форме выбирается базовая метрика-источник (дефолт `Visits`) и опц. один `Flag` из 8 (`Trash`/`BackFix`/`Interested`/`Qualified`/`Engaged`/`Interested BackFix`/`Qualified BackFix`/`Engaged BackFix`), а не агрегация (медиана/сумма/среднее здесь не выбираются).
+- **`Data feed metric` = источник + `Flag`-фильтр** — в живой форме выбирается базовая метрика-источник (дефолт `Visits`) и опц. один `Flag` из 8 (`Trash`/`BackFix`/`Interested`/`Qualified`/`Engaged`/`Interested BackFix`/`Qualified BackFix`/`Engaged BackFix`), а не агрегация (медиана/сумма/среднее здесь не выбираются). У источника `Remarketing Count` `Flag` не предлагается — вместо него мультиселекты `Events` / `Channels`.
 - **Числа AIO ≠ числа рекламного кабинета.** Раздел `Meta` показывает спенд/косты/FB-ad-метрики из кабинета, а не конверсии к нам. По объёму AIO-визитов меньше, чем FB-кликов (часть кликов до агента не доходит) — это норма, не баг метрик ([how-to/campaigns.md](../how-to/campaigns.md)).
 
 ## Вглубь и вбок — связанные материалы

@@ -4,7 +4,7 @@ title: Destinations / Advertisers / Caps (How-to)
 description: Создание Advertiser-ов, Destination через By Advertiser / By Integration / Simple Redirect / Telegram, капы, PWA-destinations (AIO и сторонние сервисы).
 doc_type: how-to
 builds: [erp, mtk]
-related: [conversion-model, push-notifications, glossary, user-fields, flow-editor, destination, notification-center, landings, user, mechanics-pwa, source-trackers, how-to-pwa, advertiser, flow-model]
+related: [conversion-model, flow-model, push-notifications, glossary, user-fields, flow-editor, destination, notification-center, landings, user, mechanics-pwa, source-trackers, how-to-pwa, advertiser]
 language: ru
 updated: 2026-08-11
 ---
@@ -89,7 +89,9 @@ Advertiser Types — группировка Advertiser-ов под одной к
 
 ### Утечёт ли referrer на редиректе
 
-**Нет — реферер рекламной площадки не передаётся.** Любой редирект, идущий через `Destination` (то есть через AIO-агент), отдаёт `Referrer-Policy: no-referrer`. Это работает для всех редирект-Destination без исключений: `Simple Redirect`, `By Advertiser` с редирект-URL, `By Integration`. Передачу sub-параметров при желании убирают самостоятельно — из ссылки или из настроек Destination.
+**Реферер рекламной площадки на редиректе через `Destination` не передаётся.** Любой редирект, идущий через `Destination` (то есть через AIO-агент), отдаёт заголовок `Referrer-Policy: no-referrer`; это в силе для всех редирект-Destination без исключений: `Simple Redirect`, `By Advertiser` с редирект-URL, `By Integration`.
+
+Передачу sub-параметров при желании убирают самостоятельно — из ссылки или из настроек Destination.
 
 Оговорка: кастомный JS-редирект в обход `Destination` AIO не трекает, и `Referrer-Policy` на нём не проставляется — но так путь строить не нужно: весь трафик идёт через `Destination` ради аналитики.
 
@@ -255,8 +257,6 @@ Fallback при переполнении — через `Destination Full` trans
 
 Когда: ПВА-оффер у стороннего PWA-сервиса.
 
-В тенанте под PWA-шаблон уже заведены дефолтные сторонние PWA-advertiser-ы: **ZM Apps, LiteApp, AppsHeroes, iRent Market, PWA Partners, WWApps, PWA.Group, SkakApp**. Если нужного сервиса в списке нет — два пути: его **заводят через саппорт** (запрос в поддержку через саппорт-чат в Telegram, см. [how-to/landings.md](landings.md)) **или добавляют вручную** как Advertiser типа PWA (см. [models/user.md](../models/user.md) про Monitoring User и «Завести свой PWA-сервис как Advertiser» ниже).
-
 **Шаги:**
 
 1. **Получить ссылку из AIO:** `Sources → +Source → 3rd Party PWA Link Generator → выбрать домен → выбрать сервис → скопировать ссылку`.
@@ -310,7 +310,7 @@ Click ID PWA-сервиса доступен плейсхолдером `{{aio.v
 
 Когда: внутренняя ПВА AIO (без стороннего сервиса). Создаётся как лэнд через PWA Builder, дальше работает как обычный лэнд во флоу.
 
-**Путь:** `Content → Landings → + → Create PWA → PWA Builder`.
+**Путь:** `Content → PWA` → кнопка `+ PWA` — премодалки с выбором способа здесь нет, сразу открывается PWA Builder. В `Content → Landings` PWA не создаётся и не показывается. Процедура целиком — [how-to/pwa.md](pwa.md).
 
 **Шаги:**
 
@@ -340,5 +340,4 @@ Click ID PWA-сервиса доступен плейсхолдером `{{aio.v
 - [how-to/flow-editor.md](flow-editor.md) — Destination Full fallback transition.
 - [how-to/source-trackers.md](source-trackers.md) — постбэк-трекеры для Destination.
 - [how-to/push-notifications.md](push-notifications.md) — Telegram Sender Provider (бот для Telegram Destination и для рассылок).
-- *Лиды не доходят до рекламодателя / партнёрки* — диагностика пуша в Destination.
 - [reference/glossary.md](../reference/glossary.md) — Destination, Destination Integrations, Replace Destination, Cap / Caps, Destination Full, Offer Visits.

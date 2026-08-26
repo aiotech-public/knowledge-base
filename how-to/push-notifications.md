@@ -1,104 +1,184 @@
 ---
 id: push-notifications
-title: Push / Notifications Flow (How-to)
-description: Создание Push Template, Notifications Flow и Push Distribution. Telegram-уведомления — Sender Provider + Buyer TG Chat ID.
+title: Тексты рассылки — дистрибуция Message Templates и наборы AIO
+description: Как собираются сами сообщения рассылки — дистрибуция типа Message Templates (Marketing → Template distributions), дерево Folder / Strategy / четыре типа шаблонов, отправляются только push-ноды, вариант на отправку выбирается равновероятно, спинтакс {вариант 1|вариант 2} и {Random=(100,1500)}, плейсхолдеры в тексте и иконка PWA, готовые глобальные наборы пушей от AIO (тумблер Show global only) — read-only и не копируются; отдельно Telegram-нотификации баеру. Только ERP.
 doc_type: how-to
 builds: [erp]
-related: [notifications-flow, distributions-model, postback-generator, conversion-model, destinations, distributions, mechanics-pwa]
+related: [remarketing-campaigns, distributions-model, permissions, notifications-flow, placeholders, mechanics-pwa, postback-generator, conversion-model, destinations, custom-fields, distributions, metric]
 language: ru
 updated: 2026-08-11
 ---
 
-# Push / Notifications Flow (How-to)
+# Тексты рассылки — дистрибуция Message Templates и наборы AIO
 
-Процедуры по push-уведомлениям и Marketing Flows: как собрать follow-up пуш, подключить его к кампании, настроить Telegram-уведомления. Концепт (типы пушей, ноды Notifications Flow, Push Distribution = Remarketing Content) — в [mechanics/notifications-flow.md](../mechanics/notifications-flow.md).
+Тексты, которые уходят визитёру в push-рассылке, собираются в дистрибуции типа `Message Templates` — дереве, где каждая нода-лист это готовое сообщение. Сама рассылка (кому, когда, серия отправок) настраивается в remarketing-кампании — [how-to/remarketing-campaigns.md](remarketing-campaigns.md). Здесь — про сообщения: где они лежат, как выбирается вариант на отправку, спинтакс, плейсхолдеры и готовые наборы пушей от AIO.
 
 ---
 
 ## TL;DR
 
-- Полный путь Follow Up Push: `Push Template` → `Notifications Flow` → `Push Distribution (Remarketing Content)`.
-- **Notification Flow на Conversion Type** — Telegram-нотификация при конверсии заданного типа (Invalid / Reject Lead и т.д.).
-- **Telegram Sender Provider** — `Marketing → Sender providers → + Sender provider` (Integration type: Telegram; API key + Bot Name).
-- **Buyer TG Chat ID** — **кастомное** поле визита (имя — пример, по дефолту в шаблонах тенантов его нет), заполняется через `Fill Field` distribution по `Campaign Owner`.
+- Тексты живут в дистрибуции типа `Message Templates` — страница `Marketing → Template distributions` (`/app/remarketing/message-template-distributions`). Раздел только в ERP.
+- В дереве — `Folder`, `Strategy` и четыре типа шаблонов (`Push Template`, `Email Template`, `Sms Template`, `Telegram Template`). Реально отправляются **только push-ноды**.
+- Вариант на отправку выбирается **равновероятно** среди нод, прошедших свои условия. Весов у шаблонов сообщений нет.
+- Спинтакс `{вариант 1|вариант 2}` и `{Random=(100,1500)}` разворачивается заново на каждую отправку — после подстановки плейсхолдеров `{{aio.*}}`.
+- Готовые наборы пушей от AIO — глобальные дистрибуции, показываются тумблером `Show global only`; редактировать и скопировать себе их нельзя.
 
 ---
 
-## Как собрать Follow Up Push: Push Template → Notifications Flow → Distribution
+## Где лежат тексты рассылки — `Marketing → Template distributions`
 
-### Шаг 1 — создать Push Template
+Тексты рассылки лежат в дистрибуциях типа `Message Templates`, страница — `Marketing → Template distributions` (`/app/remarketing/message-template-distributions`), дерево дистрибуции открывается на `/app/remarketing/message-template-distributions/tree`.
 
-**Путь:** `Marketing → Message templates` → создать `Push Template`.
+Тип создаётся карточкой `Message templates` («Шаблоны сообщений» — «Письма, push, SMS и Telegram — шаблонами в одном дереве») в диалоге создания дистрибуции; на самой странице раздела диалог выбора типа пропускается — сразу открывается форма нужного типа. Права раздела — `marketing.template-distributions.view` / `.edit` / `.share` / `.share.ownership`.
 
-**Поля:**
+Раздел есть только в ERP: модуля ремаркетинга в MTK нет. Чем этот тип дистрибуции отличается от остальных деревьев — [models/distributions-model.md](../models/distributions-model.md).
 
-- **Name** — имя.
-- **Push Title** — заголовок (короткий).
-- **Push Message** — тело.
-- **Push Icon** — картинка (из CDN).
+## Как устроено дерево шаблонов — `Folder`, `Strategy` и четыре типа шаблонов
 
-### Шаг 2 — настроить Notifications Flow
+Дерево дистрибуции `Message Templates` собирается из шести типов нод: `Folder`, `Strategy` и четыре шаблона — `Email Template`, `Push Template`, `Sms Template`, `Telegram Template` (в UI — `Email template`, `Push template`, `SMS template`, `Telegram template`). В корне разрешены все шесть, под `Folder` — тоже все шесть, под `Strategy` — только четыре шаблона. Ноды-шаблоны листовые, детей у них нет.
 
-**Путь:** `Marketing → Flows → создать новый Notifications Flow`.
+Единственный отбор в этом дереве — условия (`rule`) на самой ноде. Сплит-группы и привязка к состоянию флоу (`Flow State`) у этого типа **выключены**, в отличие от деревьев `Remarketing Content` и `Flow Content`, — поэтому язык, гео и любую другую сегментацию задают правилами ноды.
 
-**Шаги:**
+Стратегия выбора у дистрибуции жёстко проставлена кодом — `Multiple Nodes`, в форме её нет и поменять её нельзя: обработка дерева обязана вернуть все подходящие сообщения, а одно из них выбирает уже отправка.
 
-1. Добавить ноды: `Start → Wait → Check Conversion → Push → (Repeat or Finish)`.
-2. На ноде `Push` → cogwheel → выбрать **Push Template** (одиночный) **или** дистрибуцию (рекомендуется).
-3. На ноде `Wait` — задать задержку (минимум **60 секунд**; для первого Check Conversion обычно 3600+ сек).
-4. Сохранить.
+### Почему в дерево шаблонов нельзя ставить ноду `Strategy`
 
-### Шаг 3 — создать Push Distribution (Remarketing Content)
+Нода `Strategy` в дереве `Message Templates` предлагается, но не работает: взвешенного выбора шаблона сообщения в продукте нет, а шаг рассылки, дошедший до такой ноды, падает — сообщение не уходит вообще. Собирайте отбор на условиях нод, а не на весах.
 
-**Путь:** `Settings → Distributions → +Add → Remarketing Content` (или `Flow Content`).
+## Что реально отправляется из дерева — только push-ноды
 
-**Шаги:**
+Из дерева `Message Templates` уходят только push: шаг рассылки отбирает ноды `Push Template` и `Push Message`, всё остальное молча выкидывает.
 
-1. Выбрать **Notifications Flow**, который дистрибуция обслуживает.
-2. **Папка на каждый Push-шаг** в флоу (Reg 1, Reg 2, …).
-3. На папке — `Flow State` (соответствует ноде в флоу).
-4. Внутри папки — `Strategy: Weights` или `First`.
-5. Добавить `Add Push Message` ноды — выбрать Push Templates.
+- **Смешанное дерево** (push + email/SMS/Telegram) отработает без ошибки: не-push ноды отфильтруются, и если push-нода в дереве одна, все шаги серии отправят один и тот же текст.
+- Ноды `Email Template`, `Sms Template`, `Telegram Template` создаются, валидируются и хранятся, но отправить их нечем — сендеров этих каналов в модуле рассылок нет. Отказ **молчаливый**: ни записи в логе рассылки, ни `Sent` / `Failed` в метриках не появится.
+- Если push-нод в дереве не нашлось вовсе, шаг пишет ошибку `Drip: no push nodes selected from distribution tree` и не отправляет ничего.
 
-См. эвристику в [models/distributions-model.md](../models/distributions-model.md) → «Notifications Flow — сначала флоу, потом одну дистрибуцию».
+Какие каналы рассылки вообще работают, а какие заглушка — [mechanics/notifications-flow.md](../mechanics/notifications-flow.md).
 
-Также см. [mechanics/notifications-flow.md](../mechanics/notifications-flow.md).
+## Как выбирается вариант при отправке — равновероятно, весов нет
 
-## Подключение Notifications Flow к Campaign Flow
+На каждую отправку берётся **одна** нода, случайно и равновероятно, из всех прошедших свои условия. Весов в дереве шаблонов нет — поля `weight` и `is_fill_first` на выбор не влияют.
 
-Когда: Notifications Flow построен, его нужно «вшить» в Campaign Flow (запускать на визитах кампании).
+Порядок такой: дерево возвращает **все** ноды, чьи условия совпали с визитом (стратегия дистрибуции `Multiple Nodes`), шаг рассылки оставляет из них push-ноды и берёт случайную. Отсюда практика: варианты на разные языки разводят условием на ноде (`aio.visit.language_code`), а вариативность внутри одного текста делают спинтаксом — не весами.
 
-**Путь:** `Edit Flow (Campaign Flow) → +Step → Notifications Flow node → выбрать NF`. Обычно ставится **после PWA-шага** или после `Destination`.
+Как шаг рассылки подключается к кампании и что такое серия отправок — [how-to/remarketing-campaigns.md](remarketing-campaigns.md).
 
-Notifications Flow стартует, **даже если у визита нет подписки на push** — подписка проверяется только в момент попытки отправить push. Если подпишется по ходу — пуши пойдут.
+## Поля нод-шаблонов — что заполняется в каждом типе
 
-Также см. [mechanics/notifications-flow.md](../mechanics/notifications-flow.md).
+| Тип ноды | Поля тела | Ограничения |
+|---|---|---|
+| `Push template` | `Push title`, `Push message`, `Push icon` | заголовок и текст обязательны, до 255 символов; иконка опциональна, до 255 |
+| `Email template` | `Email subject`, `Email text` | тема обязательна, до 255; текст обязателен, лимита длины нет |
+| `SMS template` | `Sms text` | обязателен, до 255 символов |
+| `Telegram template` | `Telegram message` | обязателен, лимита длины нет |
 
-## Notification Flow на Conversion Type (Telegram-уведомления)
+У всех четырёх есть обязательное поле `Name` — это имя строки в дереве, а не текст сообщения.
 
-Когда: при определённом типе конверсии (Invalid / Reject / Sale) нужно отправить Telegram-нотификацию владельцу кампании (баеру).
+Контент лежит **прямо в настройках ноды**: ссылки на запись из раздела `Marketing → Message templates` тут нет, нода `Push Template` называется так же, но это не она ([models/distributions-model.md](../models/distributions-model.md)).
+
+## Как сделать текст разным на каждую отправку — спинтакс
+
+Спинтакс — синтаксис случайного выбора прямо в тексте сообщения: `{вариант 1|вариант 2}` и `{Random=(100,1500)}`. Разворачивается он заново **на каждую отправку**, уже после подстановки плейсхолдеров `{{aio.*}}`, поэтому в одном тексте можно писать и то, и другое ([reference/placeholders.md](../reference/placeholders.md)). В форме рядом с полем стоит подсказка `Spintax is supported` («Поддерживается спинтакс»).
+
+### `{вариант 1|вариант 2}` — один случайный вариант на отправку
+
+`{вариант 1|вариант 2|вариант 3}` подставляет один вариант из перечисленных. Каждая группа выбирается независимо от других, распределение равномерное, пробелы внутри вариантов сохраняются.
+
+Группы можно вкладывать друг в друга — сначала разворачиваются самые внутренние, движок делает до 10 проходов, поэтому вложенность глубже десяти уровней уже не развернётся.
+
+Случайные эмодзи — это та же группа, вариантами которой стоят эмодзи (`{💰|💵|💎}`). Отдельного макроса под эмодзи в продукте нет.
+
+### `{Random=(100,1500)}` — случайное число из диапазона
+
+`{Random=(100,1500)}` подставляет случайное целое из диапазона, границы включительно. Регистр слова `Random` не важен, перепутанные минимум и максимум молча меняются местами, отрицательные числа допустимы.
+
+Синтаксис строгий: пробелы допускаются **только вокруг запятой**. `{Random=(100, 500)}` работает, а `{Random = (100,500)}`, `{Random=( 100,500)}`, `{Random=(100,500 )}` — нет, такая запись уедет в текст без скобок.
+
+Число подставляется **до** разбора групп: `{Random=…}` внутри группы работает, а диапазон, собранный из группы (`{Random=(1,{2|3})}`), — нет.
+
+### Одиночные `{скобки}` — не макрос, скобки срежутся
+
+Фигурные скобки без `|` макросом не считаются: `{Date}` уйдёт обычным текстом `Date`, скобки срежутся. Никаких `{Date}`, `{City}`, `%city%` в текстах рассылки не подставляется — работают только спинтакс и плейсхолдеры `{{aio.*}}`.
+
+Тем же механизмом съедается **опечатка в плейсхолдере**: неизвестный ключ не подставляется, а спинтакс снимает с `{{aio.visit.опечатка}}` обе пары скобок, и в push уезжает голая строка `aio.visit.опечатка`. Симптом «в пуше напечатался сам плейсхолдер без скобок» — это опечатка в ключе, а не сбой отправки.
+
+### Где спинтакс работает, а где нет
+
+На отправке из дерева шаблонов спинтакс применяется к `Push title` и `Push message` — и всё: `Telegram Template` отсюда не уходит вовсе, а поле `Push icon` спинтакс не трогает (плейсхолдеры в иконке рендерятся, спинтакс — нет).
+
+У email и SMS спинтакс на отправке не применяется вовсе (подсказка и предпросмотр в форме есть, но эти каналы и так не отправляются). Работает спинтакс и в отдельных записях раздела `Marketing → Message templates` — push оттуда уходит тем же сендером.
+
+### Кнопка `Test` — 10 примеров отправки, считаются в браузере
+
+Кнопка `Test` («Тест») рядом с полем открывает поповер `Sample sends` («Примеры отправок») с 10 сгенерированными вариантами текста; `Generate again` («Сгенерировать ещё») пересобирает их. На пустом поле кнопка недоступна.
+
+Считается предпросмотр целиком в браузере, без запроса на сервер. Отсюда два следствия: плейсхолдеры `{{…}}` в примерах остаются как есть (значений полей визита там не увидеть), а разбор `{Random=…}` в предпросмотре мягче, чем на отправке — запись с лишними пробелами (`{Random = (100, 500)}`) в примерах покажет число, а в реальном push уедет текстом. Ориентир — строгий синтаксис отправки.
+
+## Плейсхолдеры в текстах шаблонов — вписываются руками
+
+У полей шаблона пикера плейсхолдеров нет — `{{aio.*}}` вписывается в текст руками. Перед отправкой они рендерятся тем же движком, что и на лэнде, по всем трём полям push: заголовку, тексту и иконке.
+
+Работает любой плейсхолдер визита, его полей, кампании и Source — даже если пикер его не предлагает. Пикер контекста `Distribution Campaign Content` живёт в диалоге **условий** ноды и на подстановку в тексте не влияет: в текст можно вписать плейсхолдер, которого в этом пикере нет, и он отрендерится. Список всех плейсхолдеров — [reference/placeholders.md](../reference/placeholders.md).
+
+### `{{aio.visit.pwa_icon_url}}` — иконка PWA вместо системного значка
+
+`{{aio.visit.pwa_icon_url}}` (в пикере — `PWA App Icon`, группа `Visit`) подставляет иконку PWA-приложения этого визита, чтобы push приходил с иконкой приложения, а не с дефолтным значком браузера. Пишется в поле `Push icon` руками: поле работает как выбор картинки из библиотеки, плейсхолдера в этом выборе нет, но при отправке значение отрендерится.
+
+Отдаёт манифестную иконку визита (`icon512x512`) через прокси `/_cdn` на push-домене. Если у визита иконки нет, плейсхолдер вернёт пустое значение. Именно он проставлен в готовых наборах пушей от AIO. Про PWA-манифест и иконки — [mechanics/pwa.md](../mechanics/pwa.md).
+
+## Готовые наборы пушей от AIO — что это и какие есть
+
+AIO поставляет готовые наборы push-текстов: это **глобальные дистрибуции** типа `Message Templates` — они не принадлежат ни одному тенанту и одинаковы для всех. Наборов четыре, стадия воронки стоит в названии: `iGaming After Install Pushes`, `iGaming After Registration Pushes`, `iGaming After Deposit Pushes` и `iGaming All Stages Pushes`.
+
+Внутри набора — плоский список push-нод: на каждый из 48 языков своя нода с условием `aio.visit.language_code = <язык>`, у части языков вариантов несколько. Украинского в наборах нет. Тексты написаны со спинтаксом, а в `Push icon` проставлен `{{aio.visit.pwa_icon_url}}`.
+
+Стадия в имени набора — это только имя: сама дистрибуция ни к какой стадии воронки не привязана. Сегментацию задаёт кампания — стоп-конверсия и обязательные конверсии шага ([how-to/remarketing-campaigns.md](remarketing-campaigns.md)).
+
+### Как подключить готовый набор — тумблер `Show global only`
+
+Готовый набор выбирается там же, где своя дистрибуция, — в селекторе дистрибуции на шаге серии рассылок (узел `Drip schedule`). По умолчанию глобальные скрыты; показывает их тумблер `Show global only` («Только глобальные»).
+
+Тумблер работает как **режим**, а не как «добавить к списку»: включён — в списке только глобальные наборы, выключен — только свои. Смешанного списка нет. Глобальные помечены иконкой AIO с тултипом «Shared across all — the same distribution is used everywhere» («Общая для всех — одна и та же дистрибуция используется везде»).
+
+Мастера «включить набор одной кнопкой» нет — набор подключается как обычная дистрибуция и целиком. В таблицах `Marketing → Template distributions` и `Settings → Distributions` глобальные наборы не показываются: они живут только в селекторах.
+
+Если тумблера в селекторе нет вовсе — на этом окружении наборов нет: тумблер появляется, только когда в списке есть хотя бы одна глобальная дистрибуция.
+
+### Почему готовый набор нельзя отредактировать или скопировать себе
+
+Готовые наборы read-only: тексты в них из тенанта не меняются, и сделать себе копию «чтобы доработать под себя» тоже нельзя — копирование глобальной дистрибуции ломается на первой же ноде и оставляет пустой обрубок без сообщений.
+
+Ноды набора помечены заблокированными, экшенов редактирования у них нет, а сервер отказывает в записи независимо от интерфейса. В UI про это ничего не написано: тултип на бейдже говорит только «общая для всех», про read-only — ни слова.
+
+Нужны свои тексты — заводится своя дистрибуция типа `Message Templates` и наполняется своими нодами; из готового набора при этом не переносится ничего.
+
+## Старый раздел `Marketing → Message templates` — кастомный путь
+
+Отдельные записи-шаблоны в `Marketing → Message templates` (четыре типа: Push / Email / Telegram / SMS) на месте и работают: спинтакс в них тот же, push из них уходит тем же сендером. Права — `marketing.message-templates.*`.
+
+Но новая рассылка собирается деревом дистрибуции `Message Templates`, а не отдельными записями. Раздел отдельных шаблонов — кастомный путь для старых сетапов; разворачивать на нём новую рассылку не нужно. Что умеют ноды старого пути — [mechanics/notifications-flow.md](../mechanics/notifications-flow.md).
+
+## Telegram-нотификации баеру — это не рассылка визитёрам
+
+Telegram-нотификация баеру — отдельная история от push-рассылки: её шлёт Marketing Flow, привязанный к типу конверсии, а не remarketing-кампания. Типичный сценарий — при конверсии `Invalid Lead` / `Reject Lead` / `Sale` дать знать владельцу кампании в его Telegram-чат.
 
 **Путь:** `Settings → Conversion types → <type> → Notification Flow → выбрать` (в ERP типы конверсий открываются и со страницы конверсий — шеврон у `Postback generator` → `Manage types`, см. [how-to/postback-generator.md](postback-generator.md)).
 
-**Шаги:**
-
 1. Открыть Conversion Type (например, `Invalid Lead`, `Reject Lead`).
-2. Выбрать в поле `Notification Flow` ранее созданный Marketing Flow с нодой-каналом `Telegram`.
+2. В поле `Notification Flow` выбрать заранее созданный Marketing Flow с нодой-каналом `Telegram`.
 3. `Save`.
 
-Каждый раз при создании конверсии этого типа — флоу запустится и пошлёт сообщение.
+Дальше каждый раз при создании конверсии этого типа флоу запускается и шлёт сообщение. Также см. [models/conversion-model.md](../models/conversion-model.md) → Notification Flow атрибут.
 
-Также см. [models/conversion-model.md](../models/conversion-model.md) → Notification Flow атрибут.
+### Telegram Sender Provider — без него нода `Telegram` не отправит
 
-### Telegram Sender Provider
+Без Sender Provider нода `Telegram` в флоу-редакторе отправить не сможет. **Путь:** `Marketing → Sender providers → + Sender provider → Integration type: Telegram`. Для простой нотификации хватает `Bot API Key` + `Bot Name`.
 
-Когда: первое подключение Telegram-канала. Без Sender Provider нода `Telegram` (в флоу-редакторе) не сможет отправить.
+В дропдауне `Integration type` есть ещё **Mailgun** (email), **Twilio** (SMS) и **Prelude Bridge** (SMS), но email/SMS-доставка не работает — рабочий из них только Telegram ([mechanics/notifications-flow.md](../mechanics/notifications-flow.md)). Выбор типа раскрывает поля учётки именно этого провайдера.
 
-Тот же Telegram Sender Provider используется и для `Telegram Destination` (трафик в TG-бот/канал, `Behaviour` `Bot -> Channel` / `Channel`) — см. [how-to/destinations.md](destinations.md).
+Тот же Telegram Sender Provider обслуживает и `Telegram Destination` (трафик в TG-бот/канал, `Behaviour` `Bot -> Channel` / `Channel`) — [how-to/destinations.md](destinations.md).
 
-**Путь (UI 2026-06-06):** `Marketing → Sender providers → + Sender provider → Integration type: Telegram`. В дропдауне `Integration type` также: **Mailgun** (email), **Twilio** (SMS), **Prelude Bridge** (SMS) — но email/SMS-доставка не работает (заглушка), рабочий из этих провайдеров только Telegram (см. [mechanics/notifications-flow.md](../mechanics/notifications-flow.md) → «Email/SMS-каналы — доставка не работает»). Выбор типа раскрывает поля учётки именно этого провайдера.
-
-**Поля провайдера (Telegram):**
+### Поля Telegram Sender Provider
 
 | Поле | Что делает |
 |---|---|
@@ -108,7 +188,7 @@ Notifications Flow стартует, **даже если у визита нет 
 | **Bot Name** | Username/имя бота для отображения (обяз.) |
 | **Start Message** | Сообщение, которое бот шлёт юзеру при первом заходе (`/start`) |
 | **Joined Message** | Сообщение после вступления юзера в канал |
-| **Start conversion type** | Тип конверсии, который фается, когда юзер запустил бота |
+| **Start conversion type** | Тип конверсии, который фиксируется, когда юзер запустил бота |
 | **Join conversion type** | Тип конверсии при вступлении в канал — это **«конверсия подписки»** |
 | **Join Channel** | Целевой канал (ссылка/ID), куда зовём вступить |
 | **Join Channel Header Text** | Заголовок в приглашении вступить (режим `Bot -> Channel`) |
@@ -116,38 +196,51 @@ Notifications Flow стартует, **даже если у визита нет 
 | **Chat ID Field** | Поле визита, куда бот пишет `chat_id` юзера |
 | **Username Field** | Поле визита, куда бот пишет `username` юзера |
 
-Для простой Telegram-нотификации (нода `Telegram` шлёт шаблон) достаточно **Bot API Key + Bot Name**. Остальные поля — про acquisition-флоу `Telegram Destination`: приветствие → приглашение в канал → фиксация подписки.
+Всё, кроме `Bot API Key` и `Bot Name`, — про acquisition-флоу `Telegram Destination`: приветствие → приглашение в канал → фиксация подписки. `Chat ID Field` / `Username Field` указывают на **кастомные** поля визита (по дефолту в шаблонах тенантов их нет, завести заранее), а `Join conversion type` сработает, только если **бот — админ канала**: иначе Telegram не отдаёт событие вступления.
 
-`Chat ID Field` / `Username Field` указывают на **кастомные** поля визита — по дефолту в шаблонах тенантов их нет, заведи заранее. `Join conversion type` сработает, только если **бот — админ канала** (иначе Telegram не отдаёт событие вступления).
+### Как развести Telegram-чаты по байерам — `Buyer TG Chat ID` через Fill Field
 
-### Заполнить `Buyer TG Chat ID` через Fill Field Distribution
-
-Когда: разные Telegram-чаты для разных байеров — чтобы статусы по кампаниям каждого владельца уходили именно его баеру, в его чат.
-
-*(Поле `Buyer TG Chat ID` — кастомное; имя приведено как пример, по дефолту в шаблонах тенантов его нет. Заведи его в кастомных полях визита.)*
+Когда у каждого байера свой Telegram-чат, номер чата кладут в поле визита и подставляют его плейсхолдером. Поле `Buyer TG Chat ID` — **кастомное**, имя приведено как пример: по дефолту в шаблонах тенантов его нет, заведи в кастомных полях визита ([how-to/custom-fields.md](custom-fields.md)).
 
 **Путь:** `Settings → Distributions → <Fill Field distribution> → Add Fill Field`.
-
-**Шаги:**
 
 1. Создать (или открыть) Fill Field Distribution.
 2. Добавить правило: `Campaign Owner == <Buyer X>` → `Buyer TG Chat ID = <chat_id>`.
 3. Повторить для каждого байера.
-4. Сохранить и убедиться, что в Campaign Flow есть шаг `Fill Fields` или `Fields by Distribution`, который применяет эту дистрибуцию.
+4. Убедиться, что в Campaign Flow есть шаг `Fill Fields` или `Fields by Distribution`, который применяет эту дистрибуцию.
 
 Также см. [how-to/distributions.md](distributions.md) → Fill Field Distribution, эвристика «сначала по байеру».
 
-## Частые ошибки при настройке пушей и Notifications Flow
+## Частые ошибки при сборке текстов рассылки
 
-- **Push не приходит — а Flow стартует.** Это норма: NF стартует независимо от подписки. Подписка проверяется только при отправке. Проверь, что визит подписан (Push Subscribe Toggle на лэнде + подписался в реале).
-- **Подпись на одном домене, отправка с другого.** **Технически невозможно** — подписка привязана к домену.
-- **Wait < 60 секунд.** UI не даёт. Минимум 60 сек.
-- **«Хочу видеть CTR / open-rate пушей».** Аналитика по пушам сейчас — только логи в `Marketing → Messages`. CTR / open-rate / конверсия после пуша **не трекаются**.
-- **Несколько Notifications Flow на одну точку Campaign Flow.** Можно — стартуют одновременно. Но проще один с развилками внутри.
+### «В пуше напечатался сам плейсхолдер без скобок»
+
+В тексте пуша вместо значения напечатался сам плейсхолдер, да ещё и без скобок — это опечатка в ключе, а не сбой отправки. Неизвестный ключ движок не подставляет, а спинтакс потом срезает с него обе пары фигурных скобок, и в push уезжает голая строка вида `aio.visit.чего_нет`. Сверить написание ключа — [reference/placeholders.md](../reference/placeholders.md).
+
+### «В предпросмотре число, а в пуше — текст»
+
+Лишние пробелы в `{Random=…}`. Предпросмотр в браузере разбирает запись мягче, чем отправка: пробелы допускаются только вокруг запятой, всё остальное (`{Random = (100,500)}`, `{Random=( 100,500)}`) отправка макросом не считает и печатает текстом без скобок.
+
+### «Выбрал шаблон, а ничего не пришло»
+
+Проверить тип нод в дереве: отправляются только `Push Template` / `Push Message`, а `Email` / `Sms` / `Telegram` ноды тихо отфильтруются. Если push-нод нет вовсе — в логе шага будет `Drip: no push nodes selected from distribution tree`.
+
+### «Все шаги серии шлют один и тот же текст»
+
+Серия отправляет один и тот же текст на всех шагах, когда в дереве осталась ровно одна подходящая push-нода: остальные ноды либо не push (email / SMS / Telegram — они отфильтруются), либо их условия не совпали с визитом (частый случай — правило по языку). Ошибки при этом не будет: выбор случайный, но выбирать не из чего. Лечится добавлением push-вариантов или ослаблением условий на нодах.
+
+### «Поставил `Strategy` с весами — рассылка встала»
+
+Рассылка перестала отправлять после того, как в дерево шаблонов добавили ноду `Strategy` с весами. Весов у шаблонов сообщений нет: нода в дереве предлагается, но шаг рассылки на ней падает, и сообщение не уходит вообще — ни ошибки в интерфейсе, ни отправки. Убрать `Strategy` из дерева, а отбор строить на условиях нод.
+
+### «Хочу видеть CTR и open-rate пушей»
+
+Готовой колонки-процента в продукте нет — процент собирается своей метрикой `Computable metric` поверх `Remarketing count` (типы метрик — [models/metric.md](../models/metric.md), сборка формулы — [how-to/remarketing-campaigns.md](remarketing-campaigns.md)). Считать при этом есть что только у пушей remarketing-кампании: у них трекаются `Delivered` и `Opened`, а у пушей Notifications Flow без кампании таких событий нет — там остаётся только лог `Marketing → Messages` ([mechanics/notifications-flow.md](../mechanics/notifications-flow.md)).
 
 ## Смежные темы
 
-- [mechanics/notifications-flow.md](../mechanics/notifications-flow.md) — концепт: типы пушей (Manual / Scheduled / Follow Up), Notifications Flow ноды, каналы Push / Telegram / Email / SMS (**работают Push и Telegram; Email/SMS-доставка не работает**), Sender Providers (Mailgun / Twilio / Prelude Bridge / Telegram), Message-статусы (Requested/Processing/Done/Failed), AIO Push Subscribe макрос, Telegram-стек.
-- [models/distributions-model.md](../models/distributions-model.md) — Remarketing Content Distribution + эвристика «одна дистрибуция на флоу».
-- [mechanics/pwa.md](../mechanics/pwa.md) — PWA + Service Worker.
-- [models/conversion-model.md](../models/conversion-model.md) — Notification Flow атрибут на Conversion Type.
+- [how-to/remarketing-campaigns.md](remarketing-campaigns.md) — канон процедуры рассылки: аудитория, триггеры, серия отправок, метрики.
+- [models/distributions-model.md](../models/distributions-model.md) — `Message Templates` как тип дистрибуции, дерево и его ноды среди остальных типов.
+- [mechanics/notifications-flow.md](../mechanics/notifications-flow.md) — ноды Marketing Flow, каналы (работают Push и Telegram; email/SMS — заглушка), Sender Providers, лог `Marketing → Messages`.
+- [reference/placeholders.md](../reference/placeholders.md) — все плейсхолдеры и их группы.
+- [mechanics/pwa.md](../mechanics/pwa.md) — PWA, манифест и иконка приложения.

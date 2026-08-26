@@ -1,17 +1,17 @@
 ---
 id: distributions-model
 title: Distributions Model AIO
-description: Как устроены Distributions в AIO — 7 типов, структура дерева (Folder + Strategy + Rule + Payload), Business Models, типичные use case'ы (Buyer UTM Distribution, Direct Traffic, Payout rules).
+description: Как устроены Distributions в AIO — 8 типов (включая Message Templates — дерево текстов ремаркетинг-рассылки), структура дерева (Folder + Strategy + Rule + Payload), Business Models, типичные use case'ы (Buyer UTM Distribution, Direct Traffic, Payout rules).
 doc_type: model
 builds: [erp, mtk]
-related: [distributions, glossary, business-model, visit-lifecycle, conversion-model, flow-model, notifications-flow]
+related: [distributions, remarketing-campaigns, notifications-flow, push-notifications, permissions, glossary, flow-model, business-model, visit-lifecycle, conversion-model]
 language: ru
 updated: 2026-08-12
 ---
 
 # Distributions Model AIO
 
-**Distribution** — централизованное дерево правил (`Settings → Distributions`), которое автоматически подставляет значения по визиту: payout, revenue, buyer-метка, лэнд по гео, поле визита. Вместо настройки каждой кампании отдельно, правило задаётся один раз и применяется ко всем визитам. Поддерживается 7 типов: `Payout`, `Revenue`, `Campaign Content`, `Flow Content`, `Fill Field`, `Direct Traffic`, `Remarketing Content`. Структура дерева: `Folder` + `Strategy` (полный набор в дереве Distribution — `First` / `Weights` / `Conversions AI` / `Metrics AI`) + `Rule to pass` + `Payload`-ноды. Конкретные процедуры — в [how-to/distributions.md](../how-to/distributions.md). В MTK-билде раздел открывается платным модулем `MTK Distribution` (*Билды, тарифы, триал и статусы тенанта*), в ERP доступен всем.
+**Distribution** — централизованное дерево правил (`Settings → Distributions`), которое автоматически подставляет значения по визиту: payout, revenue, buyer-метка, лэнд по гео, поле визита. Вместо настройки каждой кампании отдельно, правило задаётся один раз и применяется ко всем визитам. Поддерживается 8 типов: `Payout`, `Revenue`, `Campaign Content`, `Flow Content`, `Fill Field`, `Direct Traffic`, `Remarketing Content`, `Message Templates`. Структура дерева: `Folder` + `Strategy` (полный набор в дереве Distribution — `First` / `Weights` / `Conversions AI` / `Metrics AI`) + `Rule to pass` + `Payload`-ноды. Конкретные процедуры — в [how-to/distributions.md](../how-to/distributions.md). В MTK-билде раздел открывается платным модулем `MTK Distribution` (*Билды, тарифы, триал и статусы тенанта*), в ERP доступен всем.
 
 ## Зачем нужны Distributions
 
@@ -19,9 +19,9 @@ updated: 2026-08-12
 
 **С Distributions:** правила вынесены централизованно. «Buyer X — метка Y» / «Гео IT, источник FB — payout $5» / «Голый домен без UTM — этой кампании» — заданы один раз в `Settings → Distributions`, применяются ко всем визитам.
 
-## Какие 7 типов Distributions существуют и когда каждый применяется
+## Какие 8 типов Distributions существуют и когда каждый применяется
 
-Все 7 создаются из `Settings → Distributions → + Distribution`; лейблы в пикере: **Payout settings · Revenue settings · Campaign content · Flow content · Fill field · Direct traffic · Remarketing content**. `Payout settings` / `Revenue settings` — те же money-деревья, что в разделе `Finance` (см. раздел «Как настроить Revenue и Payout Distribution в разделе Finance» ниже).
+Все 8 создаются из `Settings → Distributions → + Distribution`; плитки пикера в порядке показа: **Payout settings · Revenue settings · Campaign content · Fill field · Direct traffic · Message templates · Flow content · Remarketing content**. На плитках `Flow content` и `Remarketing content` стоит бейдж **`Advanced`** — плитка при этом остаётся видимой и кликабельной, бейдж только помечает «не для беглого выбора»; из пикера плитки убираются исключительно по правам. `Payout settings` / `Revenue settings` — те же money-деревья, что в разделе `Finance` (см. раздел «Как настроить Revenue и Payout Distribution в разделе Finance» ниже). В фильтре `Type` таблицы `Settings → Distributions` значений больше восьми: фильтр отдаёт весь внутренний список типов, включая те, которые в пикере создания не предлагаются.
 
 ### Payout — автоматический payout по правилам
 
@@ -49,9 +49,39 @@ updated: 2026-08-12
 
 Для голых ссылок (только домен, без UTM). Альтернатива `Default Query Code` на домене. Поддерживает `initial_path` для разделения трафика внутри одного домена. Используется при прямом заходе на голый домен. Если на домене не настроено ни `Default Query Code`, ни `Direct Traffic Distribution`, заход на голый домен отдаёт `502`.
 
-### Remarketing Content — push-сценарии в Marketing Flows
+### Remarketing Content — сообщения для нод пуш-сценария, собранного во флоу
 
-Для push-сценариев в Marketing Flows. Используется для Push-уведомлений и follow-up рассылок.
+Дерево сообщений для нод `Notifications Flow`: ноды `Add Push Message` и `Add Telegram Message`, каждая ссылается на готовый шаблон из `Marketing → Message Templates`. Привязывается к флоу при создании.
+
+Дистрибуция `Remarketing Content` — **кастомный путь**: рассылку по визитам сегодня собирают ремаркетинг-кампанией, и тексты она берёт из дистрибуции типа `Message Templates` ([how-to/remarketing-campaigns.md](../how-to/remarketing-campaigns.md)). `Remarketing Content` остаётся для пуш-сценариев, которые собирают во флоу вручную — [mechanics/notifications-flow.md](../mechanics/notifications-flow.md).
+
+### Message Templates — дерево шаблонов сообщений для ремаркетинг-рассылок
+
+Дерево нод-шаблонов, из которого ремаркетинг-рассылка берёт текст сообщения: шаг серии рассылок (`Drip schedule`) выбирает дистрибуцию этого типа и на каждую отправку достаёт из неё подходящую ноду. Процедура рассылки — [how-to/remarketing-campaigns.md](../how-to/remarketing-campaigns.md), сборка самого текста (плейсхолдеры, спинтакс) — [how-to/push-notifications.md](../how-to/push-notifications.md). Контент сообщения хранится **прямо в настройках ноды**, а не ссылкой на сущность из `Marketing → Message Templates` — нода `Push Template` называется так же, но это не она.
+
+Чем этот тип отличается от остальных дистрибуций:
+
+- **Листья — четыре типа шаблонов:** `Email Template` / `Push Template` / `Sms Template` / `Telegram Template`. Нод лэнда, дестинейшна и `Push Message` в этом дереве нет.
+- **`Split Group` и `Flow State` выключены** — у нод этого типа обеих осей нет вовсе (в отличие от `Flow Content` и `Remarketing Content`), единственный отбор ноды — её `Rule to pass`.
+- **Привязки к флоу нет** — флоу при создании не выбирается: запрашиваются только `Name` (обязателен), `Description` (до 255 символов) и `Tags`.
+- **Режим выбора зашит кодом:** дистрибуция всегда работает как `Multiple Nodes` (см. «Две оси выбора» ниже), поля в форме нет, и после создания режим не меняется — дерево отдаёт все прошедшие ноды, одну из них выбирает отправка.
+
+### Почему из дерева `Message Templates` уходят только push — email, SMS и Telegram не отправляются
+
+Рассылка отбирает из дерева только push-ноды — в дереве этого типа это `Push Template`. Ноды `Email Template`, `Sms Template` и `Telegram Template` создаются, валидируются и хранятся, но отправлять их из этого дерева нечем.
+
+**Симптом:** в дереве собраны шаблоны письма / SMS / Telegram, серия рассылки отрабатывает, но сообщение не приходит и запись об отправке не появляется.
+
+**Что делать:** держать в дереве push-ноды. Если push-нод в дереве нет вовсе, шаг рассылки пишет в лог ошибку `Drip: no push nodes selected from distribution tree` — дальше по симптому «пуши не приходят» *уточните у поддержки*.
+
+### Где создать Message Templates-дистрибуцию — плитка в Settings и страница `Template distributions`
+
+Два входа в один и тот же тип:
+
+- **`Settings → Distributions → + Distribution` → плитка `Message templates`** — право то же, что у `Remarketing content` (`settings.distributions.edit.marketing-content`).
+- **`Marketing → Template distributions`** (`/app/remarketing/message-template-distributions`) — отдельная страница со своей веткой прав (`marketing.template-distributions.*`). На выделенной странице пикер типов не показывается: создание открывается сразу.
+
+**«Право на дистрибуции шаблонов выдал, а раздела у юзера нет».** Пункт `Marketing` в главном меню открывается по другим правам раздела (`marketing.messages.view`, `marketing.message-templates.view`, `marketing.sender-providers.view`, `marketing.flows.view`) — `marketing.template-distributions.view` в этот список не входит. Роли, у которой есть только оно, до страницы не дойти: выдавай его вместе с одним из прав, открывающих сам раздел `Marketing` ([how-to/permissions.md](../how-to/permissions.md)).
 
 ## Как устроено дерево дистрибуций: Folder, Strategy, Rule, Payload
 
@@ -64,7 +94,7 @@ Distribution = **дерево**. Чтение сверху вниз. Кажды�
 **Ось 1 — сколько нод дерево отдаёт (уровень всей дистрибуции), поле `Single Node` / `Multiple Nodes`.**
 
 - **`Single Node`** — как только первый лист прошёл все свои проверки, обход дерева **останавливается**, и этот лист выигрывает. Так работают money- и маршрутные дистрибуции: `Payout`, `Revenue`, `Direct Traffic` (первый проходящий лист сверху вниз — результат).
-- **`Multiple Nodes`** — дерево обходится до конца и собираются **все** прошедшие листья. Так работают `Fill Field` (за один проход можно заполнить несколько полей) и `Remarketing Content`.
+- **`Multiple Nodes`** — дерево обходится до конца и собираются **все** прошедшие листья. Так работают `Fill Field` (за один проход можно заполнить несколько полей), `Remarketing Content` и `Message Templates`.
 
 **Ось 2 — как Strategy-узел выбирает один вариант среди своих детей** (First / Weights / Conversions AI / Metrics AI, ниже). Эта ось живёт **внутри** `Strategy`-узла и решает тай-брейк между его дочерними payload-нодами; ось 1 решает, сколько таких выборов дерево в итоге вернёт визиту.
 
@@ -96,6 +126,8 @@ Distribution = **дерево**. Чтение сверху вниз. Кажды�
 4. **`split_group`-матч** — только для `Flow Content` и `Remarketing Content` (у `Campaign Content` этого гейта нет): если у визита уже выставлен цвет `Split Group`, цвет узла должен совпасть либо быть `Rainbow`.
 5. **`Rule to pass`** — условия правила. Ноль условий = авто-pass.
 
+У дерева `Message Templates` проверки 3 и 4 не применяются вовсе: `Flow State` и `Split Group` у этого типа выключены, и отбор ноды идёт только по `active` + `configured` + `Rule to pass`.
+
 ### Fill First — приоритетный вариант поверх весового распределения
 
 На вариантах шага (variant), которые распределяются по стратегии `Weights`, рядом с полем веса есть тоггл **Fill First** (поле `is_fill_first`). Вариант с включённым Fill First попадает в отдельную корзину и становится приоритетнее весовых: пока в этой корзине есть хотя бы один Fill First-вариант, выбор идёт **случайно только среди них**, минуя весовое распределение. Весовые варианты рассматриваются, только когда Fill First-корзина пуста (например, все Fill First-варианты отфильтрованы правилами или капами).
@@ -107,6 +139,8 @@ Distribution = **дерево**. Чтение сверху вниз. Кажды�
 ### Rule to pass — условие применения ноды к визиту
 
 Условие, при котором payload-нода применяется к визиту. Состоит из: поле визита + оператор + значение. Можно комбинировать через AND.
+
+Правило **без условий** редактор открывает экраном плиток-пресетов (простые пресеты по одному полю визита, комбинированные с бейджем `Advanced` и плитка `Custom` — прежний полный конструктор); разбор пресетов — [models/flow-model.md](flow-model.md).
 
 Пример: `Campaign Owner = Иван` AND `Visit Country = IT` → применить эту payload-ноду.
 
@@ -123,12 +157,38 @@ Distribution = **дерево**. Чтение сверху вниз. Кажды�
 | Add Destination | | нода дестинейшна | Campaign Content, Flow Content |
 | Add Landing | | нода лэнда | Campaign Content, Flow Content |
 | Add Redirect | ↗ | URL-редирект | Campaign Content, Flow Content |
-| Add Reflect | | внешний URL как payload (Reflect) — *уточните у поддержки* | Campaign Content, Flow Content |
+| Add Reflect | | внешний URL как payload (Reflect) | Campaign Content, Flow Content |
 | Add Query | | default query (привязать source+campaign к домену) | Direct Traffic |
-| Add Push Message | | push-шаблон из Message Templates | Remarketing Content |
+| Add Push Message | | push-шаблон из `Marketing → Message Templates` | Remarketing Content |
+| Add Telegram Message | | telegram-сообщение рассылки | Remarketing Content |
 | Add Revenue | | revenue-значение | Revenue |
 | Add Payout | | payout-значение | Payout |
 | Add Fill Field | | заполнение поля визита (с подтипами `Text`/`Image`/`Landing`/`Library`/`Destination`) | Fill Field |
+
+Листья дерева `Message Templates` — отдельной таблицей ниже.
+
+### Ноды дерева `Message Templates` — четыре листа-шаблона и где их ставить
+
+Дерево типа `Message Templates` допускает четыре листа, которых нет ни в одном другом типе дистрибуции:
+
+| Нода | Что |
+|---|---|
+| `Email Template` | лист-шаблон письма (`email_subject` + `email_text`) |
+| `Push Template` | лист-шаблон push: `push_title` и `push_message` обязательны (до 255 символов), `push_icon` опционален |
+| `Sms Template` | лист-шаблон SMS (`sms_text`); в дереве и диалоге подписан `SMS template` |
+| `Telegram Template` | лист-шаблон telegram-сообщения (`telegram_message`) |
+
+У каждой из четырёх нод есть ещё поле `Name` — это имя строки в дереве, а не текст сообщения. Контент хранится **прямо в настройках ноды**: они не ссылаются на сущность из `Marketing → Message Templates`, хотя нода `Push Template` называется так же. Как собирается сам текст — [how-to/push-notifications.md](../how-to/push-notifications.md).
+
+**Где ставить.** Лист-шаблон кладётся в корень дерева или внутрь `Folder`; вложить что-либо внутрь самого листа нельзя. Вложение в `Strategy` дерево тоже разрешает, но рассылка на такой ветке падает — см. раздел про `Strategy` ниже. `Folder` вкладывается в `Folder`, `Strategy` — в корень или в `Folder`.
+
+### `Strategy` в дереве `Message Templates` — веса не работают, шаг рассылки обрывается целиком
+
+Ноду `Strategy` дерево предлагает, но обработать её на рассылке нечем: как только под `Strategy` проходит условия хотя бы одна нода-шаблон, обработка дерева обрывается ошибкой — и шаг не отправляет **ничего**, включая шаблоны в соседних папках того же дерева. Взвешенного выбора шаблонов в дистрибуции этого типа нет.
+
+**Симптом:** в дереве стоит нода `Strategy`, серия идёт по расписанию, но из этой дистрибуции не приходит ни одного сообщения.
+
+**Что делать:** убрать `Strategy` из дерева — складывать шаблоны списком в `Folder` и разводить их правилами `Rule to pass` (например, по `aio.visit.language_code`). Среди всех нод, прошедших условия, отправка выбирает одну **равновероятно** — веса (`weight`, `Fill First`) на листьях-шаблонах не учитываются.
 
 ## Как управлять нодами дерева — элементы управления
 
@@ -160,6 +220,16 @@ Distribution = **дерево**. Чтение сверху вниз. Кажды�
 
 **Проверка:** дожимай `Show more`, пока строка не исчезнет — она пропадает ровно тогда, когда показаны все `N` из `N` нод уровня. Если строки `Show more` под уровнем не было изначально — уровень показан целиком, и недостающих нод действительно нет.
 
+## Глобальная дистрибуция — общая для всех, из тенанта не редактируется
+
+**Глобальная (системная) дистрибуция** — дистрибуция без тенанта-владельца: одна и та же для всех, заводит её команда AIO. В списках `Settings → Distributions` и `Marketing → Template distributions` её **нет** — она появляется только в селектах выбора дистрибуции.
+
+В таком селекте, если хотя бы одна глобальная дистрибуция заведена, появляется тумблер **`Show global only`** («Только глобальные»). Он работает как режим: либо обычные дистрибуции, либо только глобальные — вперемешку они не показываются. Глобальная строка помечена логотипом AIO с тултипом `Shared across all — the same distribution is used everywhere`. Пока глобальных дистрибуций нет, ни тумблера, ни пометки в интерфейсе не видно.
+
+### «Правлю глобальную дистрибуцию, а `Save` отбивается» — `System distribution is read-only`
+
+Глобальную дистрибуцию можно открыть и даже начать править — отказ приходит **на сохранении**, а не при открытии: правка самой дистрибуции отбивается сообщением `System distribution is read-only`, правка её дерева — тем же сообщением с кодом `403`. Это ожидаемое поведение, а не сбой: из тенанта такая дистрибуция только для чтения, её выбирают, но не меняют.
+
 ## Что такое Business Models и как они связаны с Payout и Revenue Distribution
 
 Преднастроенный набор бизнес-правил, на котором строятся `Payout` и `Revenue` distribution. По дефолту тенант имеет `Arrived Revenue$` (`AR`) — для приёма revenue из постбэков. Создаются в `Settings → Business models`, нужны при настройке Payout/Revenue distribution-ов. Детали определения, дефолтов (`Arrived Revenue$`, `Zero Payout`) и полей (`Type`/`Format`/`Formula`) — [models/business-model.md](business-model.md). Именно эту модель выбираешь в листе `Finance → Revenue/Payout Distribution` (`Edit revenue` / `Edit payout` → поле `Business model`, см. раздел «Как настроить Revenue и Payout Distribution в разделе Finance» ниже).
@@ -189,7 +259,7 @@ Distribution = **дерево**. Чтение сверху вниз. Кажды�
 
 - **Дефолт** — `Campaign Owner` (владелец кампании). Срабатывает для всех визитов кампании.
 - **`Launcher` (юзер, сгенерировавший ссылку)** — переключаются на него в **multi-buyer**-сценариях: одна кампания, ссылку из неё генерят несколько байеров через `Generate Link`, каждый со своим UTM/sub. `Launcher` фиксируется в момент генерации ссылки — у разных линков на ту же кампанию разный Launcher.
-- У Direct Traffic визитов `Launcher = Unknown` (ссылки не генерили) — для Direct делить только по `Campaign Owner`. См. *Поля кампании / source не применяются к визиту* → «Launcher = Unknown».
+- У Direct Traffic визитов `Launcher = Unknown` (ссылки не генерили) — для Direct делить только по `Campaign Owner`. См. *уточните у поддержки* → «Launcher = Unknown».
 
 ### Payout Distribution по гео и источнику — разные ставки без правки кампаний
 
@@ -226,7 +296,7 @@ Use case: на рекламе стоит голый URL `mydomain.com` (без `
 
 - Под одну кампанию можно привязать **очень много** доменов через `Direct Traffic Distribution` (жёсткого лимита нет; на больших пулах — **10k+** — UI начинает тормозить, такие пулы поднимают **через API**). Управление пулом на этом объёме — вне AIO: свои скрипты, менеджащие дистрибуцию через API, который предоставляет AIO; отдельного инструмента или плейбука под это в AIO нет.
 - В `Tech → Domains → Edit Domain → Direct Traffic Distribution` дистрибуция должна быть **выбрана на самом домене**, иначе домен её не использует — правил «кампания + домен» в `Direct Traffic Distribution` недостаточно.
-- После привязки домена кампания **сразу доступна** по прямому переходу — на неё пойдёт любой заход на голый домен. Настройка шага `Filter` для такой кампании — *уточните у поддержки*.
+- После привязки домена кампания **сразу доступна** по прямому переходу — на неё пойдёт любой заход на голый домен.
 - По дефолту (без DTD), чтобы визит попал в кампанию, в URL обязательно **два** параметра: `UUID кампании` + `UUID source`. DTD снимает это требование — вход идёт по голому домену без параметров.
 
 ### Многостраничный лэнд через DTD — поведение init и 404 на подпутях
@@ -239,14 +309,13 @@ Use case: на рекламе стоит голый URL `mydomain.com` (без `
 
 Лэнд-заглушка (нейтральная страница, которую флоу отдаёт вместо основного контента) открывается **вне контекста визита**, поэтому SDK-плейсхолдеры на ней **не подставляются** — `aio.*` не резолвятся. Практическое следствие: динамические подстановки на такой странице не сработают, вёрстка должна быть самодостаточной.
 
-### Remarketing Content Distribution — автоматические Push-рассылки по визиту
+### Рассылка пушей по визитам — какую дистрибуцию под неё заводить
 
-Use case: визит подписался на push (через `Push Subscribe Toggle` + `Push Subscribe Script` на лэнде). Через N часов хотим послать ему follow-up push.
+Use case: визит был на лэнде, через N часов хотим послать ему push.
 
-С Remarketing Content Distribution:
-- В Settings → Distributions тип `Remarketing Content`, при создании выбирается Notifications Flow.
-- Дерево с `Add Push Message` нодами (берётся из `Marketing → Message Templates`).
-- В Notifications Flow ноды `Push` подключаются к Distribution.
+**Дефолтный путь — ремаркетинг-кампания:** она собирает аудиторию визитов и рассылает по расписанию, а тексты берёт из дистрибуции типа `Message Templates`. Процедура целиком — [how-to/remarketing-campaigns.md](../how-to/remarketing-campaigns.md).
+
+Дистрибуция `Remarketing Content` (дерево из `Add Push Message` / `Add Telegram Message`, привязанное к `Notifications Flow`) — кастомный путь для сценариев, которые собирают во флоу вручную: [mechanics/notifications-flow.md](../mechanics/notifications-flow.md).
 
 ### Campaign Content Distribution — разные лэнды по гео в одной кампании
 
@@ -324,6 +393,8 @@ Revenue- и Payout-дистрибуции редактируются в разд
 - [mechanics/visit-lifecycle.md](../mechanics/visit-lifecycle.md) — поля визита, как их заполняют
 - [reference/glossary.md](../reference/glossary.md) — определения (`Distribution`, `Distribution Nodes`, `Business Model`, и т.д.)
 - [how-to/distributions.md](../how-to/distributions.md) — пошаговое создание Distribution (вкл. Buyer UTM / Fill Field)
+- [how-to/remarketing-campaigns.md](../how-to/remarketing-campaigns.md) — рассылки по аудитории визитов: где выбирается дистрибуция `Message Templates`
+- [how-to/push-notifications.md](../how-to/push-notifications.md) — как собирается текст сообщения в нодах-шаблонах
 
 ## Как правильно структурировать Distribution и Flow дерево — эвристики
 
@@ -373,26 +444,3 @@ Fill Field Distribution
 **Почему:** дерево читается сверху вниз, более общее наверху, конкретное — внутри. Дублирование значений = когда меняется одно — приходится менять во всех листьях.
 
 Также см. раздел «Как устроено дерево дистрибуций» выше.
-
-### Notifications Flow — сначала флоу, потом одну дистрибуцию
-
-**Когда:** сборка `Notifications Flow` с несколькими Push-шагами (Push 1, Wait, Push 2, Wait, Push 3...).
-
-**Делай:**
-
-1. **Сначала** собери Notifications Flow целиком — все ноды Push с разными именами (`Reg 1 Push`, `Reg 2 Push`, `Reg 3 Push`...), все Wait, Check Conversion.
-2. **Потом** создай **одну** Push Distribution (Remarketing Content) с **деревом папок**:
-   - Папка `Reg 1` → Flow State = `Reg 1 Push` → Add Push Message ноды для этого шага.
-   - Папка `Reg 2` → Flow State = `Reg 2 Push` → ноды для второго шага.
-   - И т.д.
-3. `Flow State` ставь **на папку** (общий для всех нод внутри), не на каждую ноду отдельно.
-
-**Не делай:** **отдельные дистрибуции под каждый Push-шаг** (`Push Reg 1 Distribution`, `Push Reg 2 Distribution`, ...). Это плодит 10+ дистрибуций ради одного флоу → невозможно поддерживать.
-
-**Почему:**
-
-- Одна дистрибуция на флоу = одно место правок.
-- `Flow State` на папке = унификация: все ноды папки автоматически срабатывают только на этом шаге.
-- При добавлении нового Push-шага — копируешь папку, меняешь Flow State, готово; не нужна новая дистрибуция.
-
-Также см. [mechanics/notifications-flow.md](../mechanics/notifications-flow.md) → ноды и Distribution.

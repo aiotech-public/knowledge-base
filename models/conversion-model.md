@@ -1,10 +1,10 @@
 ---
 id: conversion-model
 title: Модель конверсий в AIO
-description: Как устроены Conversion Types — single/multiple, три формата постбэк-URL (path, query, conversion-by-key), параметры delay / revenue / destination_uuid, поля визита через postback, Correction type, капы. Полный цикл длинной воронки Lead → статус-апдейты → финальный Purchase.
+description: Как устроены Conversion Types — single/multiple (дедупликация повторного события задаётся Uniqueness Strategy типа, а не источником события), три формата постбэк-URL (path, query, conversion-by-key), параметры delay / revenue / destination_uuid, поля визита через postback, Correction type, капы. Полный цикл длинной воронки Lead → статус-апдейты → финальный Purchase.
 doc_type: model
 builds: [erp, mtk]
-related: [flow-model, visit-lifecycle, glossary, destination, tracker, marketing-flow, postback-generator, source-trackers, debug-with-logs, business-model, distributions-model, notifications-flow, destinations, conversion-ai-testing, visit, campaigns, meta-spend-allocation, sdk, api, metric, push-notifications]
+related: [flow-model, visit-lifecycle, glossary, destination, tracker, postback-generator, source-trackers, debug-with-logs, business-model, distributions-model, notifications-flow, remarketing-campaigns, destinations, conversion-ai-testing, campaigns, meta-spend-allocation, sdk, api, metric, marketing-flow]
 language: ru
 updated: 2026-08-12
 ---
@@ -72,7 +72,7 @@ Conversion Type — конфиг, определяющий, как записы�
 |---|---|
 | **Correction type** | Механизм корректировки revenue уже созданной конверсии через спавн коррекционной конверсии с разницей. Детально — раздел «Correction type — как поправить revenue уже созданной конверсии» ниже. |
 | **Payout Settings** / **Revenue Settings** | Привязка к `Payout Distribution` / `Revenue Distribution`: в `Payout Settings` выбирается `Payout Tree`, в `Revenue Settings` — `Revenue Tree` (оба из дропдаунов). |
-| **Notification Flow** | `Notification Flow` (синоним — `Marketing Flow`), запускается при получении конверсии этого типа (например, TG-уведомление при невалидной конверсии). → [models/marketing-flow.md](marketing-flow.md) |
+| **Notification Flow** | Поле `Notification flow` (тултип — `Notifications run when conversion spawn`): выбранное флоу типа `Notifications` сеется на визит при каждой конверсии этого типа. Кастомный путь для точечных алертов; штатный запуск рассылки по конверсии — триггер ремаркетинг-кампании, см. раздел «Как запустить рассылку при получении конверсии». |
 
 ### Correction type — как поправить revenue уже созданной конверсии
 
@@ -93,11 +93,11 @@ Conversion Type — конфиг, определяющий, как записы�
 
 ### Single Conversion — одно событие на визит
 
-Одна конверсия этого типа на визит. Повторный постбэк с тем же `conversion_type_uuid` для того же визита **молча игнорируется** — новая конверсия не создаётся, существующая не перезаписывается, ошибка в логах AIO не записывается.
+Одна конверсия этого типа на визит. Повторное событие того же типа на том же визите **молча игнорируется** — новая конверсия не создаётся, существующая не перезаписывается, ошибка в логах AIO не записывается.
 
-Применяется для событий, которые по природе случаются один раз — например, `Lead` (регистрация у рекламодателя), `Purchase` (первая оплата / целевое действие), `Push Subscribe` (подписка на push-уведомления). Конкретный набор типов в тенанте зависит от шаблона и кастомизации.
+Применяется для событий, которые по природе случаются один раз — например, `Lead` (регистрация у рекламодателя), `Purchase` (первая оплата / целевое действие), `Install` (установка приложения или PWA), `Push Subscribe` (подписка на push-уведомления). Конкретный набор типов в тенанте зависит от шаблона и кастомизации.
 
-**Повторный постбэк на Single, когда конверсия уже создана:** новая конверсия **не появится**, ошибка в логах AIO **не записывается** — постбэк молча игнорируется.
+Частный случай того же правила — **повторный постбэк** с тем же `conversion_type_uuid` на визит, где конверсия этого типа уже есть: он отбрасывается так же молча. Исключение одно — у типа задан `Correction type`: тогда повторный постбэк вторую конверсию этого типа не создаёт, а спавнит коррекционную (см. «Correction type — как поправить revenue уже созданной конверсии»).
 
 ### Multiple Infinity — серия апдейтов без лимита
 
@@ -114,6 +114,12 @@ Conversion Type — конфиг, определяющий, как записы�
 Use case: нужно ровно одну конверсию на одно бизнес-значение в рамках визита. Например:
 - Один пуш на один `offer_id` — `&unique=<offer_id>`, повторные пуши того же оффера тому же визиту не плодят конверсии.
 - Один Add to Cart на один `product_uuid` — `&unique=<product_uuid>`.
+
+### Дедупликация — свойство Conversion Type, а не источника события
+
+Повтор отбрасывается или создаёт вторую конверсию по `Uniqueness Strategy` того типа, на который пришло событие. Правило одинаково работает на всех трёх путях создания — входящий постбэк, шаг `Spawn conversion` или макрос с лэнда, ручной `Trigger Conversion` (см. «Что такое конверсия в AIO и как она создаётся»).
+
+Отсюда следствие: «событие засчитается один раз» — это про настройку типа, а не про механику, которая событие порождает. Тот же самый тип, заведённый как `Multiple Infinity`, на повторном событии **создаст вторую конверсию** на том же визите; у `Multiple By Unique` вторая появится при другом значении `unique`. Поэтому при жалобе «одно и то же событие посчиталось дважды» первым делом смотрят `Uniqueness Strategy` типа, а не то, что его вызвало.
 
 ## Как работает Sale Status Update — паттерн истории статусов
 
@@ -213,7 +219,7 @@ https://<домен>/api/v1/trigger/conversion-by-key
 
 Флоу уже завершён, а конверсия по постбэку **не записалась** — типичная причина это гонка по времени: постбэк пришёл раньше, чем Destination успел зафиксировать событие на своей стороне. **Канонический фикс со стороны рекламодателя** — добавить `&delay=N` (напр. `&delay=10`) в свой постбэк-URL, чтобы AIO взял постбэк в работу на N секунд позже. Это **штатный** приём тайминга постбэка. Больше 300 секунд ставить бессмысленно: приёмник превратит такое значение в 10 секунд и отложит меньше, чем было задумано.
 
-Диагностика самой пропажи конверсии (лид ушёл, подтверждения нет) — *Лиды не доходят до рекламодателя / партнёрки*; разбор прихода постбэка по логам — [how-to/debug-with-logs.md](../how-to/debug-with-logs.md).
+Диагностика самой пропажи конверсии (лид ушёл, подтверждения нет); разбор прихода постбэка по логам — [how-to/debug-with-logs.md](../how-to/debug-with-logs.md).
 
 ### Таблица параметров постбэка
 
@@ -256,7 +262,7 @@ https://<домен>/api/v1/trigger/conversion-by-key
 ### Регистрация и Lead-постбэк
 
 1. **Визит на лэнде.** Пользователь пришёл на Preland → клик `{{link}}` → Offer с `{{form}}` → submit формы.
-2. **AIO Antifraud.** Если включён во флоу — лид проходит встроенные проверки, их результат пишется в поля визита `fraud_score` и `triggered_rules` (что именно проверяется и как настраивается — *уточните у поддержки*).
+2. **AIO Antifraud.** Если включён во флоу — лид проходит встроенные проверки, их результат пишется в поля визита `fraud_score` и `triggered_rules` (что именно проверяется и как настраивается).
 3. **Push в Destination.** AIO шлёт лид в API рекламодателя. Получает ответ — auto-login URL + другие поля.
 4. **Auto-login redirect.** Пользователь автоматически попадает в кабинет рекламодателя через возвращённую ссылку.
 5. **Рекламодатель регистрирует лида** на своей стороне — присваивает свой ID, кладёт в очередь обработки.
@@ -362,14 +368,12 @@ https://<домен>/api/v1/trigger/conversion-by-key
 - *Вертикали в арбитраже трафика* — почему `Sale Status Update` критичен в вертикалях с длинной воронкой.
 - [models/distributions-model.md](distributions-model.md) — Payout/Revenue Distribution, как BM связана с Conversion Type.
 - [models/business-model.md](business-model.md) — модель Business Model (Type + Format + Formula, Zero Payout дефолт).
-- [mechanics/notifications-flow.md](../mechanics/notifications-flow.md) — Notification Flow на Conversion Type для алертов.
+- [mechanics/notifications-flow.md](../mechanics/notifications-flow.md) — ноды флоу рассылки; поле `Notification flow` на Conversion Type как точечный алерт.
 
 **Playbooks:**
-- *Лиды не доходят до рекламодателя / партнёрки* — лид ушёл из AIO, рекламодатель не подтверждает.
-- *Конверсия не считается / Revenue=0* — Revenue/Payout = 0, регистрации не доходят до Source.
-- *FB / Meta — токен инвалидируется, атрибуция, косты* — FB CAPI не отправляет конверсии.
 
 **How-to:**
+- [how-to/remarketing-campaigns.md](../how-to/remarketing-campaigns.md) — рассылка по конверсии: ремаркетинг-кампания с триггером `Conversion`.
 - [how-to/destinations.md](../how-to/destinations.md) — настройка Destination + `Conversion Cap`.
 - [how-to/source-trackers.md](../how-to/source-trackers.md) — постбэк-трекеры, FB CAPI Custom Key/Value, формат постбэк-URL.
 
@@ -413,7 +417,7 @@ https://<домен>/api/v1/trigger/conversion-by-key
 
 Понятия «протухший `visit_uuid`» **нет**. Если визит попал в AIO, сущность визита лежит в БД, и у неё есть `visit_uuid` — навсегда. Постбэк на этот `visit_uuid` создаст конверсию **неважно когда** — через минуту или через год. Задержка постбэка по времени не отсекается.
 
-Скользящее окно 30 дней (`Rolling Window 30d`, → [models/visit.md](visit.md)) — это про **сессию визита** (когда возврат того же браузера считается тем же визитом, а не новым), **не** про срок жизни `visit_uuid`. Идентификатор визита не «истекает» через 30 дней.
+Скользящее окно 30 дней (→ [mechanics/visit-lifecycle.md](../mechanics/visit-lifecycle.md)) — это про **сессию визита** (когда возврат того же браузера считается тем же визитом, а не новым), **не** про срок жизни `visit_uuid`. Идентификатор визита не «истекает» через 30 дней.
 
 ## Reject-tracking как отдельный Conversion Type
 
@@ -512,15 +516,17 @@ Account ID нужен не только для разделения конвер
 
 Маршрут визита в AIO **не детерминирован** заранее (в отличие от сторонних трекеров) — Offer/Destination выбирается в момент перехода. Метрики Destination/Offer — **только по дошедшим**, аппроксимируются от метрики с **максимальным** числом ивентов (обычно `Installs`). Кост на голом Destination **не существует** — только в контексте `Destination × Campaign` / `Destination × Source`.
 
-## Капа ставится только на Destination — режимы Infinity, Daily и Lifetime
+## Капа на конверсии ставится только на Destination — режимы Infinity, Daily и Lifetime
 
-Капа в AIO ставится **только** на Destination/оффер, и это `Conversion Cap`. На **бренд** капу поставить некуда. Под-капа на один оффер под разных байеров — нет.
+Капа **на конверсии** в AIO ставится только на Destination/оффер, и это `Conversion Cap`. На **бренд** капу поставить некуда. Под-капа на один оффер под разных байеров — нет.
 
 Режимов `Cap Type` три: `Infinity` (без лимита; в диалоге подписан `Unlimited`), `Daily` (счётчик обнуляется в **0:00 UTC**, не локальной) и `Lifetime` (счётчик не обнуляется вовсе — копится, пока лимит не поднимут или счётчик не сбросят вручную). **Месячных кап нет.** Настройка, диалог и поведение при переполнении — [how-to/destinations.md](../how-to/destinations.md).
 
 При переполнении — алерт в Telegram (Monitoring Users) + роутинг в fallback через `Destination Full`.
 
 Капы — **только блокирующая** логика: заполнилась → новые визиты не идут; нужен fallback через `Destination Full`. Логики «сигнализация без блокировки» нет.
+
+Слово «cap» встречается в интерфейсе ещё в одном месте: в статусе remarketing-кампании (`Seeding paused (hourly cap)`) так подписан её часовой лимит отправок — к `Conversion Cap` он отношения не имеет ([how-to/remarketing-campaigns.md](../how-to/remarketing-campaigns.md)).
 
 ---
 
@@ -602,7 +608,7 @@ Account ID нужен не только для разделения конвер
 - **Reward Weight** — вес в AI-сплитах Campaigns / Landings, дефолт `1`.
 - **Payout Settings / Revenue Settings** — выбор `Payout Tree` / `Revenue Tree` из дропдаунов (привязка к Payout / Revenue Distribution).
 - После создания типа — завести метрику `Conversions Count` (`Settings → Metrics → +Metric → Conversions Count` → выбрать этот Conversion Type), иначе тип не появится в статистике. См. [models/metric.md](metric.md).
-- **Notification Flow** — Marketing Flow для уведомлений (см. раздел «Назначить Notification Flow на Conversion Type» ниже).
+- **Notification Flow** — поле для точечного алерта на конверсию этого типа; рассылку им не настраивают (см. раздел «Как запустить рассылку при получении конверсии» ниже).
 
 ### Папка с Business Model «если Conversion Type = X»
 
@@ -620,21 +626,15 @@ Account ID нужен не только для разделения конвер
 
 Также см. раздел «Кастомная финансовая конверсия с суммой в постбэке — как настроить» выше — это полный паттерн из 4 шагов.
 
-### Назначить Notification Flow на Conversion Type
+### Как запустить рассылку при получении конверсии
 
-Когда: при создании конверсии заданного типа (например, `Invalid Lead`, `Reject Lead`, `Purchase`) нужно отправить TG-уведомление.
+**Штатный способ — ремаркетинг-кампания с триггером `Conversion`**: в кампании выбирается тип конверсии, и её приход сеет визит во флоу рассылки этой кампании. Гейт — аудитория: конверсия запускает кампанию только для визитов, которые уже в её аудитории, у кампании без аудиторных привязок не сработает никто. Настройка целиком — [how-to/remarketing-campaigns.md](../how-to/remarketing-campaigns.md), концепт модуля — [models/marketing-flow.md](marketing-flow.md).
 
-**Путь:** `Settings → Conversion Types → <type> → Notification Flow → выбрать`.
+Триггер срабатывает и на коррекционной конверсии, а не только на первичном приходе конверсии этого типа.
 
-**Шаги:**
+Поле `Notification flow` на самом Conversion Type (`Settings → Conversion Types → <type>`) — второй, кастомный путь. Он жив и работает, но аудиторного гейта у него нет: визит сеется в выбранное `Notifications`-флоу при каждой конверсии этого типа. Годится для точечного алерта (например, сообщение в Telegram на невалидную конверсию), а не как способ настроить рассылку.
 
-1. Открыть Conversion Type.
-2. В поле `Notification Flow` выбрать ранее созданный Marketing Flow с нодой `Telegram`.
-3. `Save`.
-
-После — каждый раз при создании конверсии этого типа запускается Notification Flow.
-
-Также см. [how-to/push-notifications.md](../how-to/push-notifications.md) → Notification Flow на Conversion Type.
+Пути стоят рядом и друг друга не отменяют: если тип конверсии одновременно указан в поле `Notification flow` и выбран триггером ремаркетинг-кампании, на одну конверсию сработают оба. Ноды внутри флоу рассылки — [mechanics/notifications-flow.md](../mechanics/notifications-flow.md).
 
 ### Retrigger конверсии
 

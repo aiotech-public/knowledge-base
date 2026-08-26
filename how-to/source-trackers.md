@@ -201,5 +201,3 @@ Source настраивается **JSON-конфигом** (поле `Source co
 - [how-to/campaigns.md](campaigns.md) — генерация ссылки, Lead Action и событие покупки.
 - [how-to/debug-with-logs.md](debug-with-logs.md) — чтение логов FB CAPI и Destination Handler.
 - [reference/glossary.md](../reference/glossary.md) — Trackers, Retrigger trackers, Sale Status Mapping, Source-level rewrites.
-- *FB / Meta — токен инвалидируется, атрибуция, косты* — диагностика FB CAPI.
-- *Конверсия не считается / Revenue=0* — диагностика «лид дошёл, не считается».

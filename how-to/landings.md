@@ -4,7 +4,7 @@ title: Landings (How-to)
 description: Загрузка лэндов, адаптация, отладка через Preview, типичные ошибки.
 doc_type: how-to
 builds: [erp, mtk]
-related: [placeholders, landing, glossary, mechanics-pwa, user-fields, permissions-model, limits, forms, notification-center, events-exporter, custom-fields, content-library, distributions-model, sdk, visit-lifecycle, session-analytics, campaign-defaults, flow-model, onboarding-tours, campaigns, ui-common, ui-map]
+related: [placeholders, landing, glossary, mechanics-pwa, how-to-pwa, user-fields, permissions-model, limits, forms, notification-center, events-exporter, custom-fields, content-library, distributions-model, sdk, visit-lifecycle, session-analytics, campaign-defaults, flow-model, onboarding-tours, campaigns, ui-common]
 language: ru
 updated: 2026-08-12
 ---
@@ -34,15 +34,14 @@ updated: 2026-08-12
 
 ## Создание лэнда (`+ Landing`)
 
-`Content → Landings → + Landing` → модалка **«Add landing to AIO»** — 4 способа:
+`Content → Landings → + Landing` → модалка **«Add landing to AIO»** — **две карточки**:
 
 - **Upload landing** (Most used) — загрузить готовый **ZIP-архив** веб-страницы (основной путь, требования ниже).
-- **PWA landing** (только ERP) — собрать PWA через встроенный PWA Builder (custom design + offline). В MTK встроенного PWA Builder нет — внешняя PWA через сторонний сервис. См. [mechanics/pwa.md](../mechanics/pwa.md).
 - **Create manually** (Advanced) — собрать лэнд с нуля в **AIO code editor**.
-- **Generate landing** (Advanced) — сгенерировать лэнд через **AI** (AI templates + generator).
-- **Request making new LP** — запрос на создание лэнда силами AIO Partners. Открывает контактный pop-up со ссылками для отправки заявки (сам лэнд не создаётся в UI).
 
-Каретка-дропдаун у `+ Landing`: **Manage templates** (Lander Templates) + **Manage landing types**. Типы лэндов **полностью настраиваемые** (Color/Icon + тогглы поведения `Auto place AIO macros` / `Generate events` / `Full CDN used` / `Temp CDN used` + схема полей) — не только дефолтные Offer / Preland / White / Preland w/ Form / Thank-You Page. Детально — секция «Типы лэндов и шаблоны — конфигурация» ниже.
+Других карточек в модалке нет. **PWA отсюда не создаётся** — у неё свой раздел `Content → PWA` со своей кнопкой `+ PWA` (только ERP; в MTK встроенного PWA Builder нет), см. [mechanics/pwa.md](../mechanics/pwa.md) и [how-to/pwa.md](pwa.md). **Сгенерировать лэнд через AI из интерфейса нельзя** — карточки `Generate landing` в модалке нет, и открыть генератор из UI неоткуда.
+
+Каретка-дропдаун у `+ Landing` есть **только на странице `Content → Landings`**: **Manage templates** (Lander Templates) + **Manage landing types**. На странице `Content → PWA` у кнопки создания каретки нет — ни `Manage templates`, ни `Manage landing types` оттуда не открыть. Типы лэндов **полностью настраиваемые** (Color/Icon + тогглы поведения `Auto place AIO macros` / `Generate events` / `Full CDN used` / `Temp CDN used` + схема полей) — не только дефолтные Offer / Preland / White / Preland w/ Form / Thank-You Page. Детально — секция «Типы лэндов и шаблоны — конфигурация» ниже.
 
 ## Manage landing — редактор и экшены
 
@@ -113,6 +112,10 @@ updated: 2026-08-12
 
 После загрузки лэнд появится в `Content → Landings`. Если процессинг прошёл корректно — стили будут на месте, картинки подтянутся с CDN.
 
+### Итог загрузки читается по статусу карточки — обработка архива асинхронная
+
+Диалог загрузки закрывается сразу, а архив разбирается **в фоне**: мгновенного «готово» или «ошибка» в самом диалоге нет. Итог видно по статусу карточки лэнда в `Content → Landings`: `Preparing` (обрабатывается) → `Fine` (успех) либо `Issues` — тогда текст ошибки показывается тултипом на иконке статуса.
+
 ### Секция `User fields` в диалоге загрузки — значения полей визита прямо при заливке
 
 Под зоной загрузки архива в диалоге `Upload landing` идёт секция `User fields`: сюда добавляются поля визита, значение которых задаётся у самого лэнда, — заполнять их отдельно после заливки не нужно.
@@ -142,7 +145,7 @@ updated: 2026-08-12
 
 Manage landing → вкладка **CDN files** (или отдельная вкладка `Content → CDN files`). **CSS / HTML / JS редактируемы**, остальные форматы — только просмотр.
 
-**Важно — какой `index.html` видит визит (частая путаница):** визиту отдаётся processed-версия (тот, что виден в `Manage landing → Code`); `<uuid>.index.html` в `CDN files` — оригинал из архива, визит его не открывает. JS/CSS при этом не дублируются и не модифицируются — обрабатываются все HTML-файлы (`index.html` и каждый sub-html) для вставки `{{aio}}`-плейсхолдеров и замены путей. `Download Landing → Original` = оригинальный архив, `Merged` = с правками редактора. Работайте с Original, если планируете локально редактировать; CDN files меняет только сами файлы на CDN — Original остаётся неизменным, изменения попадают в Merged. Полная механика — *уточните у поддержки*.
+**Важно — какой `index.html` видит визит (частая путаница):** визиту отдаётся processed-версия (тот, что виден в `Manage landing → Code`); `<uuid>.index.html` в `CDN files` — оригинал из архива, визит его не открывает. JS/CSS при этом не дублируются и не модифицируются — обрабатываются все HTML-файлы (`index.html` и каждый sub-html) для вставки `{{aio}}`-плейсхолдеров и замены путей. `Download Landing → Original` = оригинальный архив, `Merged` = с правками редактора. Работайте с Original, если планируете локально редактировать; CDN files меняет только сами файлы на CDN — Original остаётся неизменным, изменения попадают в Merged.
 - **Не ссылайся на `<uuid>.index.html` напрямую** в коде лэнда — это не тот путь, по которому ходит визит. Чтобы вернуться на главную страницу лэнда с подстраницы, используй корневой путь **`href="/"`** (см. раздел Multi-page lands ниже).
 
 Прочие нюансы:
@@ -282,7 +285,7 @@ Use cases: динамические переводы (`v-if` по `country_code`
 
 ## Content Library (Content Types) — динамический контент
 
-`Content → Content library` — двухуровневая структура (Content Type → Items) для динамического контента на лэндах (ротация офферов, ротация контента, переводы). На лэнде item подставляется через `aio.visit.fields.offer.name`, `aio.visit.fields.offer.image_url` и т.п. Структура и механика — [models/content-library.md](../models/content-library.md). Динамический флоу — *уточните у поддержки*, [models/distributions-model.md](../models/distributions-model.md).
+`Content → Content library` — двухуровневая структура (Content Type → Items) для динамического контента на лэндах (ротация офферов, ротация контента, переводы). На лэнде item подставляется через `aio.visit.fields.offer.name`, `aio.visit.fields.offer.image_url` и т.п. Структура и механика — [models/content-library.md](../models/content-library.md). Динамический флоу, [models/distributions-model.md](../models/distributions-model.md).
 
 ## Сплиты лэндов в MTK: ротация целыми лэндами через веса
 
@@ -308,7 +311,7 @@ Use cases: динамические переводы (`v-if` по `country_code`
 
 ### Форма не отправляется, AIO её «не видит»
 
-`<form>` вместо `{{form}}` без `AIO Non-SDK Form Handler`. Либо заменить на `{{form}}`, либо включить Non-SDK Form Handler + добавить макрос после `{{aio}}`. См. *Форма не отправляется*.
+`<form>` вместо `{{form}}` без `AIO Non-SDK Form Handler`. Либо заменить на `{{form}}`, либо включить Non-SDK Form Handler + добавить макрос после `{{aio}}`. См. *уточните у поддержки*.
 
 ### `intl-tel-input` глючит, двойные дропдауны страны
 
@@ -344,9 +347,7 @@ CDN-кеш на уровне домена. Подождать инвалидац
 - [reference/placeholders.md](../reference/placeholders.md) — полный список плейсхолдеров AIO.
 - [reference/sdk.md](../reference/sdk.md) — `AIO SDK Macros Collection`, типы макросов, `Active` / `Global` / `Preferred Placement`.
 - [how-to/forms.md](forms.md) — детально про SDK-форму, Form Builder, кастомизацию через CSS-переменные и `aioBus`.
-- *уточните у поддержки* — Vue.js на лэндах, динамический контент (LP-сплиты — секция «LP-сплиты» выше).
 - [models/landing.md](../models/landing.md), [models/content-library.md](../models/content-library.md) — как устроены лэнды и Content Library; макросы/SDK — [reference/sdk.md](../reference/sdk.md); креативы/CDN files/Uploaded Files — секции выше.
-- *Форма не отправляется* — диагностика, если форма не отправляется (валидация, `beforeSubmitPromises`, allowance rules, Dummy Destination).
 
 ---
 
@@ -398,15 +399,14 @@ CDN-кеш на уровне домена. Подождать инвалидац
 
 ### Загрузка лэнда — все варианты
 
-**Путь:** `Content → Landings → +Landing → Upload ZIP / Create manually / Create PWA / Generate / Request making new LP`.
+**Путь:** `Content → Landings → +Landing` → `Upload landing` либо `Create manually`.
 
 | Вариант | Когда |
 |---|---|
-| **Upload ZIP** | Готовый лэнд в архиве (см. секцию «Загрузка ZIP» выше) |
-| **Create manually** | Лэнд создаётся прямо в Manage landing без ZIP |
-| **Create PWA** (только ERP) | Встроенный PWA Builder для AIO-внутренней пвашки; в MTK отсутствует |
-| **Generate** | Через интеграцию-генератор (`Generate landing` → выбор Generator) |
-| **Request making new LP** | Запрос на создание лэнда силами AIO Partners; открывает контактный pop-up (сам лэнд в UI не создаётся) |
+| **Upload landing** (Most used) | Готовый лэнд в архиве (см. секцию «Загрузка ZIP» выше) |
+| **Create manually** (Advanced) | Лэнд создаётся прямо в редакторе, без ZIP |
+
+PWA в этой модалке нет — она создаётся в своём разделе `Content → PWA` ([how-to/pwa.md](pwa.md)); подробнее — секция «Создание лэнда (`+ Landing`)» выше.
 
 **Тип лэнда** при загрузке: `Preland` / `Offer` / `White`. Влияет на Backfix (`enabledBackFix` проверяет `lander_type_uuid`) и фильтрацию во флоу.
 
@@ -609,7 +609,7 @@ Color Groups работают и на уровне кампании (`Tracker �
 
 `+ Landing ▾ → Manage landing types` — таблица типов. Дефолтные: **Offer**, **Preland**, **White**, **Preland w/ Form**, **Thank-You Page**. Колонки: `Type`, `Description`, **`AIO Macros`**, **`Generate events`**, **`Full CDN used`**, **`Temp CDN used`** (Yes/No-флаги), `Created`. Кнопка `+ Landing type` — создать свой тип.
 
-**Флаги `Full CDN used` / `Temp CDN used` сейчас не функциональны.** Механика — [models/landing.md](../models/landing.md).
+**Флаги работают по-разному.** `Full CDN used` — неиспользуемая заготовка: рантайм-читателей у него нет, включение ничего не меняет. `Temp CDN used` **работает и влияет на отдачу лэнда**: у лэндов такого типа меняется то, по каким адресам браузер визитёра тянет файлы лэнда. Отдаются те же файлы: содержимое лэнда и трекинг флаг не меняет, править сам лэнд под него не нужно. Сами флаги как часть типа — [models/landing.md](../models/landing.md).
 
 Экшены (ПКМ по типу): **`Edit landing type`**, **`Landing type logs`**, `Freeze top` / `Freeze bottom`.
 
@@ -625,7 +625,11 @@ Color Groups работают и на уровне кампании (`Tracker �
   - **`Auto place AIO macros?`** — авто-вставлять SDK-макросы (`{{aio:head}}` / `{{aio}}`) в лэнды этого типа при процессинге. Выкл у White → SDK на White не грузится.
   - **`Generate events?`** — генерировать ли трекинг-события на лэндах этого типа.
   - **`Is PWA?`** — пометить лэнды этого типа (и их визиты) как PWA независимо от режима лэнда; манифест и service worker всё равно даёт PWA-контент (канон флага — [models/landing.md](../models/landing.md)).
-  - **`Full CDN used?`** / **`Temp CDN used?`** — сейчас не функциональны ([models/landing.md](../models/landing.md)).
+  - **`Full CDN used?`** — неиспользуемая заготовка, рантайм-читателей нет ([models/landing.md](../models/landing.md)).
+  - **`Temp CDN used?`** — работает: у лэндов этого типа меняется то, по каким адресам браузер визитёра тянет файлы лэнда; сами файлы и трекинг при этом те же ([models/landing.md](../models/landing.md)).
+
+#### Схема полей типа — вкладки Simple и Advanced
+
 - **Схема полей типа** — вкладки **Simple** / **Advanced** (билдер «строка = поле»):
   - **Simple:** колонки `Name`, `Key`, `Req` (тоггл обязательности) + корзина удалить + кнопка добавить строку.
   - **Advanced:** `Name`, `Key`, `Tooltip`, `Placeholder`, `Description`, `Group`, `Req` — те же поля + метаданные для UI.
@@ -657,7 +661,3 @@ Color Groups работают и на уровне кампании (`Tracker �
 - **`Types`** — фильтр списка по типу лэнда (Offer / Preland / White / …).
 - **`Colors`** — фильтр по присвоенному цвету (цвет берётся из типа лэнда, см. «Edit landing type → Color/Icon» выше).
 - **`Versions`** (тоггл) — показать только лэнды, у которых есть версии архивов (появляются при перезаливке `Replace by ZIP`, см. «Replace by ZIP и Original Archive» выше).
-
-### Generate landing — выбор Generator
-
-При `+ Landing → Generate landing` лэнд собирается генеративными технологиями. Помимо `Name`, `Lander type` и `Lander template`, обязательно выбрать **Generator из дропдауна** — каталог подключённых генераторов лежит в `Settings → Generators` ([reference/ui-map.md](../reference/ui-map.md)).

@@ -41,7 +41,7 @@ updated: 2026-08-11
 
 **Не существует** «Delete для сохранённого шага» — кнопка `Delete` после сохранения работать перестаёт. Не путать с дистрибуциями (там `Disable node` + `Clear recursively`).
 
-Отдельный случай — блок, который вообще не удаляется, потому что ещё не сохранён: несохранённый блок убирается только перезагрузкой редактора без сохранения. Разбор — *Флоу не сохраняется — несохранённый блок в редакторе*.
+Отдельный случай — блок, который вообще не удаляется, потому что ещё не сохранён: несохранённый блок убирается только перезагрузкой редактора без сохранения.
 
 ## Сменить Settings Availability шага
 
@@ -83,5 +83,4 @@ updated: 2026-08-11
 - [models/flow-model.md](../models/flow-model.md) — концепт: States, Transitions, Settings Availability, Split Groups.
 - [how-to/campaigns.md](campaigns.md) — создание кампании на флоу.
 - [how-to/distributions.md](distributions.md) — Content Distribution в Content step.
-- *Флоу не сохраняется — несохранённый блок в редакторе* — почему флоу не сохраняется.
 - [heuristics/campaign-defaults.md](../heuristics/campaign-defaults.md) — Campaign Template и Skip-Skip защита.

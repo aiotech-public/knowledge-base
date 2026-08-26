@@ -1,10 +1,10 @@
 ---
 id: permissions
 title: Permissions / Users / Sharing (How-to)
-description: Добавление и деактивация юзеров, привязка к Position, Share связок, скрытие флоу через Change Ownership.
+description: Добавление и деактивация юзеров, привязка к Position, Share связок и папок, скрытие флоу через Change ownership — и в Tracker, и в Marketing → Flows; ветка Scopes для обратного хода.
 doc_type: how-to
 builds: [erp, mtk]
-related: [permissions-model, user, ui-common, campaigns, architecture, glossary]
+related: [permissions-model, user, ui-common, marketing-flow, campaigns, architecture, glossary]
 language: ru
 updated: 2026-08-11
 ---
@@ -22,7 +22,7 @@ updated: 2026-08-11
 - Привязка Position юзеру: `Settings → Positions → выбрать → assign`.
 - Share на сущности (Campaign / Landing): ПКМ → `Share`.
 - Пошарить можно и **папку**: доступ получает всё её содержимое, включая сущности, добавленные в неё позже.
-- Скрыть флоу от байеров — `Change Ownership` + access type «по пошарке».
+- Скрыть флоу от байеров — `Change ownership` (массовый пункт — `Mass change ownership`) + access type «по пошарке» (`By Share`). Работает и на `Tracker → Flows`, и на флоу рассылок в `Marketing → Flows`.
 
 ---
 
@@ -103,7 +103,7 @@ updated: 2026-08-11
 
 Также см. [models/permissions-model.md](../models/permissions-model.md) → Sharing.
 
-Если массовое действие падает ошибкой (`Some UUIDs were not found in this model`, `Missing or invalid uuids`, `Action type is not correct`, при Copy — `Model wasn't found`) — разбор симптом→причина→проверка в *Permissions / Sharing — не работает или нужно настроить*.
+Если массовое действие падает ошибкой (`Some UUIDs were not found in this model`, `Missing or invalid uuids`, `Action type is not correct`, при Copy — `Model wasn't found`) — разбор симптом→причина→проверка.
 
 ### Сотруднику нужно править чужие лэнды — не шарить каждый по одному
 
@@ -164,12 +164,12 @@ updated: 2026-08-11
 
 Когда: байеры видят все флоу в кампании — хочется оставить им только нужные.
 
-**Путь:** список флоу → `Change Ownership` (массовый или single).
+**Путь:** список флоу → ПКМ → `Change ownership` / `Mass change ownership`.
 
 **Шаги:**
 
 1. Выделить флоу (один или несколько).
-2. ПКМ → `Change Ownership`.
+2. ПКМ → `Change ownership` (на одном флоу) или `Mass change ownership` (на выделении из нескольких).
 3. Выбрать **access type**:
    - `доступен всем` (Everyone) — флоу виден всем юзерам тенанта.
    - `по пошарке` (By Share) — флоу виден только тем, кому пошарен.
@@ -179,9 +179,23 @@ updated: 2026-08-11
 
 Также см. [models/permissions-model.md](../models/permissions-model.md) (модель Sharing / Ownership).
 
+### Флоу рассылок (`Marketing → Flows`) прячутся так же
+
+Список `Marketing → Flows` показывает не все флоу тенанта: юзер видит свои, пошаренные ему, флоу с access type `Everyone` и флоу подчинённых; роль полного доступа (Owner / Admin) видит все. Новый флоу рассылок создаётся с access type `By Share` — по умолчанию его видит только владелец, остальным его нужно пошарить.
+
+В списке есть колонки `Owner` и `Access type`; у `Access type` тултип `Using for visibility only, everyone shared cannot edit anyway.` — access type управляет **только видимостью**, права на правку он не выдаёт. Колонка `Shares` (кому флоу пошарен) по умолчанию скрыта и включается в настройках таблицы.
+
+Экшены те же, что на трафиковых сущностях: `Change ownership` / `Mass change ownership` и шаринг `Share also` / `Force share` / `Unshare`. Закрыты они собственной веткой прав — доступ к трафиковым флоу и кампаниям её не даёт (ветки перечислены в [models/permissions-model.md](../models/permissions-model.md)). Сама сущность — [models/marketing-flow.md](../models/marketing-flow.md).
+
+### Видеть все флоу, ничего не шаря — ветка `Scopes`
+
+Обратный ход к `By Share`: чтобы сотрудник видел все флоу тенанта и не пришлось шарить каждый по одному, в его Position включается право `Scopes: tracker flows` (`scopes.tracker.flows`) — с ним ограничение видимости по владению, шарингу и access type на флоу снимается.
+
+Право снимает ограничение **только на просмотр**. Править чужой флоу оно не разрешает: правку без владения снимает ветка `Editor Scopes`, а она существует только для лэндов ([models/permissions-model.md](../models/permissions-model.md)). «Видит все флоу» и «может их менять» — разные вещи.
+
 ### Change Ownership на кампании
 
-Аналогично — ПКМ на кампании (или нескольких) → `Change Ownership` → выбрать целевого юзера + access type.
+Аналогично — ПКМ на кампании → `Change ownership` (на выделении из нескольких — `Mass change ownership`) → выбрать целевого юзера + access type.
 
 Также см. [how-to/campaigns.md](campaigns.md) → Change Owner.
 
@@ -191,8 +205,8 @@ updated: 2026-08-11
 - **Дал юзеру Position, но он всё равно не видит.** Несколько Positions, конфликт Allow/Deny — выигрывает Position с **большим Priority** (слайдер в модалке Position). Проверить значение Priority у обеих. Внутри одной Position императивы применяются **сверху вниз** (`Deny` убирает, `Allow` добавляет) — нижний может перекрыть верхний; механика — [models/permissions-model.md](../models/permissions-model.md).
 - **Без 2FA — часть полей скрыта.** Это by design. Включить 2FA через `@aio_tech_bot` (Telegram) или Google Authenticator.
 - **Сделал Change Owner на кампании, но не стал Tenant Owner.** `Owner сущности` ≠ `Tenant Owner` — разные вещи; механика — [models/permissions-model.md](../models/permissions-model.md).
-- **«Скройте этого юзера от других байеров».** Глобального скрытия нет by design — *Permissions / Sharing — не работает или нужно настроить*.
-- **Действие отклонено — `Read access denied` / `Edit access denied`.** У юзера роль не Owner/Admin и в Position нет нужного view/Action-императива; видеть ≠ редактировать — разбор в *Permissions / Sharing — не работает или нужно настроить*.
+- **«Скройте этого юзера от других байеров».** Глобального скрытия нет by design.
+- **Действие отклонено — `Read access denied` / `Edit access denied`.** У юзера роль не Owner/Admin и в Position нет нужного view/Action-императива; видеть ≠ редактировать — разбор.
 
 ## Смежные темы
 
@@ -200,5 +214,4 @@ updated: 2026-08-11
 - [models/user.md](../models/user.md) — концепт сущности User (один аккаунт в нескольких тенантах, Owner/Launcher, деактивация ≠ удаление).
 - [context/architecture.md](../context/architecture.md) — Tenant как единица, Manage Tenant.
 - [how-to/campaigns.md](campaigns.md) → Change Owner на кампаниях.
-- *Permissions / Sharing — не работает или нужно настроить* — 2FA для нотификаций, скрыть юзера, дать байеру лэнд.
 - [reference/glossary.md](../reference/glossary.md) — `Manage Tenant`, `Change Owner / Change Ownership` (access type: Everyone / By Share), `Share Also / Unshare / Force Share`.

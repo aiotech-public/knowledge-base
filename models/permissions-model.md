@@ -4,7 +4,7 @@ title: Permissions Model AIO
 description: Как устроены роли, Positions, Imperatives, Teams и Sharing в AIO. Какие комбинации работают, как читать матрицу доступов.
 doc_type: model
 builds: [erp, mtk]
-related: [analytics, limits, postback-generator, session-analytics, permissions, custom-fields, architecture, tenant, user, glossary, api]
+related: [analytics, limits, postback-generator, session-analytics, remarketing-campaigns, permissions, registration, custom-fields, architecture, tenant, user, glossary, api]
 language: ru
 updated: 2026-08-11
 ---
@@ -96,6 +96,14 @@ Feature-императивов семь, каждый закрывает сво�
 
 Права на колонки `Revenue` / `Payout`, на выгрузку таблицы и на генератор постбэков заведены в обоих билдах — ERP и MTK; записи сессий, хитмапы и заметки есть только в ERP.
 
+### Ремаркетинг закрыт своими ветками прав — доступ к трафиковым кампаниям его не даёт
+
+Раздел `Remarketing` гейтится собственными ветками прав, независимыми от трафиковых `tracker.*`: `marketing.campaigns.*` — remarketing-кампании, `marketing.template-distributions.*` — контент рассылок. В матрице `Settings → Positions` они лежат в ветках `remarketing/campaigns/*` и `remarketing/template-distributions/*`. Отдельно от них заведены права на шаринг флоу рассылок — `marketing.flows.share` и `marketing.flows.share.ownership`.
+
+Перечисленные ветки объявлены только в ERP-наборе — в MTK их нет. Роли полного доступа (Owner / Admin) проходят по ним автоматически, как и по остальным императивам.
+
+Что делает сам раздел и как выглядит каждая его страница — [how-to/remarketing-campaigns.md](../how-to/remarketing-campaigns.md); процедура шаринга и скрытия флоу рассылок — [how-to/permissions.md](../how-to/permissions.md).
+
 ### Как императивы применяются в UI (Settings → Positions)
 
 Модалка `Settings → Positions → + Position`: `Position name` + `Description` + `Assign color` + **`Priority`** (слайдер) + две вкладки — **`Imperatives`** и **`Assigned users`** (кому назначена).
@@ -163,7 +171,7 @@ Teams создаются в `Settings → Teams`. Внутри тенанта м
 
 ### Юзеры друг от друга не скрыты (by design)
 
-AIO намеренно не скрывает юзеров друг от друга — Slack/Discord-модель, by design. Ни юзера целиком, ни его отдельные поля (аватар, Telegram, имя/позиция) скрыть нельзя — такой настройки в системе нет. Что можно, а что нельзя закрыть на уровне видимости (юзеры, поля, 2FA-скрытие) — *Permissions / Sharing — не работает или нужно настроить*.
+AIO намеренно не скрывает юзеров друг от друга — Slack/Discord-модель, by design. Ни юзера целиком, ни его отдельные поля (аватар, Telegram, имя/позиция) скрыть нельзя — такой настройки в системе нет.
 
 ## Как работает Sharing — индивидуальный доступ к сущности
 
@@ -182,7 +190,7 @@ Grant выдаётся не только на сущность, но и на **�
 - **Share Also** (`Also Share`) — добавить юзера/команду к шарингу (предыдущие шаринги сохраняются).
 - **Unshare** — снять шаринг с указанных.
 - **Force Share** — снять предыдущие шаринги, оставить только новые.
-- **Mass Change Owner** (`Change Ownership`) — массово сменить owner-а (см. ниже).
+- **`Mass change ownership`** — массово сменить owner-а (см. ниже). Одиночный пункт правого клика называется иначе — `Change ownership`.
 
 ## Как Ownership определяет владельца сущности
 
@@ -209,7 +217,7 @@ Grant выдаётся не только на сущность, но и на **�
 | Поле | Что |
 |---|---|
 | Name | имя нового юзера (для отображения) |
-| Code | кастомное **или** случайное значение — это код, который шаришь юзеру |
+| Code | кастомное **или** случайное значение — это код, который шаришь юзеру; от 4 до 255 символов. **Регистр не важен ни при создании, ни при вводе:** код, отличающийся от уже существующего только регистром, создать нельзя — форма подсветит поле ошибкой `The code has already been taken.`, а при регистрации `free14` и `FREE14` откроют один и тот же инвайт ([how-to/registration.md](../how-to/registration.md)) |
 | Usages | сколько раз можно использовать инвайт-код (например, `1` — одноразовый) |
 | Status | active/inactive |
 | Type | `User` (обычный) |
@@ -240,7 +248,7 @@ Grant выдаётся не только на сущность, но и на **�
 
 ## Какие бывают отказы доступа — дословные ошибки прав
 
-Когда прав не хватает, действие отклоняется дословной серверной ошибкой. Точный текст = точка входа: по нему находится причина. Симптом→причина→проверка по каждой — *Permissions / Sharing — не работает или нужно настроить*.
+Когда прав не хватает, действие отклоняется дословной серверной ошибкой. Точный текст = точка входа: по нему находится причина.
 
 - **`Read access denied`** — нет права **читать** этот раздел/сущность (не хватает view-императива в Position; роль не Owner/Admin).
 - **`Edit access denied`** — нет права **редактировать** (не хватает Action-императива вроде `Edit Landing`; роль не Owner/Admin). Видеть ≠ редактировать — это разные императивы.

@@ -4,14 +4,14 @@ title: Flow Model AIO
 description: Как устроены Flows — States, Transitions, типы Flow, State Rules и Settings. Фундамент для понимания пути визита по кампании.
 doc_type: model
 builds: [erp, mtk]
-related: [flow-editor, campaign, domain, distributions-model, forms, form, conversion-model, notifications-flow, marketing-flow, user-fields, placeholders, visit-lifecycle, visit-timeline, limits, glossary, destination, landing, visit, visit-field]
+related: [flow-editor, campaign, domain, distributions-model, forms, form, conversion-model, remarketing-campaigns, notifications-flow, marketing-flow, user-fields, placeholders, destinations, visit-lifecycle, visit-timeline, limits, glossary, destination, landing, visit, visit-field]
 language: ru
 updated: 2026-08-12
 ---
 
 # Flow Model AIO
 
-Flow в AIO — это визуальный конструктор пути визита от Source до Destination. Состоит из States (шагов) и Transitions (переходов между ними). Два типа Flow: `Campaign Flow` (полный путь Source → Destination) и `SubFlow` (вставной переиспользуемый кусок). Конкретные процедуры построения — в [how-to/flow-editor.md](../how-to/flow-editor.md).
+Flow в AIO — это визуальный конструктор пути визита от Source до Destination. Состоит из States (шагов) и Transitions (переходов между ними). Типов флоу три: `Campaigns` (он же `Campaign Flow` — полный путь Source → Destination), `SubFlow` (вставной переиспользуемый кусок) и `Notifications` (флоу рассылок). Конкретные процедуры построения — в [how-to/flow-editor.md](../how-to/flow-editor.md).
 
 ## Что такое Flow в AIO
 
@@ -41,7 +41,7 @@ Transitions — стрелки между States. Палитра Flow Editor («
   - `Landing` — показ ZIP-лэнда или PWA.
   - `HTML` — inline-HTML, пишется прямо в Code Editor на уровне кампании в настройках шага (не требует заливки лэнда). Удобно для простых вайтов / 404-замен / временных страниц.
   - `Redirect` — переход на стороннюю ссылку. Как thank-you шаг **после API-push** redirect не работает: после пуша визит остаётся на месте и не редиректится. Если нужен переход после пуша — ставь `Destination`, а не `Redirect`.
-  - `Reflect` / `Proxy-reflector` — показ внешнего сайта как контента шага; как это устроено — *уточните у поддержки*.
+  - `Reflect` / `Proxy-reflector` — показ внешнего сайта как контента шага; как это устроено.
   - `Skip` — пропуск шага (например, чтобы из 2-step сделать 1-step).
   - `404` — дефолт, если шаг не выбран.
 
@@ -75,7 +75,7 @@ Transitions — стрелки между States. Палитра Flow Editor («
 
 ### Filter — Traffic Filter
 
-Шаг фильтрации трафика: для каждого визита даёт `Passed` или `Rejected` и по этим веткам ведёт его дальше по флоу. Какой фильтр стоит на шаге и по каким правилам он отбирает трафик — сущность Filter и её параметры разобраны в *уточните у поддержки*, каталог подключаемых фильтров — в *уточните у поддержки*.
+Шаг фильтрации трафика: для каждого визита даёт `Passed` или `Rejected` и по этим веткам ведёт его дальше по флоу. Какой фильтр стоит на шаге и по каким правилам он отбирает трафик — сущность Filter и её параметры разобраны, каталог подключаемых фильтров —.
 
 ### SubFlow-нода — вставка переиспользуемого блока
 
@@ -96,7 +96,7 @@ Transitions — стрелки между States. Палитра Flow Editor («
 - **Condition** — ветвление по условию на поля визита (без показа контента); тогглом `Trash when Rejected` (по умолчанию выключен) умеет ещё и помечать отклонённый визит как trash.
 - **Spawn conversion** — порождает конверсию на шаге флоу. См. [models/conversion-model.md](conversion-model.md).
 - **Field Verification** — шаг проверки/валидации поля визита (в handler-типах UI подписан `Phone Verification`; ветки `passed` / `rejected`).
-- **Notifications flow** — подключает Notifications / Marketing Flow (follow-up push). См. [mechanics/notifications-flow.md](../mechanics/notifications-flow.md), [models/marketing-flow.md](marketing-flow.md).
+- **Notifications flow** — сеет визит во флоу рассылки (тип `Notifications`) прямо из кампанийного флоу. Это кастомный путь: штатно рассылку запускает ремаркетинг-кампания ([how-to/remarketing-campaigns.md](../how-to/remarketing-campaigns.md)). См. [mechanics/notifications-flow.md](../mechanics/notifications-flow.md), [models/marketing-flow.md](marketing-flow.md).
 
 `Edit Offer Name` — не отдельная нода палитры, а вариант шага `Fill fields` с конкретным полем (Offer Name), группой плейсхолдеров (`Offer Names`) и payload type `Fill Content`. Про варианты `Fill fields` из дистрибуций — [models/distributions-model.md](distributions-model.md).
 
@@ -142,7 +142,7 @@ Transitions — стрелки между States. Каждая стрелка и
 
 **Обратный** transition (машинный слаг — `destination-rejected`): если Destination отклонил визит — визит возвращается на предыдущий State (обычно — Offer). Улучшает аналитику (видно, сколько лидов отклонено) и позволяет показать визиту fallback-страницу.
 
-Возврат на предыдущий Content-шаг происходит и без нарисованного `Destination-rejected`. Flow держит внутренний **history-стек только из Content-шагов**: при заходе на каждый Content-шаг его позиция кладётся в стек. Когда Destination отклонил визит или переполнил капу и на шаге НЕ нарисован ни `destination-rejected`, ни `destination-interacted`, ни `destination-full`, — визит всё равно откатывается на вершину этого стека (предыдущий Content) через внутренний переход `state-back-content` (history-pop). Поэтому визит после reject почти всегда оказывается на прошлом лэнде, даже если байер не рисовал явную ветку. `Destination-rejected` — это явная, видимая в аналитике версия того же возврата. Это **не** SDK-`Backfix` (браузерная кнопка «Назад» на преленде) — механизм чисто серверный. Про `Backfix` — *Backfix не работает*.
+Возврат на предыдущий Content-шаг происходит и без нарисованного `Destination-rejected`. Flow держит внутренний **history-стек только из Content-шагов**: при заходе на каждый Content-шаг его позиция кладётся в стек. Когда Destination отклонил визит или переполнил капу и на шаге НЕ нарисован ни `destination-rejected`, ни `destination-interacted`, ни `destination-full`, — визит всё равно откатывается на вершину этого стека (предыдущий Content) через внутренний переход `state-back-content` (history-pop). Поэтому визит после reject почти всегда оказывается на прошлом лэнде, даже если байер не рисовал явную ветку. `Destination-rejected` — это явная, видимая в аналитике версия того же возврата. Это **не** SDK-`Backfix` (браузерная кнопка «Назад» на преленде) — механизм чисто серверный.
 
 ### Destination-pushed — переход после успешного пуша
 
@@ -158,7 +158,7 @@ Transitions — стрелки между States. Каждая стрелка и
 
 ### Rejected — визит не прошёл Filter
 
-После `Filter`: визит не прошёл шаг и уходит по второй ветке — куда именно, решает схема флоу. По какому правилу принимается решение — *уточните у поддержки*.
+После `Filter`: визит не прошёл шаг и уходит по второй ветке — куда именно, решает схема флоу.
 
 ### No payload — fallback при отсутствии подходящего варианта
 
@@ -170,9 +170,9 @@ Fallback (машинный слаг перехода — `no-payload`). Если
 
 Transition шага `Destination` (машинный слаг — `destination-full`): срабатывает, когда у Destination переполнена капа (`Daily` / `Infinity` лимит). Визиты, не поместившиеся в капу, уходят в fallback — другой `Destination` или дистрибуцию. Капа считается **в момент открытия Destination**, не в момент захода визита. Как настроить fallback — [how-to/flow-editor.md](../how-to/flow-editor.md) (раздел «Fallback при переполнении капы»).
 
-## Типы флоу: Campaign Flow и SubFlow
+## Типы флоу: Campaign Flow, SubFlow и Notifications
 
-Два типа Flow определяют, как флоу может использоваться в системе.
+Тип флоу определяет, как оно может использоваться в системе. Общий список флоу тенанта — `Tracker → Flows`: в нём лежат все три типа, а флоу рассылок (`Notifications`) вдобавок выведены отдельным списком в разделе рассылок.
 
 ### Campaign Flow — полный путь визита
 
@@ -187,6 +187,14 @@ Transition шага `Destination` (машинный слаг — `destination-fu
 Вставной кусок. **НЕТ** `Source` и `Destination`, есть `Start` и `Finish`. Используется как переиспользуемый блок (обычно — для `Fill Fields` логики).
 
 SubFlow **не работает самостоятельно** — только через State `SubFlow` в Campaign Flow.
+
+### Notifications — флоу рассылок
+
+Третий тип флоу — `Notifications`: флоу рассылки, которое **исполняется по триггеру ремаркетинг-кампании**, а не заходом визита в кампанию. Ремаркетинг-кампания обязана ссылаться на флоу именно этого типа — без него форма не сохраняется и отдаёт `Remarketing campaign requires a Notifications flow`. Свой список таких флоу — `Marketing → Flows`: там лежат только они, и оттуда же они создаются. В общем списке `Tracker → Flows` они тоже видны.
+
+Чем запускается рассылка (триггеры `Schedule` / `Conversion` / `Manual`, аудитория, расписание) — [how-to/remarketing-campaigns.md](../how-to/remarketing-campaigns.md); концепт модуля целиком — [models/marketing-flow.md](marketing-flow.md); ноды внутри самого флоу рассылки — [mechanics/notifications-flow.md](../mechanics/notifications-flow.md).
+
+Есть и кастомный способ запустить такое флоу — нода `Notifications flow` внутри кампанийного флоу: она сеет в выбранный `Notifications`-подфлоу любой дошедший до неё не-трэшевый визит. Дефолтом рассылки это не является и ремаркетинг-кампанию не заменяет: у визита, посеянного нодой, нет ни аудитории кампании, ни её лимитов и метрик отправки.
 
 ### Advanced Flow и APK-шаблоны
 
@@ -219,7 +227,7 @@ SubFlow **не работает самостоятельно** — только 
 
 Часть States (`Content`, `Destination`, `Filter` с custom allowance) поддерживают **Rules** — динамические правила выбора варианта.
 
-**Где открыть редактор правил.** Внутри `Content` / `Destination` / `Filter` State кнопка **`All`** (рядом с вариантами, внизу панели настроек шага) открывает окно **`Manage Rule`** — в нём добавляются условия `field + operator + value`.
+**Где открыть редактор правил.** Внутри `Content` / `Destination` / `Filter` State кнопка **`All`** (рядом с вариантами, внизу панели настроек шага) открывает окно **`Manage Rule`**. У правила без условий оно начинается с экрана плиток-пресетов (секция «Пресеты правила»); полный конструктор условий `field + operator + value` — это пресет `Custom`.
 
 **Структура правила:** Поле визита + Оператор + Значение.
 
@@ -232,13 +240,27 @@ SubFlow **не работает самостоятельно** — только 
 
 В `Fill Fields` State через Rules задаются условия заполнения поля.
 
+### Пресеты правила: экран плиток вместо пустого конструктора
+
+**Пока у правила нет ни одного условия, `Manage Rule` открывается экраном плиток-пресетов** — и при создании нового правила, и при открытии сохранённого пустого («( Accept everything )»). Плитка сама подставляет плейсхолдер(ы) и жёстко фиксирует оператор `in`: в упрощённой форме остаются только значения, селекта оператора там нет вовсе.
+
+Простые пресеты (бейдж `Simple`): `Visit Country` (`aio.visit.country_code`), `Visit Language` (`aio.visit.language_code`), `Visit Domain` (`aio.visit.domain_uuid`), `Device Name` (`aio.visit.device_name`), `OS Name` (`aio.visit.os_name`), `Campaign Owner` (`aio.campaign.owner_uuid`). С бейджем `Advanced`: `Visit Country + Language`, `Visit Domain + Country` и `Custom` — прежний полный конструктор `field + operator + value`.
+
+Плитка видна, только если все её плейсхолдеры доступны в этом контексте; `Custom` доступен всегда. Диалог общий: он же открывается из настроек кампании, из правил шага флоу, из дерева дистрибуции и из content-сплитов.
+
+### Сохранённое правило открылось в `Custom` — почему
+
+**В форму пресета сохранённое правило попадает, только если его условия в точности повторяют набор полей пресета И все используют оператор `in`** — иначе открывается `Custom`. Переключение пресета отбрасывает условия вне его набора, кнопка `Back` возвращает к плиткам.
+
+Отдельной сущности на сервере у пресетов нет: на выходе получается обычное условие с оператором `in`.
+
 ### Совпало несколько вариантов — какой выберется (тай-брейк)
 
 **Тай-брейк ВАРИАНТОВ и тай-брейк ПРАВИЛ — это два разных механизма, не путать.**
 
 **Выбор варианта Content / Destination (стратегия `First`) — выигрывает первое совпадение сверху вниз.** Если под визит подошло несколько вариантов, берётся тот, что выше в списке; остальные не рассматриваются. Отсюда практика: более общее правило держат ниже (как fallback), более узкое — выше, иначе общее «съест» трафик до того, как дойдёт до узкого. Стратегия `First` — это ровно этот же проход сверху вниз до первого подходящего варианта.
 
-**Несколько `Allowance Rules` на одном шаге (`Condition`, а также `Filter`) — это AND «все должны пройти», а не «первое подошедшее выигрывает».** Шаг прогоняет ВСЕ активные правила и обрывает проход на ПЕРВОМ правиле, вернувшем `false` (событие `Rejected`); совпавшее (true) правило НЕ шорткатит визит в pass. Визит проходит, только удовлетворив каждое правило. То есть больше правил — строже отбор, а не «сработает первое из списка». Помечается ли непрошедший визит как trash — *уточните у поддержки*.
+**Несколько `Allowance Rules` на одном шаге (`Condition`, а также `Filter`) — это AND «все должны пройти», а не «первое подошедшее выигрывает».** Шаг прогоняет ВСЕ активные правила и обрывает проход на ПЕРВОМ правиле, вернувшем `false` (событие `Rejected`); совпавшее (true) правило НЕ шорткатит визит в pass. Визит проходит, только удовлетворив каждое правило. То есть больше правил — строже отбор, а не «сработает первое из списка».
 
 Внутри одного `Allowance Rule` условия комбинируются слева-направо без группировки и без скобок, поверх стартового `true`: коннектор (`or` / `and`) самого первого условия игнорируется — оно всегда AND-ится к `true`, а дальше применяется в порядке следования. Смешанные `and` / `or` не расставляют приоритет: `A AND B OR C` считается как `((true AND A) AND B) OR C`, а не `A AND (B OR C)`. Поэтому порядок условий в правиле влияет на результат.
 
@@ -322,6 +344,22 @@ UUID стейта флоу напрямую в UI не виден. Получи�
 
 **Общий каркас всех нод:** `Name` + `Description` + **`Visual settings`** (`State color` / `Collapsed by default` / `Archive state`). У большинства «контент-производящих» нод сверху — **`Settings availability`** (`Campaign template` / `Flow only` / `Campaign only`, см. «State Settings») и блок выбора варианта со стратегией **`First` / `Weights`** + тоггл `Compact` / `Control`; в строке варианта — цвет (= Split Group, см. «Split Groups — маршрутизация цветами»), сама ценность, вес и тоггл **Fill First** (приоритет варианта поверх весов — [models/distributions-model.md](distributions-model.md)), кнопка `+ Add another variant`. (`Balance` — не отдельная стратегия ноды флоу, а кнопка режима `Weights` для распределения весов на Distribution / сплитах.)
 
+### `Redirect strategy` — чем визитёра отправляют дальше (301 / 302 / Meta Refresh)
+
+**`Redirect strategy` (в payload узла — ключ `redirect_strategy`) задаёт, каким способом шаг отправляет визитёра на следующий URL.** Селект с тремя значениями, плейсхолдер — `Default`; пустое значение = прежнее поведение, редирект `301`. Тултип поля: `How the visitor is sent further: 301 is cached by the browser, 302 is not, Meta Refresh hides the referer`.
+
+- **`301 Permanent`** — постоянный редирект, браузер его кэширует.
+- **`302 Temporary`** — временный редирект, не кэшируется.
+- **`Meta Refresh No Referer`** — альтернатива 30x-редиректу для случаев, когда referer не должен уезжать дальше.
+
+### На каких узлах есть `Redirect strategy` и где она не действует
+
+Поле есть у трёх нод: `Content`, `Destination` и `Domain change`.
+
+На шаге `Destination` стратегия действует на переходы по ссылкам (handle `link`, `link-1` … `link-5`) и на редирект в уже зарегистрированный URL дестинейшена. На сабмит формы (handle `form`) она не применяется — там ответ уходит визиту JSON'ом, а не редиректом.
+
+В целевом URL разрешены только `http(s)`-адреса, протокол-относительные (`//…`) и абсолютные-путевые (`/…`): всё остальное подменяется на `/`, управляющие символы вычищаются.
+
 ### Start (Initial state) — настройки
 
 Только общий каркас — точка входа, добавляется авто.
@@ -332,7 +370,7 @@ UUID стейта флоу напрямую в UI не виден. Получи�
 
 ### Filter (Traffic filtering) — настройки
 
-Инлайн-панель шага задаёт, каким фильтром и по каким правилам отбирается трафик; ветки транзишенов — `passed` / `rejected`. Состав настроек и их семантика — *уточните у поддержки*.
+Инлайн-панель шага задаёт, каким фильтром и по каким правилам отбирается трафик; ветки транзишенов — `passed` / `rejected`.
 
 ### Condition (Check rules) — настройки
 
@@ -344,7 +382,7 @@ UUID стейта флоу напрямую в UI не виден. Получи�
 
 Тоггл **`Trash when Rejected`** на шаге `Condition` (ключ настройки стейта `is_trash_when_rejected`, подсказка в UI — `Mark trash when condition was rejected`) заставляет шаг класть отклонённый визит в trash. **По умолчанию выключен** — без него реджект на `Condition` визит не помечает.
 
-При включённом тоггле на первом непрошедшем активном `Allowance Rule` визиту проставляется `is_trash`, а причина пишется в поле `Trash Reason` (дословные литералы причин — *уточните у поддержки*); только после этого пушится обычное событие `Rejected` — визит идёт по rejected-ветке уже помеченным. Прошли все правила → `Passed`, тоггл ни на что не влияет.
+При включённом тоггле на первом непрошедшем активном `Allowance Rule` визиту проставляется `is_trash`, а причина пишется в поле `Trash Reason` (дословные литералы причин); только после этого пушится обычное событие `Rejected` — визит идёт по rejected-ветке уже помеченным. Прошли все правила → `Passed`, тоггл ни на что не влияет.
 
 Тоггл настраивается **только на уровне Flow** — per-campaign переопределения нет (на кампанию из настроек стейта уезжает только payload, то есть сами `Allowance Rules`). Поэтому включение действует сразу на все кампании этого флоу. Кому он нужен, а кому навредит — секция «Когда включать `Trash when Rejected`, а когда не стоит».
 
@@ -360,15 +398,13 @@ UUID стейта флоу напрямую в UI не виден. Получи�
 
 Пометка `is_trash` — не ярлык, а переключатель поведения: визит выпадает из общей аналитики и уходит на вкладку `Trash` ([mechanics/visit-lifecycle.md](../mechanics/visit-lifecycle.md)), а часть веток флоу у него глохнет.
 
-- **Нотификационный саб-флоу не запускается** — follow-up рассылка по такому визиту не уйдёт.
+- **Нода `Notifications flow` визит не сеет** — в подфлоу рассылки он через неё не попадёт (единственное условие ноды — визит не помечен trash).
 - **На `Destination` лид пушится как обычно, но авто-конверсия ноды не создаётся** — разбор в секции «Destination (External target) — настройки».
 - **Переходы визита по нодам перестают попадать в Visit timeline** — лента обрывается на ноде, где визит помечен ([how-to/visit-timeline.md](../how-to/visit-timeline.md)).
 
-Полный перечень причин и литералы поля `Trash Reason` — *уточните у поддержки*.
-
 ### Content (Show to browser) — настройки
 
-Вариант = **`Select landing page`**; **`Linked field`**; **`Payload type`** (Landing / HTML / Redirect / Reflect / Skip / 404); **`Lander type`** (Preland / Offer / White, мульти-выбор); **`Advertiser type`**; **`Form fallback`**.
+Вариант = **`Select landing page`**; **`Linked field`**; **`Payload type`** (Landing / HTML / Redirect / Reflect / Skip / 404); **`Lander type`** (Preland / Offer / White, мульти-выбор); **`Advertiser type`**; **`Form fallback`**; **`Redirect strategy`** — как отправлять визитёра на сторонний URL варианта `Redirect` (секция «`Redirect strategy` — чем визитёра отправляют дальше»).
 
 Что делают три «неочевидных» атрибута:
 
@@ -391,7 +427,7 @@ Content-нода (и любая нода-выборщик) работает в �
 
 ### Destination (External target) — настройки
 
-Вариант = **`Select destination`**; `Linked field`; `Advertiser type`; **`Reject conversion spawn`** (спаун конверсии при reject); **`Pushed conversion spawn`** (спаун при успешном push).
+Вариант = **`Select destination`**; `Linked field`; `Advertiser type`; **`Reject conversion spawn`** (спаун конверсии при reject); **`Pushed conversion spawn`** (спаун при успешном push); **`Redirect strategy`** — чем отправлять визитёра дальше по ссылке дестинейшена (секция «`Redirect strategy` — чем визитёра отправляют дальше»).
 
 `Reject conversion spawn` / `Pushed conversion spawn` — это опции **для удобства** на шаге Destination, а не единственный способ спавна. `Spawn conversion` — отдельная нода, её можно поставить в **любое место** флоу (перед, после или рядом с Destination). Эти опции просто позволяют спавнить конверсию прямо в момент reject / push, не заводя отдельный шаг — удобно, но не обязательно.
 
@@ -411,7 +447,7 @@ Content-нода (и любая нода-выборщик) работает в �
 
 ### Domain change (Flip domains) — настройки
 
-Вариант = **`Select domain`** — на какой домен флипнуть (трекинговый ↔ публичный). Конкретный домен обычно задаётся per-campaign (Settings availability).
+Вариант = **`Select domain`** — на какой домен флипнуть (трекинговый ↔ публичный). Конкретный домен обычно задаётся per-campaign (Settings availability). Есть и **`Redirect strategy`** — каким способом визитёра переносят на выбранный домен (секция «`Redirect strategy` — чем визитёра отправляют дальше»).
 
 ### Spawn conversion (Initiate conversion) — настройки
 
@@ -431,7 +467,7 @@ Content-нода (и любая нода-выборщик) работает в �
 - `Not Found` — для шага нет отправленного кода (визит попал на `handle` без отправки) → ветка `rejected`. Трейс-статус.
 - `Failed To Send` — код не удалось отправить (сбой Sender Provider / пустой контакт после подстановки плейсхолдера); шаг пропускает визит дальше по ветке `passed`, но верификация не состоялась. Трейс-статус.
 
-Display-лейблы на экране (`Sent` / `Invalid Code`) отличаются от RAW-значений: экран показывает `Verified ✓` / `Tries Exceeded` / `Failed to Send` (регистр/окончание не совпадают с enum). Лимиты верификации (число попыток ввода, число отправок на визит, срок жизни кода) — [reference/limits.md](../reference/limits.md). Разбор этих статусов как симптомов — *Форма не отправляется*.
+Display-лейблы на экране (`Sent` / `Invalid Code`) отличаются от RAW-значений: экран показывает `Verified ✓` / `Tries Exceeded` / `Failed to Send` (регистр/окончание не совпадают с enum). Лимиты верификации (число попыток ввода, число отправок на визит, срок жизни кода) — [reference/limits.md](../reference/limits.md).
 
 #### Как устроена проверка кода (OTP-механика шага)
 
@@ -450,7 +486,9 @@ Display-лейблы на экране (`Sent` / `Invalid Code`) отличаю�
 
 ### Notifications flow (Send notifications) — настройки
 
-**`Notification flows`** — выбор Marketing/Notifications-флоу (follow-up рассылка, см. [mechanics/notifications-flow.md](../mechanics/notifications-flow.md)).
+**`Notification flows`** — единственное поле ноды, обязательное: выбор `Notifications`-подфлоу (плейсхолдер `Select notification sub-flow`, ключ в payload узла — `flow_uuid`). Нода сеет в выбранный подфлоу любой не-трэшевый визит, дошедший до неё.
+
+Это кастомный способ запустить рассылку прямо из кампанийного флоу; штатный — ремаркетинг-кампания ([how-to/remarketing-campaigns.md](../how-to/remarketing-campaigns.md)). Ноды внутри самого флоу рассылки — [mechanics/notifications-flow.md](../mechanics/notifications-flow.md).
 
 ### Finish (Ending state) — настройки
 
@@ -467,7 +505,6 @@ Display-лейблы на экране (`Sent` / `Invalid Code`) отличаю�
 - [how-to/flow-editor.md](../how-to/flow-editor.md) — пошаговое построение
 - [reference/glossary.md](../reference/glossary.md) — определения всех State'ов и Transitions
 - [reference/placeholders.md](../reference/placeholders.md) — `{{link}}` и трэнзишн Handle-link
-- *уточните у поддержки* — нода Filter
 - [models/destination.md](destination.md) — нода Destination
 - [models/landing.md](landing.md) — что показывает Content-шаг
 - [models/domain.md](domain.md) — нода Domain change

@@ -1,7 +1,7 @@
 ---
 id: meta-ads
 title: Как в AIO управляют рекламой Meta/Facebook — модуль Meta (Ad-Manager внутри платформы)
-description: "Meta-модуль AIO — рекламный кабинет Facebook внутри платформы: подсекции (Ad Accounts, Social Profiles, Campaigns/Ad Sets/Ads, Pages), управление кампаниями (Start/Stop, Budget Manager с CBO/ABO, Fetch Targeting, Pull Data), статус и enum причин бана рекламного аккаунта, поля кабинета, статус соцпрофиля, Meta Ad Preview. ERP /app/facebook, MTK /app/mtk/meta (Meta+ платный)."
+description: "Meta-модуль AIO — рекламный кабинет Facebook внутри платформы: подсекции (Ad Accounts, Social Profiles, Campaigns/Ad Sets/Ads, Pages), управление иерархией (Start/Stop на кампании, ad set и объявлении, Budget Manager с CBO/ABO, Fetch Targeting, Pull Data), статус и enum причин бана рекламного аккаунта, поля кабинета, статус соцпрофиля, Meta Ad Preview. ERP /app/facebook, MTK /app/mtk/meta (Meta+ платный)."
 doc_type: how-to
 builds: [erp, mtk]
 related: [meta-spend-allocation, notification-center, google-ads, permissions, analytics]
@@ -11,7 +11,7 @@ updated: 2026-08-11
 
 # Как в AIO управляют рекламой Meta/Facebook — модуль Meta (Ad-Manager внутри платформы)
 
-**Meta-модуль — это рекламный кабинет Facebook прямо внутри AIO: подключаешь соцпрофиль, тянешь из Meta свою иерархию (ad account → campaign → ad set → ad) и управляешь ей из платформы, не заходя в Ads Manager Facebook.** Кампании стартуешь и стопаешь, меняешь бюджеты (CBO/ABO), подтягиваешь таргетинг и данные по спенду — всё из таблиц AIO. Модуль читает данные из Meta через подключённый соцпрофиль и шлёт команды обратно в Meta.
+**Meta-модуль — это рекламный кабинет Facebook прямо внутри AIO: подключаешь соцпрофиль, тянешь из Meta свою иерархию (ad account → campaign → ad set → ad) и управляешь ей из платформы, не заходя в Ads Manager Facebook.** Кампании, адсеты и объявления стартуешь и стопаешь, меняешь бюджеты (CBO/ABO), подтягиваешь таргетинг и данные по спенду — всё из таблиц AIO. Модуль читает данные из Meta через подключённый соцпрофиль и шлёт команды обратно в Meta.
 
 В ERP модуль живёт по пути `/app/facebook`, раздел в навигации называется `Facebook`. В MTK — по пути `/app/mtk/meta`, называется `Meta`, и это **платный подключаемый модуль `Meta+`** (в базовый MTK не входит, активируется по подписке — см. секцию «Meta-модуль в MTK: add-on `Meta+`» ниже и *Как устроен MTK-вид AIO: навигация, пресеты из шаблона и методы под типовые задачи*).
 
@@ -54,12 +54,29 @@ Right-click на строке (или на нескольких выделенн
 
 ### Что пишется в `status_text` соцки при ошибке синка
 
-**Когда соцка уходит в `Down`, реальная причина видна дословно в `status_text` — по формату строки понятно, на каком шаге синка споткнулись.** Форматы:
+**Когда соцка уходит в `Down`, причина видна в `status_text` — по началу строки понятно, где именно встал синк.** Форматы:
 
-- **`<Namespace>: <Meta error>`** — фоновый синк упал на конкретном шаге; `<Namespace>` ∈ `Fetch Costs` / `Fetch Campaigns` / `Fetch Ad Accounts` / `Fetch Ad Sets` / `Fetch Ads`, хвост — сырой текст ошибки от Meta. Например `Fetch Costs: (#190) ...` = токен протух на шаге подтяжки костов.
-- **Сырой Meta `error.message` целиком** (без namespace-префикса) — соцка не прошла проверку токена (`checkToken`): AIO подставляет в `status_text` то, что Meta вернула в `error.message` (протухший/отозванный токен, снятый доступ). Если у ошибки нет тела ответа — вместо неё `Error while request`; если тело есть, но без `error.message` — `Unknown`.
+- **`Failed Job: <причина>`** — основной формат: упал фоновый джоб пуллинга Meta. Вариант **`Timeout Failed Job: <причина>`** — тот же джоб не отработал в срок.
+- **`<Namespace>: <Meta error>`** — синк упал на конкретном шаге; `<Namespace>` ∈ `Fetch Costs` / `Fetch Campaigns` / `Fetch Ad Accounts` / `Fetch Ad Sets` / `Fetch Ads`, хвост — сырой текст Meta. `Fetch Costs: (#190) ...` = токен протух на подтяжке костов.
+- **Сырой Meta `error.message` целиком** (без префикса) — соцка не прошла проверку токена (`checkToken`): в `status_text` уходит то, что Meta вернула в `error.message` (протухший/отозванный токен, снятый доступ). Нет тела ответа — вместо неё `Error while request`; тело есть, но без `error.message` — `Unknown`.
 
-Оба формата означают одно: синк с Meta встал, первый шаг — перепривязать соцку (`Disconnect` → `Connect`, см. секцию «Данные не тянутся, статус `Down`» ниже). Пустой visit-level косты/спенд как следствие отвалившейся соцки разбираются в *Не тянет спенд / косты по кампании нулевые или слетают*.
+**Хвост после `Failed Job: ` — не всегда текст Meta:** пять узнаваемых ошибок Graph API AIO подменяет собственным объяснением (секция ниже), неопознанная — кладётся текстом Meta как есть.
+
+Любой из форматов означает одно: синк с Meta встал, первый шаг — перепривязать соцку (`Disconnect` → `Connect`, секция «Данные не тянутся, статус `Down`» ниже).
+
+### Пять узнаваемых ошибок Meta: что значит текст в `status_text`
+
+**Для пяти семейств ошибок Graph API AIO кладёт в `status_text` собственное объяснение вместо сырого текста Meta — читать надо именно его.** Строки захардкожены по-английски: интерфейс на другом языке их не переводит.
+
+| Строка после префикса | Что произошло |
+|---|---|
+| `Owner has not authorized the app: ad account owner (BM admin) must login via the app connect link once. Or the owner is restricted by Meta (integrity policy).` | Владелец кабинета (админ Business Manager) ни разу не залогинился по connect-ссылке приложения — либо он ограничен Meta по integrity-политике. |
+| `Account is managed via Business Manager and requires business_management permission — cannot be pulled by this profile.` | Кабинет ведётся через Business Manager и требует разрешения `business_management`; этим соцпрофилем его не подтянуть. |
+| `Token expired or invalidated (password change / session revoked) — reconnect the social profile.` | Токен протух или отозван (смена пароля, отозванная сессия). |
+| `Meta rate limit reached — pulling will recover on next runs.` | Упёрлись в лимит запросов Meta. |
+| `Meta temporary error — pulling will recover on next runs.` | Временная ошибка на стороне Meta. |
+
+Ошибка, не попавшая ни в одно из этих семейств, кладётся в `status_text` сырым текстом Meta.
 
 ### Данные не тянутся, статус `Down`, ошибки доступа к кабинетам — сначала перепривязать соцку
 
@@ -155,7 +172,15 @@ Right-click на строке (или на нескольких выделенн
 
 ### Start / Stop — включить и выключить доставку
 
-`Start` запускает доставку объекта, `Stop` — останавливает. Есть на кампании (`meta.campaigns.edit.start` / `.stop`) и на ad set (`meta.ad-sets.edit.start` / `.stop`). Обе команды уходят в Meta через соцпрофиль; после отправки объект ждёт ответа сервера Meta.
+`Start` запускает доставку объекта, `Stop` — останавливает. Экшены есть на **всех трёх уровнях** иерархии Meta, и на каждый уровень своё право:
+
+- **кампания** — `meta.campaigns.edit.start` / `meta.campaigns.edit.stop`;
+- **ad set** — `meta.ad-sets.edit.start` / `meta.ad-sets.edit.stop`;
+- **объявление** — `meta.ads.edit.start` / `meta.ads.edit.stop`. Правым кликом по строке на вкладке `Ads`, пункты `Start` (`Start delivering this ad.`) и `Stop` (`Stop delivering this ad.`); в списке прав они подписаны `Meta: ads start` и `Meta: ads stop`. Так гасят одно объявление, не трогая его ad set и кампанию.
+
+Команда уходит в Meta через соцпрофиль; диалог просит подтверждение и ждёт ответа сервера Meta (`Waiting for the server answer...`). Пришедшие от Meta статус и `effective status` AIO сразу перезаписывает у объекта — колонка статуса в таблице обновляется без отдельного `Pull data`.
+
+Уровни ad set и объявления есть только в ERP: в MTK-виде вкладок `Ad Sets` и `Ads` нет, там `Start` / `Stop` доступны на кампании — см. секцию «Meta-модуль в MTK: add-on `Meta+`» ниже.
 
 ### Budget Manager — бюджет кампании: CBO и ABO
 

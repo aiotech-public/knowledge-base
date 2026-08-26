@@ -130,7 +130,7 @@ Sibling в группе `Tracker` верхнего меню — Campaigns, Sourc
 
 ### «FB не видит лиды» — смотри Tracker logs
 
-`Trackers → Tracker logs` → проверить outgoing-запрос. Частые причины: трекер не привязан к нужному Source (поле `Sources`); либо выбран не тот `Conversion type`. Детально — *FB / Meta — токен инвалидируется, атрибуция, косты*.
+`Trackers → Tracker logs` → проверить outgoing-запрос. Частые причины: трекер не привязан к нужному Source (поле `Sources`); либо выбран не тот `Conversion type`.
 
 ### Массовый Retrigger trackers — через чекбоксы или API
 
@@ -141,8 +141,7 @@ Sibling в группе `Tracker` верхнего меню — Campaigns, Sourc
 - **Процедуры** (создать трекер, FB CAPI Custom Key/Value, Tracker logs) → [how-to/source-trackers.md](../how-to/source-trackers.md).
 - **Родитель Source** (suuid, rewrites, двунаправленность) → [models/source.md](source.md).
 - **Conversion Types, входящий постбэк-URL, Dynamic Actions, дубликаты FB** → [models/conversion-model.md](conversion-model.md).
-- **Диагностика FB CAPI** (токен / атрибуция / двойной пиксель) → *FB / Meta — токен инвалидируется, атрибуция, косты*.
-- **Лид не дошёл / переотбить через Retrigger trackers** → *Лиды не доходят до рекламодателя / партнёрки*.
+- **Диагностика FB CAPI** (токен / атрибуция / двойной пиксель) → *уточните у поддержки*.
 - **SDK-фичи `fbCapi` / `fbPixel` на лэнде** → [reference/sdk.md](../reference/sdk.md).
 - **Retrigger trackers ≠ Distribution** (не меняет payout/revenue) → [models/distributions-model.md](distributions-model.md).
 - **Глоссарий** (Tracker → Trackers вкладка, Retrigger trackers, Custom Key/Value) → [reference/glossary.md](../reference/glossary.md).

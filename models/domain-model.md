@@ -77,7 +77,7 @@ Flow — это граф: узлы (**Flow State**, «шаг») + рёбра (**
 - **Advertiser** — компания/сеть, кому отдаём лиды (платит Revenue); контейнер Destination-ов. → [models/advertiser.md](advertiser.md)
 - **Conversion** · **Conversion Type** — событие(я) по визиту из постбэка (Lead/Registration/Purchase…); привязка через `visit_uuid`. → [models/conversion-model.md](conversion-model.md)
 - **Tracker** (`Tracker → Trackers`) — исходящая отбивка конверсии наружу (FB CAPI / TikTok / HTTP Get…); ребёнок Source, реагирует на Conversion Type. → [models/tracker.md](tracker.md)
-- **Distribution** (7 типов) — rule-деревья: Payout/Revenue settings (деньги), Campaign/Flow content, Fill field, Direct traffic, Remarketing. → [models/distributions-model.md](distributions-model.md)
+- **Distribution** (8 типов) — rule-деревья: Payout/Revenue settings (деньги), Campaign/Flow content, Fill field, Direct traffic, Remarketing, `Message Templates` (шаблоны сообщений для ремаркетинг-рассылок). → [models/distributions-model.md](distributions-model.md)
 - **Business Model** — формула расчёта Revenue/Payout (лист Finance-дерева). → [models/business-model.md](business-model.md) *(движок дерева — [models/distributions-model.md](distributions-model.md))*
 
 ### Фильтрация и антифрод: Filter, Traffic Filter, AIO Antifraud
@@ -126,7 +126,7 @@ Flow — это граф: узлы (**Flow State**, «шаг») + рёбра (**
 
 ### Текущий Flow State и Visit Status — это две разные оси
 
-- **Visit Status (Wait / Live / Left) — это другое, ортогональное измерение.** Оно про «живость» сессии, не про позицию в графе: визит может быть `Live` стоя на Offer, или `Left`, бросив на Preland. (`Wait` = визит ждёт первые ивенты от SDK / не догрузился JS и т.п.) → *Visit Status = Wait — что это значит*
+- **Visit Status (Wait / Live / Left) — это другое, ортогональное измерение.** Оно про «живость» сессии, не про позицию в графе: визит может быть `Live` стоя на Offer, или `Left`, бросив на Preland. (`Wait` = визит ждёт первые ивенты от SDK / не догрузился JS и т.п.) → *уточните у поддержки*
 - **Практический смысл (главный дебаг-объектив):** «куда уехал визит / где застрял» = найти, **на каком State** он сейчас и **каким Transition** (или `No payload`) туда попал. Это первое, что смотрят при разборе «лиды не доходят» / «лэнд не тот».
 
 Модель Visit целиком — [models/visit.md](visit.md); ноды и переходы — [models/flow-model.md](flow-model.md); путь визита по шагам — [mechanics/visit-lifecycle.md](../mechanics/visit-lifecycle.md).

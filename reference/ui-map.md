@@ -4,7 +4,7 @@ title: Карта интерфейса AIO (где что лежит)
 description: Полная карта навигации app.aio.tech — топ-меню (Dashboard/Tracker/Content/Marketing/Finance/Tech/Meta/Analytics/Settings), подразделы каждого, меню профиля (Billing, смена тенанта, Manage tenant). Чтобы быстро находить нужный раздел.
 doc_type: reference
 builds: [erp, mtk]
-related: [postback-generator, sdk, meta-ads, google-ads, events-exporter, live-pulse, session-analytics, registration, permissions-model, debug-with-logs, glossary, custom-fields, api, ui-common, profile-settings, placeholders]
+related: [postback-generator, landing, sdk, remarketing-campaigns, meta-ads, google-ads, events-exporter, live-pulse, session-analytics, registration, glossary, permissions-model, debug-with-logs, custom-fields, api, ui-common, profile-settings, placeholders]
 language: ru
 updated: 2026-08-12
 ---
@@ -42,15 +42,18 @@ Tracker — ядро трекинга: кампании, источники, д�
 
 ### Где редактировать Flows (цепочки State'ов) — `/app/tracker/flows`
 
-Flows `/app/tracker/flows` — редактор флоу (цепочки State'ов), доступен только в ERP. В MTK флоу выбираются как готовые пресеты в настройках кампании (поле Traffic flow) — редактора нет.
+Flows `/app/tracker/flows` — редактор флоу (цепочки State'ов), доступен только в ERP.
+
+В MTK флоу выбираются как готовые пресеты в настройках кампании (поле Traffic flow) — редактора нет.
 
 ## Где находятся лэнды, макросы и файлы — Content `/app/landers-creatives`
 
 Content — раздел для управления лэндами, креативами и переменными контента.
 
-### Где находятся лэнды и макросы — Landings и Macros
+### Где находятся лэнды, PWA-шки и макросы — Landings, PWA и Macros
 
-- **Landings** `/landers` — лэнды. В MTK Landings доступны как отдельная вкладка верхнего меню (`/app/mtk/landers-creatives/landers`).
+- **Landings** `/landers` — лэнды в режиме `Editor`. В MTK Landings доступны как отдельная вкладка верхнего меню (`/app/mtk/landers-creatives/landers`).
+- **PWA** `/pwa` — лэнды в режиме `PWA` (только ERP; пункт закрыт правом `content.landings.view`). Разделение по режиму лэнда навязано: на `Landings` видны только лэнды режима `Editor`, на `PWA` — только режима `PWA`, переключить или снять этот фильтр в интерфейсе нельзя ([models/landing.md](../models/landing.md)).
 - **Macros** `/macros` — макросы (в т.ч. `AIO SDK Macros Collection`, см. [reference/sdk.md](sdk.md)). В MTK Macros перенесены в `Settings → Macros`, см. *Как устроен MTK-вид AIO: навигация, пресеты из шаблона и методы под типовые задачи*.
 
 ### Где находятся креативы, Content Library и файлы — Creatives, Files, CDN
@@ -60,14 +63,19 @@ Content — раздел для управления лэндами, креат�
 - **Uploaded files** `/files` — загруженные файлы.
 - **CDN files** `/cdn-files` — файлы на CDN.
 
-## Где настраиваются push, нотификации и Marketing Flows — Marketing `/app/remarketing`
+## Где собираются рассылки пушей — Marketing `/app/remarketing`
 
-Marketing — ремаркетинг и каналы отправки сообщений (push / нотификации).
+Marketing (в главном меню — `Marketing`) — ремаркетинг: рассылки по собранной аудитории визитов, флоу рассылок и шаблоны сообщений. По умолчанию раздел открывается на экране `Campaigns`. Только ERP.
 
-- **Flows** `/flows` — Notifications / Marketing Flow.
-- **Messages** `/messages` — сообщения.
-- **Message templates** `/message-templates` — шаблоны push/сообщений.
-- **Sender providers** `/sender-providers` — провайдеры отправки.
+- **Campaigns** `/app/remarketing/campaigns` — ремаркетинг-кампании: аудитория, `Launch trigger`, прогоны ([how-to/remarketing-campaigns.md](../how-to/remarketing-campaigns.md)).
+- **Flows** `/app/remarketing/flows` — флоу рассылок; список сужен до флоу типа `Notifications`, в них живёт узел `Drip schedule`.
+- **Template distributions** `/app/remarketing/message-template-distributions` — дистрибуции шаблонов сообщений (тип дистрибуции `Message Templates`); само дерево нод открывается на `/app/remarketing/message-template-distributions/tree`.
+- **Messages** `/app/remarketing/messages` — отправленные сообщения.
+- **Sender providers** `/app/remarketing/sender-providers` — провайдеры отправки.
+- **Message templates** `/app/remarketing/message-templates` — отдельные записи-шаблоны сообщений; тексты ремаркетинг-рассылки лежат не здесь, а в нодах `Template distributions`.
+- **Other** `/app/remarketing/other` — служебная страница: сюда открываются групперы `Remarketing`, у которых нет своей страницы (`Channel`, `Send Result`, время).
+
+Пункт `Marketing` в главном меню показывается по правам **других** страниц раздела (`Messages`, `Message templates`, `Sender providers`, `Flows`) — роль, у которой есть только права на ремаркетинг-кампании, пункта не увидит, хотя страница `/app/remarketing/campaigns` ей открывается по прямой ссылке ([how-to/remarketing-campaigns.md](../how-to/remarketing-campaigns.md)).
 
 ## Где смотреть Revenue и Payout Distributions — Finance `/app/finance`
 
@@ -148,8 +156,8 @@ Settings — настройки тенанта. Состав подраздел�
 
 ### Какие подразделы Settings доступны только в ERP
 
-- **Distributions** `/distributions` — все Distributions (Direct Traffic / Campaign Content / Fill Field / Flow Content / Remarketing Content / Revenue и т.д.).
-- **Fields** `/fields` — поля визита (custom fields). Страница выглядит не плоской таблицей, а раскрывающимися папками по `Type` и `Group` ([how-to/custom-fields.md](../how-to/custom-fields.md)).
+- **Distributions** `/distributions` — все Distributions (Direct Traffic / Campaign Content / Fill Field / Flow Content / Remarketing Content / Revenue и т.д.). Страница показана раскрывающимися папками по типу дистрибуции — переключателя на плоскую таблицу нет.
+- **Fields** `/fields` — поля визита (custom fields). Страница выглядит не плоской таблицей, а раскрывающимися папками по `Type` и `Group`; вернуться к плоскому виду нельзя — переключателя вида на странице нет ([how-to/custom-fields.md](../how-to/custom-fields.md)).
 - **Forms** `/forms` — настройки SDK-форм (поля, Required, min/max).
 - **Conversion types** `/conversion-types` — типы конверсий.
 - **Metrics** `/metrics` — метрики.

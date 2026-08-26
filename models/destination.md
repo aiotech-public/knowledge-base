@@ -94,7 +94,7 @@ Fallback по переполнению уходит на `Destination Full` **т
 ## Подводные камни Destination — частые ошибки настройки
 
 - **`Destination-rejected` транзишен стоит настраивать** — иначе теряешь аналитику отклонений и фолбэк.
-- **Лид ≠ конверсия** — «пуш ушёл, а конверсии нет» часто значит «получатель ещё не прислал постбэк» или проблема с Tracker/Business Model (см. *Конверсия не считается / Revenue=0*).
+- **Лид ≠ конверсия** — «пуш ушёл, а конверсии нет» часто значит «получатель ещё не прислал постбэк» или проблема с Tracker/Business Model.
 - **Destination Full** → нужен план Б (альтернативный дестинейшн / дистрибуция).
 - **Advertiser-ы заводятся в `Settings → Advertisers`**, сами Destination — в `Tracker → Destinations`.
 
@@ -104,5 +104,4 @@ Fallback по переполнению уходит на `Destination Full` **т
 - **Конверсии, которые возвращаются** → [models/conversion-model.md](conversion-model.md).
 - **Зеркальный вход воронки** → [models/source.md](source.md) (Source — откуда трафик, что ловим).
 - **Деньги за конверсии** → [models/distributions-model.md](distributions-model.md) (Revenue/Payout), [models/business-model.md](business-model.md) (формула Revenue/Payout).
-- **Troubleshooting** → *Лиды не доходят до рекламодателя / партнёрки*, *Конверсия не считается / Revenue=0*, *FB / Meta — токен инвалидируется, атрибуция, косты*.
 - **UI** → [reference/ui-map.md](../reference/ui-map.md) → Tracker → Destinations; Advertisers — Settings.

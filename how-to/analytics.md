@@ -1,10 +1,10 @@
 ---
 id: analytics
 title: Analytics / Reports (How-to)
-description: Highlight Row, тоггл Attribute by events time (атрибуция по времени события), Colorize Static, древовидный отчёт через Groupers (полный каталог), Cohorts / Comparative, Tracker data-секции, экспорт таблицы в CSV (что попадает в файл, где есть кнопка, право на выгрузку), Roll Up по полям антифрода.
+description: Highlight Row, тоггл Attribute by events time (атрибуция по времени события), Colorize Static, древовидный отчёт через Groupers (полный каталог), Cohorts / Comparative, Tracker data-секции, экспорт таблицы в CSV (что попадает в файл, где есть кнопка, право на выгрузку), Roll Up по полям антифрода; группировки рассылок — позиционные RMK-категории трекера vs агрегированные группировки раздела Marketing (вкладка Remarketing, включая разбивку Templates), на каких страницах раздела есть колонки метрик, почему даты отправок выходят за период и почему аналитики до текста пуша нет.
 doc_type: how-to
 builds: [erp, mtk]
-related: [glossary, meta-ads, meta-spend-allocation, custom-fields, limits, events-exporter, permissions-model, user-fields, visit-field, campaigns, debug-with-logs, conversion-model, metric, conversion-ai-testing, live-pulse, session-analytics]
+related: [glossary, meta-ads, meta-spend-allocation, metric, visit, marketing-flow, remarketing-campaigns, custom-fields, limits, events-exporter, permissions-model, user-fields, visit-field, campaigns, debug-with-logs, conversion-model, conversion-ai-testing, live-pulse, session-analytics]
 language: ru
 updated: 2026-08-12
 ---
@@ -91,7 +91,7 @@ updated: 2026-08-12
 
 ### Каталог групперов
 
-Каталог (категория → суб-групперы) — типовые системные групперы (динамический per-tenant состав см. в подсекции ниже):
+Каталог (категория → суб-групперы) — типовые системные групперы (динамический per-tenant состав и категории `RMK ...` по рассылкам — в подсекциях ниже):
 
 | Категория | Групперы |
 |---|---|
@@ -108,6 +108,50 @@ updated: 2026-08-12
 | **Other** | Screen Dimensions, Agent Version, Trash Reason, ASN Organization, Visit UUID, Ip Address, User Agent |
 | **Funnel** | Funnels Contains LP, Funnels Contains LP Type |
 
+### Групперы по рассылкам — категории `RMK ...` в каталоге
+
+В каталоге есть **семь системных `RMK`-категорий (21 группер)** — разбивки по рассылкам. Они приезжают каждому ERP-тенанту безусловно, отдельной настройки или права под них нет. В каждой категории по три позиции `#1`…`#3`; дословные подписи групперов:
+
+`RMK Audience #1`…`#3`, `RMK Campaign #1`…`#3`, `RMK Flow #1`…`#3`, `RMK Templates #1`…`#3`, `RMK Channel #1`…`#3`, `RMK Template Node #1`…`#3`, `RMK Send Result #1`…`#3`.
+
+Подписи в интерфейсе английские (перевода у этих групперов нет) — искать и цитировать их надо дословно, как выше.
+
+**Убрать `RMK`-категории из каталога нельзя** — это частый запрос от тех, кто рассылками не пользуется и хочет разгрузить список. Настройки видимости у них нет: каталог отдаётся тенанту целиком. Разгружает другое — категории сгруппированы на отдельной вкладке `Remarketing` внутри каталога, поэтому в общий список групперов они не подмешиваются, и открывать эту вкладку не обязательно. Скрыть можно не группер, а **колонку** — у метрики есть настройка `Hidden at groupers`, она убирает колонку при разбивке по выбранным групперам ([models/metric.md](../models/metric.md)).
+
+### `RMK Audience` или `RMK Campaigns` — какая разбивка про что
+
+Две соседние категории каталога отвечают на разные вопросы. **`RMK Audience`** (групперы `RMK Audience #1`…`#3`) — в какие аудитории рассылки визит **собирался**; список только пополняется, выбывший визит из него не исчезает, поэтому это история попадания, а не текущий состав аудитории. **`RMK Campaigns`** (групперы `RMK Campaign #1`…`#3`) — из каких кампаний визиту **реально что-то отправили**.
+
+Разбирать по ним «кому уйдёт следующий пуш» нельзя: попадание в аудиторию не равно отправке. Что показывают колонки визита — [models/visit.md](../models/visit.md); почему список аудиторий не уменьшается — [models/marketing-flow.md](../models/marketing-flow.md).
+
+### Разбивки раздела `Marketing` — отдельный набор группировок, не трекерный
+
+**Группировок по рассылкам два набора, и они не пересекаются.** В каталоге трекера (Roll Up, Tracker-таблицы) — позиционные категории `RMK ...` с позициями `#1`…`#3`, как у лендов. На страницах раздела `Marketing` (`/app/remarketing` — рассылки) каталог другой: свой набор группировок на вкладке `Remarketing`, и в Roll Up он недоступен — это отдельный namespace аналитики, устроенный так же, как у Meta-группировок.
+
+Разница не косметическая. У одного визита за жизнь набирается много кампаний, флоу, дистрибуций и каналов, поэтому позиционная разбивка отвечает на вопрос про путь конкретного визита («первая отправка, вторая, третья»), а группировки раздела `Marketing` считают отправки **в сумме** — по кампании, флоу, дистрибуции шаблонов, каналу, результату отправки и времени.
+
+**Разбивка по дистрибуции шаблонов есть** — группировка называется `Templates`. Полный список девяти группировок раздела — [how-to/remarketing-campaigns.md](remarketing-campaigns.md).
+
+### На каких страницах раздела `Marketing` есть колонки метрик
+
+Колонки метрик подмешиваются к **четырём** страницам раздела `Marketing` (`/app/remarketing`): `Campaigns`, `Flows`, `Template distributions` и `Other` (страница-свалка для группировок без своей страницы-сущности — канал, результат отправки и время). На остальных страницах раздела — `Messages`, `Message templates`, `Sender providers` — аналитики нет вовсе: это списки сущностей.
+
+Показываются на этих страницах только метрики типа `Remarketing count` и формулы целиком над ними — почему так и как собрать процент, см. [models/metric.md](../models/metric.md).
+
+### Почему суммы по дням в разделе `Marketing` выходят за границы периода
+
+Симптом: в разделе `Marketing` (рассылки) отправки разложены по `Day`, а в таблице видны даты за пределами выбранного периода. Частые формулировки: «даты рассылки не совпадают с периодом», «в отчёте чужие дни».
+
+Причина — связка с тогглом `Attribute by events time`. Колонка времени (`Day` / `Hour` / `Month` / `Year`) в этом разделе **всегда** показывает время отправки, в таймзоне пользователя. А период выбирается по-разному: с включённым тогглом — тоже по времени отправки (даты сойдутся), с выключенным (дефолт) — по времени **визита**. То есть по умолчанию в отчёт попадают отправки по визитам выбранного периода, а сами отправки могли уйти позже и лечь в колонке `Day` на свою дату.
+
+Проверка: включить `Attribute by events time`, если нужен ровно период отправок.
+
+### Есть ли аналитика по конкретному тексту пуша
+
+**Нет: до текста конкретного сообщения аналитика не доходит.** Отправленный текст (после раскрытия спинтакса) в аналитике не хранится — он собирается заново на каждую отправку.
+
+Самое мелкое, до чего разложимы отправки, — **узел-шаблон дерева дистрибуции**: под него в каталоге трекера заведена категория `RMK Template Node #1`…`#3`. В разделе `Marketing` среза по узлу шаблона нет, как нет и среза по шагу серии `Drip schedule`: разложить серию по шагам через группировки нельзя.
+
 ### Почему каталог групперов у меня другой (динамический per-tenant)
 
 Каталог групперов **динамический и per-tenant**. Таблица выше — **системные** групперы; плюс туда попадают **кастомные поля визита** из `Settings → Fields`, у которых в `Edit Field → **Availability as grouper**` выбрано **`Analytics`** (группер в Roll Up) и/или **`Tables`** (группер в Tracker-таблицах). Поле встаёт группером под категорией из своего атрибута `Group` (пустой `Group` → категория `Fields`), подписью группера служит имя поля. При подключённых рекламных интеграциях в каталог добавляются категории `Facebook` / `Google`. Поэтому у разных тенантов список разный — напр. кастомные поля под конкретный источник или интеграцию (`Quora Campaign ID`, `AdForm Order ID`). Категории с «+N» как раз скрывают такие доп. (часто кастомные) поля.
@@ -117,7 +161,7 @@ updated: 2026-08-12
 ### Поиск и Table Settings в Roll Up
 
 - **Search.** Поиск ищет сущности по UUID или имени (Enter / кнопка-лупа). Какую сущность ищет — определяется **первым выбранным группером**: первый группер `Campaign` → поиск по кампаниям, и т.д.
-- **Table Settings.** Путь `Presets → Table settings`. В окне: фильтры, пометка строк как **Favorites**, скрытие / переупорядочивание колонок, сохранение пресетов, число строк на странице (`10 / 25 / 50 / 100`). На страницах, которые грузят весь список одним запросом (сейчас это `Settings → Fields`), переключателя числа строк в окне нет, а в верхней панели нет пагинации — листать там нечего.
+- **Table Settings.** Путь `Presets → Table settings`. В окне: фильтры, пометка строк как **Favorites**, скрытие / переупорядочивание колонок, сохранение пресетов, число строк на странице (`10 / 25 / 50 / 100`). Есть страницы, которые грузят весь список **одним запросом, до 1000 строк**: `Settings → Fields`, `Settings → Metrics` и общая страница `Distributions` (без выбранного типа дистрибуции — страница конкретного типа работает обычной таблицей с пагинацией). Там переключателя числа строк в окне нет и в верхней панели нет пагинации — листать нечего.
 - **Номер строки.** В таблице есть колонка с порядковым номером строки. Подсказка в шапке: `Row number. Calculated on the front end — handy for naming a row while sharing your screen`. Номер считается **на фронте по текущей выдаче** — это позиция в том, что сейчас на экране, а не идентификатор записи: при смене сортировки, фильтров или страницы он у той же строки поменяется. Ссылаться на объект по нему нельзя, для этого есть `Human ID` / UUID ([reference/glossary.md](../reference/glossary.md)).
 
 ### Отчёт не строится: нужно выбрать группер
@@ -204,16 +248,12 @@ Meta-метрики (`Spend`, `Impressions` и т.п.) внутри несут �
 
 Поля антифрода — обычные поля визита: `fraud_score` и `triggered_rules` встают в отчёт групперами `Fraud Score` и `Trigger Rules`, как любое поле с включённым `Availability as grouper` в `Settings → Fields` ([how-to/custom-fields.md](custom-fields.md)). Дерево раскрывается синими стрелками `►` или разворачивается целиком кнопкой `Unwrap tree view`.
 
-Как читать эти значения и что с ними делать — *уточните у поддержки*.
-
 ## Смежные темы
 
 - [reference/glossary.md](../reference/glossary.md) — Cohorts Report, Compare Analytics, Roll Up Report, Qualified Visits, Visit Loss, Attribution Event Time, External Reports, Pivot Report API, LP1 / LP2 / Scrolling метрики, Show sessions.
-- *уточните у поддержки* — антифрод: поля `fraud_score` / `triggered_rules` и их настройка.
-- *Антифрод / антиспам — диагностика проблем* — разбор антифрода по отчётам.
 - [how-to/debug-with-logs.md](debug-with-logs.md) — Loggable UUID для конкретного визита.
 - [models/conversion-model.md](../models/conversion-model.md) — что такое конверсия, postback-формат.
-- [models/metric.md](../models/metric.md) — концепт: что такое Metric как сущность (3 типа Conversions count / Computable / Data feed; деньги = Data feed + source; адресация по UUID).
+- [models/metric.md](../models/metric.md) — концепт: что такое Metric как сущность (4 типа Conversions count / Remarketing count / Computable / Data feed; деньги = Data feed + source; адресация по UUID).
 - [mechanics/meta-spend-allocation.md](../mechanics/meta-spend-allocation.md) — AIO Attribution Engine: как метрика `Meta Spend` аллоцируется по разрезам Roll Up report.
 - [heuristics/conversion-ai-testing.md](../heuristics/conversion-ai-testing.md) — Attribution toggle единый на команду.
 
@@ -227,7 +267,7 @@ Meta-метрики (`Spend`, `Impressions` и т.п.) внутри несут �
 
 ### Roll Up report — древовидный drill-down отчёт (`/analytics/dd`)
 
-Групперы (`+` → каталог) + панель `Filters` слева + синие `►`. Каталог — тот же, что в Tracker-таблицах (см. «Каталог групперов» выше): системные категории Tracker / Location / Landings / Destinations / Variants / Client / Device / OS / Time / Browser / Other / Funnel.
+Групперы (`+` → каталог) + панель `Filters` слева + синие `►`. Каталог — тот же, что в Tracker-таблицах (см. «Каталог групперов» выше): системные категории Tracker / Location / Landings / Destinations / Variants / Client / Device / OS / Time / Browser / Other / Funnel плюс семь `RMK`-категорий по рассылкам (см. «Групперы по рассылкам» выше).
 
 > В каталоге есть и динамические per-tenant категории — **`Fields`** и категории из атрибута `Group` кастомных полей с `Availability as grouper`, а при подключённых рекламных интеграциях — **`Facebook`** / **`Google`** (см. блок про динамический per-tenant каталог выше + [how-to/custom-fields.md](custom-fields.md)).
 
@@ -279,7 +319,7 @@ Metric-фильтры по доступным полям (та же панель
 
 ### Settings → Metrics — кастомные метрики (что можно считать в отчётах)
 
-Метрики (числовые показатели в колонках Roll Up / Cohorts / Comparative) — **настраиваемые** в `Settings → Metrics → + Metric`. Три типа: `Conversions count` (число конверсий), `Computable metric` (формула), `Data feed metric` (фид событий; денежные суммы = источник `Conversions By Type Revenue`/`Payout`) — концепт, поля форм и `Flag`-enum в [models/metric.md](../models/metric.md). Колонки списка метрик: `Metric`, `Formula` (у формульных — формула с именами метрик), `Access Type`, `Owner`, `Order`, `Main For`, `Visible`, `Created`. Набор доступных метрик в аналитике **per-tenant** — системные + заведённые кастомные.
+Метрики (числовые показатели в колонках Roll Up / Cohorts / Comparative) — **настраиваемые** в `Settings → Metrics → + Metric`. Четыре типа: `Conversions count` (число конверсий), `Remarketing count` (события рассылок — `Sent` / `Failed` / `Delivered` / `Opened` по выбранным каналам), `Computable metric` (формула), `Data feed metric` (фид событий; денежные суммы = источник `Conversions By Type Revenue`/`Payout`) — концепт, поля форм и `Flag`-enum в [models/metric.md](../models/metric.md). Колонки списка метрик: `Metric`, `Definition` (из чего метрика собрана — формула или источник с аргументами), `Access Type`, `Owner`, `Main For`, `Visible`, `Created`; остальные включаются в настройке колонок. Что показывает `Definition` и чем отличаются два вида списка (`Groups` / `Order`) — [models/metric.md](../models/metric.md). Набор доступных метрик в аналитике **per-tenant** — системные + заведённые кастомные.
 
 ## Tracker data-секции (Countries / Day Party / Devices / Days / OS / Browsers / Other)
 

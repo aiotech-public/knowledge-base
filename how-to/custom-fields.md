@@ -1,10 +1,10 @@
 ---
 id: custom-fields
 title: Custom Fields (How-to)
-description: Создание полей визита в Settings → Fields — шесть значений Type, атрибуты и тогглы карточки поля, папки по Type и Group, состав колонок и экшенов, пачка полей под интеграцию обогащения, Geo Code как select.
+description: Создание полей визита в Settings → Fields — шесть значений Type, атрибуты и тогглы карточки поля, папки по Type и Group (вид зафиксирован), состав колонок и экшенов, массовые действия по выделению (With selection), пачка полей под интеграцию обогащения, Geo Code как select.
 doc_type: how-to
 builds: [erp]
-related: [visit-lifecycle, glossary, user-fields, forms, visit-field, sdk, landings, flow-model, placeholders, source-trackers, meta-spend-allocation, campaigns, analytics]
+related: [visit-lifecycle, glossary, user-fields, forms, visit-field, sdk, landings, flow-model, placeholders, source-trackers, meta-spend-allocation, campaigns, analytics, permissions]
 language: ru
 updated: 2026-08-12
 ---
@@ -20,7 +20,7 @@ updated: 2026-08-12
 - Все поля визита — в `Settings → Fields → +Field`. Slug автогенерируется по имени. Сама страница — не плоская таблица, а папки по `Type` и `Group`.
 - Атрибуты в карточке поля: `Is Visible`, `Is Registry`, `Is Macro Visible`, `2FA Protected`.
 - Вписать значение поля прямо в карточку `Source`, `Campaign`, лендинга, `Destination` (и раздать его из `Flow` / `Lander Type` / `Advertiser`) — секция `User fields`: [how-to/user-fields.md](user-fields.md).
-- Под интеграцию обогащения (`Traffic Filter`, дозаполняющий поля визита внешними данными) пачку полей нужно завести **заранее** — иначе ответ интеграции некуда записать и поля останутся пустыми; сами интеграции — *уточните у поддержки*.
+- Под интеграцию обогащения (`Traffic Filter`, дозаполняющий поля визита внешними данными) пачку полей нужно завести **заранее** — иначе ответ интеграции некуда записать и поля останутся пустыми; сами интеграции.
 - `Geo Code` (и другие строки) можно превратить в **select** через `Available Values`.
 - `required` напрямую на **Visit Field** сделать **нельзя** — только через `Link Generator` (помечает параметр обязательным в ссылке). Не путать с `Required` на **Form Control** в `Settings → Forms` — там обязательность инпута SDK-формы работает (см. [how-to/forms.md](forms.md) § Required — два контекста).
 
@@ -111,6 +111,8 @@ Slug используется в плейсхолдерах (`{{aio.visit.fields
 
 Свёрнутые папки запоминаются браузером: в другом браузере или после чистки данных сайта все папки снова раскрыты.
 
+Вид страницы зафиксирован: переключателя вида здесь нет, вернуть плоскую таблицу вместо папок нельзя.
+
 Пагинации и переключателя числа строк на этой странице нет — весь список (до 1000 полей) грузится одним запросом. На обычных таблицах выбор `10 / 25 / 50 / 100` не изменился ([how-to/analytics.md](analytics.md)).
 
 ### Какие колонки показывает `Settings → Fields`
@@ -124,6 +126,16 @@ Slug используется в плейсхолдерах (`{{aio.visit.fields
 ### Экшены правого клика в `Settings → Fields`
 
 `Edit field`, `Field logs`, **`Make analytic`** (ускоритель разбивок по полю), `Relink analytic` и `Remove analytic` (у поля, которое уже сделали аналитическим), `Share`, `Change ownership`, `Archive` / `Unarchive`.
+
+### Как пошарить или передать сразу несколько полей — выделение и группа `With selection`
+
+Поля шарятся не только по одному: на странице есть выделение чекбоксами и массовые действия по выделенному.
+
+Чекбокс стоит на четырёх уровнях: в шапке таблицы (выделить всё), на строке папки типа, на строке группы и на самой строке поля — отметка папки или группы берёт все лежащие в ней поля.
+
+Когда выделено **больше одного** поля, в меню появляется группа `With selection (N)`, где `N` — число выделенных. В ней четыре пункта: `Share also`, `Force share`, `Unshare` (все три под правом `settings.fields.share`) и `Mass change ownership` (право `settings.fields.share.ownership`). На одном поле группы нет — там работает обычный правый клик, где передача владения называется `Change ownership`.
+
+Выделение нигде не сохраняется: перезагрузили страницу — выделять придётся заново. Что именно делают `Share also` / `Force share` / `Unshare` — [how-to/permissions.md](permissions.md).
 
 ### Что содержит `Edit Field`
 
@@ -174,11 +186,11 @@ Slug используется в плейсхолдерах (`{{aio.visit.fields
 3. Внести значения (IP / User-Agent / телефоны — построчно или через запятую).
 4. `Save`.
 
-**Как готовый список подставляется в правило:** в правиле выбирают соответствующее поле визита и оператор `In` / `Not In`, а вместо ручного перечисления значений указывают сам список. Где настраиваются такие правила — *уточните у поддержки*.
+**Как готовый список подставляется в правило:** в правиле выбирают соответствующее поле визита и оператор `In` / `Not In`, а вместо ручного перечисления значений указывают сам список.
 
 ## Типичные ошибки
 
-- **Подключил интеграцию обогащения (`Traffic Filter`), а поля визита пустые.** Поля под маппинг/интеграцию заводите ЗАРАНЕЕ — сначала создать поля в `Settings → Fields`, потом подключать интеграцию (детали — *уточните у поддержки*).
+- **Подключил интеграцию обогащения (`Traffic Filter`), а поля визита пустые.** Поля под маппинг/интеграцию заводите ЗАРАНЕЕ — сначала создать поля в `Settings → Fields`, потом подключать интеграцию (детали).
 - **`required` не работает на поле.** Через `Settings → Fields` нельзя. Через `Link Generator` — отметить required при генерации.
 - **Хочу поменять slug.** Нельзя на существующем — архивировать старое, создать новое. Если поле уже используется в плейсхолдерах — придётся править лэнды.
 - **Поле `Is Used For Cost = true`, но FB-косты не приходят.** `Is Used For Cost` — для **ручного** Update Costs. По FB-костам и профиту основной способ — метрика `Meta Spend` ([mechanics/meta-spend-allocation.md](../mechanics/meta-spend-allocation.md)); старый перелив через `AIO Meta` в метрику `Costs` — устаревший путь (см. [how-to/campaigns.md](campaigns.md)).
@@ -190,6 +202,5 @@ Slug используется в плейсхолдерах (`{{aio.visit.fields
 - [mechanics/visit-lifecycle.md](../mechanics/visit-lifecycle.md) — путь визита и поля.
 - [reference/glossary.md](../reference/glossary.md) — Fields & Groupers Catalog (Tracker/Location/Browser/OS/Time/Web/Landings/Destinations/Custom), `Available Values`, `Item List`.
 - [reference/placeholders.md](../reference/placeholders.md) — `{{aio.visit.fields.<slug>}}`, Source Mapping.
-- *уточните у поддержки* — интеграции обогащения: под какие поля их заводить.
 - [how-to/source-trackers.md](source-trackers.md) — Source Rewrites (slug-маппинг).
 - [how-to/campaigns.md](campaigns.md) — Update Costs By Field (использует `Is Used For Cost`).

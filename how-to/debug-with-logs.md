@@ -1,10 +1,10 @@
 ---
 id: debug-with-logs
 title: Debug с логами AIO (How-to)
-description: Settings → Logs, Destination Handler namespace, Loggable UUID, Show Logs (JSON-снапшоты + Domain logs), debug JSON визита, 2FA для нотификаций.
+description: Settings → Logs, дропдаун Namespace (Destination Handler, Tracker, Traffic Filter, Conversions, Remarketing и др.), Loggable UUID, Show Logs (JSON-снапшоты + Domain logs), debug JSON визита, 2FA для нотификаций.
 doc_type: how-to
 builds: [erp, mtk]
-related: [visit-timeline, domains, tracker, landings, architecture, conversion-model]
+related: [visit-timeline, remarketing-campaigns, domains, tracker, landings, architecture, conversion-model]
 language: ru
 updated: 2026-08-12
 ---
@@ -18,10 +18,11 @@ updated: 2026-08-12
 ## Какой лог для чего — быстрая справка
 
 - **ПКМ по визиту → `Visit logs`** — **самый быстрый путь** к логам одного визита (уже отфильтровано по нему); таблица выглядит пустой, пока не переключишь `Severity` на `Debug` — детали ниже. Рядом `Visit timeline` — те же события хронологией ([how-to/visit-timeline.md](visit-timeline.md)).
-- **`Settings → Logs`** — центральное окно логов: namespace (`Destination Handler` / `Tracker` / `Traffic Filter` / `Conversions`) задаёт тип логов, фильтр `Loggable UUID` ловит конкретный визит или конверсию.
+- **`Settings → Logs`** — центральное окно логов: дропдаун `Namespace` задаёт тип логов (`Destination Handler`, `Tracker`, `Traffic Filter`, `Conversions`, `Remarketing` и другие — разбор ниже), фильтр `Loggable UUID` ловит визит, конверсию или сообщение рассылки.
 - **`Show logs` на сущности** — полные JSON-снапшоты настроек сущности после каждого изменения. Что именно изменилось — сравнивается вручную. Для домена это же окно (`Domain logs`) пишет и репойнт сервер→сервер.
 - **Debug JSON визита** — одно из двух мест с сырым JSON визита (другое — отчёт визита через `Show Visit`).
-- **`Destination Handler`** — namespace логов для **диагностики пуша** в Destination. На лэнде виден только бинарный исход (`success: true/false`); причина реджекта дублируется в поле визита `last_rejection_reason` (+ `Rejected Destination` / `Rejected Advertiser`) — *Лиды не доходят до рекламодателя / партнёрки*.
+
+- **`Destination Handler`** — namespace логов для **диагностики пуша** в Destination. На лэнде виден только бинарный исход (`success: true/false`); причина реджекта дублируется в поле визита `last_rejection_reason` (+ `Rejected Destination` / `Rejected Advertiser`).
 - **Без привязки к Telegram нотификации из логов не приходят.** Нотификации `Message` через `AIO-tech-bot` доставляются только в Telegram — нужна привязка аккаунта к TG (`Profile Settings`); 2FA через Google Authenticator её не заменяет.
 
 ---
@@ -32,7 +33,7 @@ updated: 2026-08-12
 
 **Таблица открывается пустой — это визуально, а не «логов нет».** По умолчанию `Severity`-фильтр не включает уровень `Debug`, а вся детальная отладка по визиту пишется именно на `Debug`-уровне (он скрыт по умолчанию). **Переключи `Severity` на `Debug`** — появятся все записи.
 
-Что внутри: **все логи по визиту** — проверки трафик-фильтров и антифрода (handlers `Filter`, `Traffic Filter`, `Antifraud`; сама механика — *уточните у поддержки*), пуши в Destination (и успешные, и с ошибкой — с полным ответом рекламодателя и причиной реджекта). Это более простой путь, чем копировать `Visit UUID` и вручную собирать фильтр в `Settings → Logs`; ручной путь ниже нужен, когда фильтруешь сразу по нескольким визитам или заходишь в логи не от строки визита.
+Что внутри: **все логи по визиту** — проверки трафик-фильтров и антифрода (handlers `Filter`, `Traffic Filter`, `Antifraud`; сама механика), пуши в Destination (и успешные, и с ошибкой — с полным ответом рекламодателя и причиной реджекта). Это более простой путь, чем копировать `Visit UUID` и вручную собирать фильтр в `Settings → Logs`; ручной путь ниже нужен, когда фильтруешь сразу по нескольким визитам или заходишь в логи не от строки визита.
 
 Рядом в контекстном меню — **`Visit timeline`**: та же диагностика визита, но как хронология событий (какие поля когда и на что менялись, какие конверсии заспавнились, в какие Destination визит попал). Разбор — [how-to/visit-timeline.md](visit-timeline.md).
 
@@ -40,14 +41,17 @@ updated: 2026-08-12
 
 Когда нужно посмотреть логи конкретного компонента (Destination Handler / Traffic Filter / Tracker): **`Settings → Logs` → справа `Presets` → `Table Settings` → выбрать `Namespace` (например, `Destination Handler`) → `Apply`.**
 
-Namespace задаёт тип логов, которые вы получаете:
+**Дропдаун `Namespace` перечисляет все неймспейсы системы — их больше двух десятков, закрытым списком из четырёх он не ограничен.** Ходовые в разборах:
 
 - **`Destination Handler`** — обмен при пуше визита в Destination.
 - **`Tracker`** — исходящие отбивки конверсий в рекламные платформы.
 - **`Traffic Filter`** — проверки трафика: что решили трафик-фильтры и антифрод по визиту (антифрод логирует под этим же namespace, отдельного `Antifraud` в дропдауне нет).
 - **`Conversions`** — жизнь конверсий: как создана, что пришло постбэком.
+- **`Remarketing`** — отправка сообщений рассылок: скипы по лимитам, отсутствие push-подписки у визита (сами рассылки — [how-to/remarketing-campaigns.md](remarketing-campaigns.md)).
 
-**Фильтрация по сущности (Presets):** ввести UUID (Visit или Conversion) в поле `Loggable UUID` + выбрать `Namespace` — останутся только логи этой сущности. Под задачу: `Destination Handler` — ошибка пуша в Destination; `Conversions` — логи по конверсиям.
+Нужного типа логов в этом списке нет — открой дропдаун целиком: у подсистем есть собственные неймспейсы помимо перечисленных.
+
+**Фильтрация по сущности (Presets):** ввести UUID сущности (Visit, Conversion, а для логов рассылки — сообщения) в поле `Loggable UUID` + выбрать `Namespace` — останутся только логи этой сущности. Под задачу: `Destination Handler` — ошибка пуша в Destination; `Conversions` — логи по конверсиям.
 
 ### Где кнопка Severity (Debug / Info / Success / Warning / Error)
 
@@ -66,6 +70,18 @@ Namespace задаёт тип логов, которые вы получаете
 3. Видите логи всех handlers, которые трогали этот визит: `Filter`, `Traffic Filter`, `Destination Handler`, `Antifraud`.
 
 **Namespace `Conversions`** показывает логи по конверсиям и как именно конверсия создана — шагом флоу `Spawn Conversion` или из постбэка. Loggable UUID при этом — **Conversion UUID** (не Visit UUID).
+
+**Ручной запуск конверсии тоже попадает в логи — но на визит, а не на конверсию.** Когда конверсию триггерят руками из интерфейса, в namespace `Conversions` пишется запись уровня `INFO` с текстом `Manual conversion trigger requested` и указанием типа конверсии, а Loggable UUID у неё — **Visit UUID**. Поэтому «кто и когда дёрнул конверсию вручную» ищется по UUID визита, а не по UUID конверсии — по конверсии этой записи не видно.
+
+### Сообщение рассылки срезал лимит — искать по UUID сообщения, не визита
+
+**Когда лимит срезает уже созданное сообщение рассылки, запись в логах есть — но `Loggable UUID` у неё — UUID сообщения из `Marketing → Messages`, а не UUID визита и не идентификатор пуш-события.** По UUID визита такая запись не найдётся — отсюда и ощущение «в логах ничего нет».
+
+Что искать: namespace `Remarketing`, уровень `Error`, текст `Remarketing send skipped by limit: <причина> (campaign <uuid>)`. Причины пишутся дословно — `daily_limit`, `hourly_limit`, `min_interval`.
+
+**Лог пишется к сообщению рассылки, поэтому он есть только тогда, когда лимит сработал уже на отправке.** Если лимит срезал визит ещё на этапе посева, сообщения не создаётся вовсе — искать в логах нечего, результат виден только в аналитике (`Send Result` / `RMK Send Results`).
+
+Второй след того же события — remarketing-событие `Failed` с той же причиной. Сам визитёр при этом ничего не замечает: сообщение просто не уходит. Какие лимиты действуют и как они считаются — [how-to/remarketing-campaigns.md](remarketing-campaigns.md).
 
 ### «AIO принял мой клик?» — полный путь от UUID до логов визита
 
@@ -114,9 +130,9 @@ Namespace задаёт тип логов, которые вы получаете
 
 ### «Лид ушёл, рекламодатель не подтверждает» — где причина реджекта
 
-На лэнде у визита виден только бинарный исход: `success: true/false`. **Полный текст ответа рекламодателя — в логах** `Destination Handler`. Но причина реджекта при этом пишется **прямо в поле визита `last_rejection_reason`** (плюс `Rejected Destination` / `Rejected Advertiser` — какой Destination и адвертайзер отклонили лид), так что для быстрой диагностики логи открывать не обязательно — поля видны в `Tracker → Visits`. Разбор реджекта — *Лиды не доходят до рекламодателя / партнёрки*.
+На лэнде у визита виден только бинарный исход: `success: true/false`. **Полный текст ответа рекламодателя — в логах** `Destination Handler`. Но причина реджекта при этом пишется **прямо в поле визита `last_rejection_reason`** (плюс `Rejected Destination` / `Rejected Advertiser` — какой Destination и адвертайзер отклонили лид), так что для быстрой диагностики логи открывать не обязательно — поля видны в `Tracker → Visits`.
 
-Симптомы «лид зарубило», «лид ушёл, а рекламодатель (в обиходе — брокер) не подтверждает» разбираются так: взять `Visit UUID` → `Settings → Logs` → namespace `Destination Handler` → `Loggable UUID = <VISIT_UUID>` → там точная причина реджекта. Типовая диагностика пуша — *Лиды не доходят до рекламодателя / партнёрки*.
+Симптомы «лид зарубило», «лид ушёл, а рекламодатель (в обиходе — брокер) не подтверждает» разбираются так: взять `Visit UUID` → `Settings → Logs` → namespace `Destination Handler` → `Loggable UUID = <VISIT_UUID>` → там точная причина реджекта.
 
 ## Логи Traffic Filter — почему поле визита пустое
 
@@ -125,11 +141,9 @@ Namespace задаёт тип логов, которые вы получаете
 - Путь: `Visit UUID` → `Settings → Logs` → `Loggable UUID = <VISIT_UUID>` → Severity `Debug`.
 - В логах будет дословный ответ интеграции — видно, ответила ли она вообще и что именно вернула.
 
-Механика Traffic Filter и разбор ответов интеграций — *уточните у поддержки*.
-
 ### Сторонний фильтр возвращает 403 Forbidden — что делать
 
-Если в Debug-логах по `Visit UUID` видно `Filter Error: 403` — это ответ внешнего сервиса, подключённого как `Traffic Filter`, а не AIO. Решение на его стороне: обратиться в саппорт этого сервиса. В логах AIO виден только его ответ. Подключение и разбор Traffic Filter-интеграций — *уточните у поддержки*.
+Если в Debug-логах по `Visit UUID` видно `Filter Error: 403` — это ответ внешнего сервиса, подключённого как `Traffic Filter`, а не AIO. Решение на его стороне: обратиться в саппорт этого сервиса. В логах AIO виден только его ответ.
 
 ## Логи трекера — что AIO реально отправил наружу
 
@@ -170,6 +184,3 @@ AIO **не хранит логи событий Facebook Pixel**. В логи п
 - [context/architecture.md](../context/architecture.md) — `AIO-tech-bot`, 2FA, Monitoring User.
 - [models/conversion-model.md](../models/conversion-model.md) — постбэки, Conversion Types.
 - [how-to/visit-timeline.md](visit-timeline.md) — хронология событий визита (ПКМ → `Visit timeline`).
-- *уточните у поддержки* — Traffic Filter: интеграции фильтрации и обогащения трафика.
-- *Лиды не доходят до рекламодателя / партнёрки* — типовая диагностика пуша через `Destination Handler` логи.
-- *Форма не отправляется* — где смотреть, если форма не уходит.

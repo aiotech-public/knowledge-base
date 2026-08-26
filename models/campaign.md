@@ -1,10 +1,10 @@
 ---
 id: campaign
 title: Campaign — концепт
-description: Что такое кампания в AIO, её роль как инстанса Flow и точки агрегации, как через неё входит визит (cuuid), как Edit Campaign накладывается на Flow, чем отличается от Flow/Source/Link. Концепт; процедуры — в how-to/campaigns.md.
+description: Что такое кампания в AIO, её роль как инстанса Flow и точки агрегации, как через неё входит визит (cuuid), как Edit Campaign накладывается на Flow, чем отличается от Flow/Source/Link, и чем от неё отличается второй тип — Remarketing Campaign. Концепт; процедуры — в how-to/campaigns.md.
 doc_type: model
 builds: [erp, mtk]
-related: [campaigns, ui-map, flow-model, visit-lifecycle, meta-spend-allocation, source, domain, ui-common]
+related: [campaigns, ui-map, flow-model, visit-lifecycle, meta-spend-allocation, source, remarketing-campaigns, domain, ui-common]
 language: ru
 updated: 2026-08-12
 ---
@@ -64,6 +64,12 @@ updated: 2026-08-12
 
 Помимо UUID у кампании есть короткий человекочитаемый номер **`human_id`** — 6 цифр с ведущими нулями, например `007567`. Именно его показывают таблицы и разбивки статистики (рядом с именем), и по нему удобно искать кампанию вместо длинного `cuuid`. Формат `#7567` = тот же номер без ведущих нулей. Номер не участвует в tracking-ссылке — в ней едет `cuuid` (UUID), а `human_id` только для человека в UI.
 
+## Remarketing Campaign — второй тип кампании, без трафиковой части
+
+Всё выше — про **трафиковую** кампанию. Кроме неё есть второй тип — **Remarketing Campaign**: она не принимает трафик, а рассылает сообщения по собранной аудитории визитов. У неё нет доменов, источников, ссылки, стратегий костов и traffic-фильтров — она указывает на флоу типа `Notifications` и редактируется тем же диалогом кампании, только без трафиковой части. Живёт в отдельном разделе `Remarketing → Campaigns` и есть только в ERP-билде.
+
+Права на неё **отдельные**: права трафиковых кампаний доступа к ремаркетингу не дают, их выдают отдельно. Как устроена, чем запускается и как собирается аудитория — [how-to/remarketing-campaigns.md](../how-to/remarketing-campaigns.md).
+
 ## Кампания в MTK — те же кнопки минус три
 
 **В MTK-билде кампания работает так же, как в ERP, за вычетом ровно трёх вещей** (MTK — это ограниченный вид того же тенанта, разбор — *Как устроен MTK-вид AIO: навигация, пресеты из шаблона и методы под типовые задачи*):
@@ -72,7 +78,7 @@ updated: 2026-08-12
 2. **Нет `Conversions AI` / `Metrics AI`.** AI-стратегии оптимизации в MTK недоступны.
 3. **Нет `LP Splits`.** Сплитить элементы внутри лэнда нельзя; ротация — только целыми лэндами через веса в блоке `Landing` кампании (`First` / `Weights`).
 
-Всё остальное в `Edit Campaign` идентично ERP: встроенный фильтр в блоке `AIO Filter` (его параметры — *уточните у поддержки*), косты, домены, source — как обычно. Где что лежит в MTK-навигации — *Как устроен MTK-вид AIO: навигация, пресеты из шаблона и методы под типовые задачи*.
+Всё остальное в `Edit Campaign` идентично ERP: встроенный фильтр в блоке `AIO Filter` (его параметры), косты, домены, source — как обычно. Где что лежит в MTK-навигации — *Как устроен MTK-вид AIO: навигация, пресеты из шаблона и методы под типовые задачи*.
 
 ## Как Campaign связана с остальными сущностями
 
@@ -110,5 +116,4 @@ updated: 2026-08-12
 - **Процедуры** → [how-to/campaigns.md](../how-to/campaigns.md) (создание, Edit Campaign, Link Generator, Update Costs, FB/AIO Meta).
 - **Путь, который кампания инстанцирует** → [models/flow-model.md](flow-model.md); что проходит по пути → [mechanics/visit-lifecycle.md](../mechanics/visit-lifecycle.md).
 - **Вход трафика** → [models/source.md](source.md).
-- **Troubleshooting** → *Поля кампании / source не применяются к визиту*, *Конверсия не считается / Revenue=0*.
 - **UI** → [reference/ui-map.md](../reference/ui-map.md) → Tracker → Campaigns; общий табличный UI — [reference/ui-common.md](../reference/ui-common.md).

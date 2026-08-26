@@ -79,5 +79,4 @@ updated: 2026-07-07
 - **Что у юзера есть (модель доступа целиком)** → [models/permissions-model.md](permissions-model.md).
 - **Процедуры** (инвайт / деактивация / Position / Share / Change Ownership) → [how-to/permissions.md](../how-to/permissions.md).
 - **Тенант-контейнер** → [models/tenant.md](tenant.md).
-- **Troubleshooting доступа** → *Permissions / Sharing — не работает или нужно настроить*.
 - **UI** → [reference/ui-map.md](../reference/ui-map.md) (`Settings → Users / Positions / Teams`; смена тенанта и `Manage Tenant` в меню профиля).

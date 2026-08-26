@@ -11,7 +11,7 @@ updated: 2026-08-11
 
 # Business Model (формула Revenue/Payout) — концепт (модель)
 
-> Модель сущности **Business Model**. Движок дистрибуций (Folder / Rule to pass / Strategy / лист) — [models/distributions-model.md](distributions-model.md) + Finance-addendum. Поля конверсии, семантика Revenue vs Payout, 4-шаговый кастомный паттерн — [models/conversion-model.md](conversion-model.md). Траблшутинг «деньги не считаются» — *Конверсия не считается / Revenue=0*. Отображение денег в отчётах (Metrics) — [how-to/analytics.md](../how-to/analytics.md).
+> Модель сущности **Business Model**. Движок дистрибуций (Folder / Rule to pass / Strategy / лист) — [models/distributions-model.md](distributions-model.md) + Finance-addendum. Поля конверсии, семантика Revenue vs Payout, 4-шаговый кастомный паттерн — [models/conversion-model.md](conversion-model.md). Отображение денег в отчётах (Metrics) — [how-to/analytics.md](../how-to/analytics.md).
 
 ## Что такое Business Model и как она считает деньги
 
@@ -126,7 +126,7 @@ Business Model пишет деньги в поле конверсии. Чтоб�
 
 ### Конверсия пришла, но Revenue/Payout = 0
 
-Новый Conversion Type по дефолту = `Zero Payout` → конверсия приходит, но Revenue/Payout = 0. Симптом «конверсия пришла, но $0». Нужно завести Business Model и привязать в Distribution. См. *Конверсия не считается / Revenue=0*.
+Новый Conversion Type по дефолту = `Zero Payout` → конверсия приходит, но Revenue/Payout = 0. Симптом «конверсия пришла, но $0». Нужно завести Business Model и привязать в Distribution. См. *уточните у поддержки*.
 
 ### Постбэк с `revenue=` выключает расчёт по бизнес-модели
 
@@ -164,7 +164,7 @@ Business Model — per-tenant: набор у каждого тенанта св�
 
 - **Движок дистрибуций** (Folder / Rule to pass / Strategy / лист, Revenue/Payout Distribution, экшены ноды) → [models/distributions-model.md](distributions-model.md) (родитель-движок).
 - **Поля конверсии, семантика Revenue vs Payout, 4-шаговый кастомный паттерн, Uniqueness** → [models/conversion-model.md](conversion-model.md).
-- **Траблшутинг «деньги не считаются»** (Zero Payout) → *Конверсия не считается / Revenue=0*.
+- **Траблшутинг «деньги не считаются»** (Zero Payout) → *уточните у поддержки*.
 - **Отображение денег в отчётах** (Settings → Metrics: `Data feed metric` с источником `Conversions By Type Revenue`/`Payout`, `Computable`) → [how-to/analytics.md](../how-to/analytics.md).
 - **Пошаговые процедуры создания Revenue/Payout Distribution** → [how-to/distributions.md](../how-to/distributions.md).
 - **Собрать ссылку постбэка под модель** (в селекте генератора только модели типа `Revenue`, поля формулы обязательны, превью суммы) → [how-to/postback-generator.md](../how-to/postback-generator.md).

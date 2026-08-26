@@ -4,14 +4,14 @@ title: Content Library — концепт (модель)
 description: Что такое Content Library в AIO — хранилище типизированных объектов (Content Type → Content Item), значения которых динамически подставляются на лэнды/в кампании через {{aio.visit.fields.<field>.<key>}}; связь с полем визита типа Placeholder, Fill Fields и Distribution. Концепт; процедуры — how-to/landings.md.
 doc_type: model
 builds: [erp]
-related: [landings, custom-fields, placeholders, visit-field, flow-model, distributions-model, limits, server, landing, ui-map, destination, advertiser, campaign-defaults, glossary]
+related: [landings, custom-fields, placeholders, visit-field, flow-model, distributions-model, limits, landing, ui-map, destination, advertiser, campaign-defaults, glossary]
 language: ru
 updated: 2026-08-11
 ---
 
 # Content Library — концепт (модель)
 
-> Модель сущности **Content Library**. Процедуры (создать Content Type/Item, использовать на лэнде) — [how-to/landings.md](../how-to/landings.md) (секции про Content Library). Поле визита под неё — [how-to/custom-fields.md](../how-to/custom-fields.md). Плейсхолдер-контракт — [reference/placeholders.md](../reference/placeholders.md). Showcase как частный случай — *уточните у поддержки*.
+> Модель сущности **Content Library**. Процедуры (создать Content Type/Item, использовать на лэнде) — [how-to/landings.md](../how-to/landings.md) (секции про Content Library). Поле визита под неё — [how-to/custom-fields.md](../how-to/custom-fields.md). Плейсхолдер-контракт — [reference/placeholders.md](../reference/placeholders.md).
 
 ## Что такое Content Library
 
@@ -63,7 +63,7 @@ Content Library — это хранилище; **выбор конкретног
 
 ### 6. Подстановка в runtime
 
-Содержимое подставляется не на этапе сборки, а при отдаче лэнда: значение берётся из Content Item, выбранного по правилам дистрибуции/флоу (с учётом матчинга Countries/Languages у Item-а) — выбор вычисляет AIO, а агент подставляет его в плейсхолдер при отдаче (как агент работает по командам AIO — [models/server.md](server.md)). Поэтому динамический контент из Content Library работает только там, где грузится SDK — на White-лэнде он не подставляется by design ([models/landing.md](landing.md)).
+Содержимое подставляется не на этапе сборки, а при отдаче лэнда: значение берётся из Content Item, выбранного по правилам дистрибуции/флоу (с учётом матчинга Countries/Languages у Item-а) — и выбор, и подстановку значения в плейсхолдер делает AIO: на агент контент уходит уже отрендеренным, агент отдаёт его как есть (плейсхолдер-контракт — [reference/placeholders.md](../reference/placeholders.md)). Поэтому динамический контент из Content Library работает только там, где грузится SDK — на White-лэнде он не подставляется by design ([models/landing.md](landing.md)).
 
 Самые ходовые лэнды AIO кэширует агрессивнее (атрибут `cache_priority` проставляется автоматически по трафику) — руками это включать не нужно (когда и по какому расписанию — *Что AIO проставляет и делает сам — фоновые задачи и их расписание*).
 
@@ -119,7 +119,7 @@ Showcase — частный паттерн поверх Content Library (мас�
 
 - **Key обязателен при нескольких ключах.** `{{aio.visit.fields.offer_name}}` без key (когда есть `for_visitor`/`for_advertiser`) не подставится — AIO не знает, что брать.
 - **White-лэнд не подставляет `aio.*`** — SDK там не грузится, динамический контент из Content Library не работает by design.
-- **Абсолютные CDN-ссылки на картинки из Content Library не переписываются.** При процессинге лэнда AIO переписывает на CDN только **относительные** пути внутри HTML-ZIP; абсолютная ссылка из Content Library остаётся в исходниках лэнда и продолжает вести на исходный хост, а не на ваш CDN-домен. Переписывайте на relative вручную (актуально для Showcase Item — *уточните у поддержки*).
+- **Абсолютные CDN-ссылки на картинки из Content Library не переписываются.** При процессинге лэнда AIO переписывает на CDN только **относительные** пути внутри HTML-ZIP; абсолютная ссылка из Content Library остаётся в исходниках лэнда и продолжает вести на исходный хост, а не на ваш CDN-домен. Переписывайте на relative вручную (актуально для Showcase Item).
 - **`Placeholder Group`, не «Payload Group».** Корректное имя поля — `Placeholder Group`.
 - **Байеры по дефолту не видят вкладку и не заводят Items.** Нужно либо `Share`, либо `Access Type = Everyone`, иначе Item байеру не виден.
 - **Чтобы лэнд показал контент под конкретный Destination — предзаполните Destination через `Fill Fields` ДО шага Landing.** На лэнде нельзя «заранее» знать Destination без записи в поле визита.
@@ -132,7 +132,6 @@ Showcase — частный паттерн поверх Content Library (мас�
 - **Fill Fields-нода (Fill Text / Fill Content, Placeholder Group)** → [models/flow-model.md](flow-model.md).
 - **`Add Fill Field` подтип `Library`, выбор Item стратегиями** → [models/distributions-model.md](distributions-model.md).
 - **Как Content Library накладывается поверх лэнда (динамика)** → [models/landing.md](landing.md).
-- **Showcase Site/Item + Vue.js, абсолютные CDN-ссылки** → *уточните у поддержки*.
 - **Content Library как способ «убрать возможность ошибиться» у байера** → [heuristics/campaign-defaults.md](../heuristics/campaign-defaults.md).
 - **Точные имена (Content Library, Key, Placeholder Group)** → [reference/glossary.md](../reference/glossary.md).
 - **UI** → [reference/ui-map.md](../reference/ui-map.md) (раздел Content `/app/landers-creatives` → вкладка Content Library, внутренний URL `/lander-placeholders`; `+Content Type`; ПКМ: Edit Structure / Manage Data / Assign to Folder / Share / Change ownership / Archive / Freeze).

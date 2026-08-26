@@ -4,7 +4,7 @@ title: User fields — поля визита прямо в карточках So
 description: Секция User fields в формах настроечных сущностей — кнопка Add field, какой пул полей доступен в какой карточке, три режима родительских полей у Flow / Lander Type / Advertiser, подстановка шаблона при создании, архивные и удалённые поля.
 doc_type: how-to
 builds: [erp, mtk]
-related: [custom-fields, visit-field, permissions, sdk, flow-model, landing, advertiser, destination, placeholders]
+related: [custom-fields, visit-field, permissions, sdk, flow-model, landing, advertiser, destination, placeholders, remarketing-campaigns]
 language: ru
 updated: 2026-08-11
 ---
@@ -145,3 +145,4 @@ updated: 2026-08-11
 - [models/flow-model.md](../models/flow-model.md) — Flow и его шаги; шаг `Fill Fields` как второй способ записать значение в поле по правилу.
 - [models/landing.md](../models/landing.md) — лендинг и `Lander Type`; [models/advertiser.md](../models/advertiser.md) и [models/destination.md](../models/destination.md) — Advertiser и Destination.
 - [reference/placeholders.md](../reference/placeholders.md) — как прочитать значение поля на лэнде через `{{aio.visit.fields.<slug>}}`.
+- [how-to/remarketing-campaigns.md](remarketing-campaigns.md) — пикер `Remarketing campaigns` в тех же карточках: аудитория рассылки набирается на сущностях трафика, и у родительских сущностей режим привязки читается так же, как режим родительского поля здесь.
