@@ -6,7 +6,7 @@ doc_type: model
 builds: [erp, mtk]
 related: [destination, destinations, distributions-model, landing, placeholders, user-fields, conversion-model, business-model, source, ui-map]
 language: ru
-updated: 2026-08-11
+updated: 2026-08-26
 ---
 
 # Advertiser — концепт (модель)

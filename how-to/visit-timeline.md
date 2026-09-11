@@ -6,7 +6,7 @@ doc_type: how-to
 builds: [erp]
 related: [visit, visit-field, debug-with-logs, conversion-model, visit-lifecycle]
 language: ru
-updated: 2026-08-12
+updated: 2026-08-26
 ---
 
 # Visit timeline — хронология событий визита

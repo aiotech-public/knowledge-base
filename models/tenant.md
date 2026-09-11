@@ -6,7 +6,7 @@ doc_type: model
 builds: [erp, mtk]
 related: [registration, architecture, permissions-model, ui-map, user]
 language: ru
-updated: 2026-07-07
+updated: 2026-09-11
 ---
 
 # Tenant — концепт
@@ -37,6 +37,8 @@ Tenant — это один объект, который сразу и workspace,
 ## Жизненный цикл Tenant: статусы Trial / Operate / Suspended / Blocked
 
 Тенант создаётся при регистрации **из Template** (готовый шаблон тенанта, напр. «Finance Template») и проходит статусы: `Trial` → `Operate` (рабочий, оплачен) либо `Suspended` (не «бан» — не оплачен / кончился триал) / `Blocked`. Активный (рабочий) статус называется дословно **`Operate`** — не «active». Детали, включая правило «триал по первому лимиту: время ИЛИ клики», и полный список статусов — *Билды, тарифы, триал и статусы тенанта*. Регистрация — [how-to/registration.md](../how-to/registration.md).
+
+Из шаблона едет только живое: архивные сущности донора в новый тенант не копируются, а домены и сервера не копируются вообще — вместо них заводится тестовая пара «сервер + домен». Заодно приехать могут шаблоны сообщений ремаркетинга (`Message Templates`) и правила нотификаций, если они заведены в самом шаблоне. Полный состав шаблона — [context/architecture.md](../context/architecture.md).
 
 ## Как Tenant связан с User, Build, Template и инфраструктурой
 

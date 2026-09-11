@@ -1,19 +1,19 @@
 ---
 id: placeholders
 title: Placeholders в AIO
-description: Все плейсхолдеры AIO (lander, SDK, поля визита, Vue.js) с примерами и местами использования; плюс спинтакс `{вариант 1|вариант 2}` в текстах рассылок.
+description: "Все плейсхолдеры AIO (lander, SDK, поля визита, Vue.js) с примерами и местами использования; модификаторы `{{ключ:modifier}}` — `raw`, `urlencode`, `json_array_first…ninth`, `timestamp`, `encrypt`; массивные плейсхолдеры (`landing_human_ids` → `%5B309889%5D`), реферер `{{aio.visit.fields.referer}}`; плюс спинтакс `{вариант 1|вариант 2}` в текстах рассылок."
 doc_type: reference
 builds: [erp, mtk]
-related: [server, landing, glossary, sdk, visit-field, how-to-pwa, forms, notifications-flow, source, source-trackers, landings, content-library, visit-lifecycle]
+related: [server, landing, glossary, sdk, visit-field, how-to-pwa, forms, destinations, visit, notifications-flow, flow-model, auto-rules, source, source-trackers, landings, content-library, visit-lifecycle]
 language: ru
-updated: 2026-08-11
+updated: 2026-09-11
 ---
 
 # Placeholders в AIO
 
 Плейсхолдеры — это то, чем вы связываете статический лэнд с рантаймом AIO: переходы по флоу, SDK-форму, пути к файлам на CDN, значения полей визита. Вы пишете их прямо в HTML/JS/CSS, а AIO подставляет реальные значения. Различаются они **моментом подстановки** — это важно понимать, чтобы не искать значение не там: часть при процессинге ZIP, часть AIO подставляет при отдаче лэнда визиту, часть исполняется в runtime на стороне визита.
 
-Плейсхолдеры делятся на четыре семейства: лэнд-плейсхолдеры (`{{link}}`, `{{form}}`, `{{aio}}`, `{{cdn}}`), локальные макросы (`{{aio:macros:<slug>}}`), поля визита (`{{aio.visit.*}}`) и Source-link плейсхолдеры в JSON-коде Source. Плюс `vue.`-форма для реактивных Vue.js-шаблонов на лэнде. Отдельным разделом в конце — **спинтакс** в текстах рассылок (`{вариант 1|вариант 2}`): это не плейсхолдер, а синтаксис случайного выбора варианта, и живёт он только в сообщениях.
+Плейсхолдеры делятся на четыре семейства: лэнд-плейсхолдеры (`{{link}}`, `{{form}}`, `{{aio}}`, `{{cdn}}`), локальные макросы (`{{aio:macros:<slug>}}`), поля визита (`{{aio.visit.*}}`) и Source-link плейсхолдеры в JSON-коде Source. Плюс `vue.`-форма для реактивных Vue.js-шаблонов на лэнде. К любому плейсхолдеру данных `{{aio.*}}` можно дописать **модификатор** через двоеточие — `{{aio.visit.uuid:urlencode}}`, `{{aio.visit.landing_human_ids:json_array_first}}` (раздел «Модификаторы плейсхолдеров» этого документа). Отдельным разделом в конце — **спинтакс** в текстах рассылок (`{вариант 1|вариант 2}`): это не плейсхолдер, а синтаксис случайного выбора варианта, и живёт он только в сообщениях.
 
 ---
 
@@ -46,7 +46,7 @@ updated: 2026-08-11
 |---|---|---|
 | `{{aio.visit.uuid}}` | в Destination URL / Simple Redirect | AIO — подставляет UUID визита |
 | `{{aio.visit.fields.<field>}}` | в Destination URL / templates | AIO — значение поля визита |
-| `{{aio.visit.query}}` | в Destination URL / templates | AIO — весь исходный query-string визита |
+| `{{aio.visit.query}}` | в Destination URL / templates | AIO — все захваченные параметры визита одним JSON-объектом (не строкой `a=1&b=2`) |
 | `{{aio.visit.query.<key>}}` | в Destination URL / templates | AIO — сырой URL-параметр (напр. `{{aio.visit.query.lp}}`) |
 | `{{aio.visit.fields.<field>.<key>}}` | то же + Content Library | AIO — значение из Content Library item |
 | `{{aio.campaign.uuid}}` / `{{aio.source.uuid}}` / `{{aio.user.uuid}}` / `{{aio.replace}}` | в JSON-коде Source (`links[].parameters`) | Link Generator — при генерации ссылки |
@@ -242,16 +242,51 @@ https://broker.example.com/api/leads?
   email={{aio.visit.fields.email}}
 ```
 
+### Плейсхолдеры самого дестинейшена — `{{destination_domain}}`, `{{destination_human_id}}`, `{{destination_name}}`
+
+**В поле `URL Parameters` адвертайзера с `Integration type` = `Simple Redirect` кроме обычных `{{aio.visit.*}}` работают три плейсхолдера уровня дестинейшена: `{{destination_domain}}` (хост из его `Redirect URL`), `{{destination_human_id}}` и `{{destination_name}}`.** Тултип поля перечисляет их дословно: `Extra placeholders: {{destination_domain}}, {{destination_human_id}}, {{destination_name}}`.
+
+Больше нигде эти три не разворачиваются: в полях других интеграций дестинейшена такая запись уедет получателю строкой как есть. Правила склейки `URL Parameters` со ссылкой дестинейшена — [how-to/destinations.md](../how-to/destinations.md).
+
 ### Прямые системные плейсхолдеры (не через `fields.`)
 
 Кроме полей визита есть **системные** плейсхолдеры — данные, которые AIO пишет сам. Обращение к ним **прямое**, без `fields.`. Актуальный полный список всегда виден в UI-пикере (иконка-гексагон) — он подтягивается динамически; ниже — самые ходовые.
 
-- **Гео / устройство:** `{{aio.visit.country_code}}`, `{{aio.visit.city}}`, `{{aio.visit.postal}}`, `{{aio.visit.language_code}}`, `{{aio.visit.ip_address}}`, `{{aio.visit.user_agent}}`, `{{aio.visit.os_name}}`, `{{aio.visit.device_name}}`, `{{aio.visit.client_name}}`.
+- **Гео / устройство:** `{{aio.visit.country_code}}`, `{{aio.visit.location_city}}`, `{{aio.visit.location_postal_code}}`, `{{aio.visit.language_code}}`, `{{aio.visit.ip_address}}`, `{{aio.visit.useragent}}`, `{{aio.visit.os_name}}`, `{{aio.visit.os_version}}`, `{{aio.visit.device_name}}`, `{{aio.visit.brand_name}}`, `{{aio.visit.model}}`, `{{aio.visit.client_name}}`.
 - **Путь / инфраструктура визита:** `{{aio.visit.path}}`, `{{aio.visit.initial_path}}`, `{{aio.visit.domain}}`, `{{aio.visit.campaign_human_id}}`, `{{aio.visit.created_at}}`, `{{aio.visit.is_backfix}}`, `{{aio.visit.is_push_subscribed}}`, `{{aio.visit.pwa_app_name}}`, `{{aio.visit.pwa_icon_url}}`, `{{aio.visit.form_uuid}}`, `{{aio.visit.flow_uuid}}`.
 - **Пуш в Destination / деньги:** `{{aio.visit.destination_url}}`, `{{aio.visit.destination_external_id}}`, `{{aio.visit.destination_uuid}}`, `{{aio.visit.revenue}}`, `{{aio.visit.payout}}`.
+
+### Плейсхолдеры кампании, конверсии, Source и текущего времени — `{{aio.campaign.*}}`, `{{aio.conversion.*}}`, `{{aio.source.*}}`, `{{aio.common.*}}`
+
+Кроме данных визита системные плейсхолдеры есть у кампании, конверсии и Source, плюс группа `Common` с текущим временем; обращение тоже прямое, без `fields.`, ключи — как в UI-пикере.
+
 - **Кампания:** `{{aio.campaign.uuid}}`, `{{aio.campaign.name}}`, `{{aio.campaign.country_code}}`, `{{aio.campaign.language_code}}`.
-- **Конверсия:** `{{aio.conversion.uuid}}`, `{{aio.conversion.type_uuid}}`, `{{aio.conversion.revenue}}`, `{{aio.conversion.payout}}`, `{{aio.conversion.created_at}}`.
-- **Source / время:** `{{aio.source.uuid}}`, `{{aio.source.name}}`, `{{aio.current_timestamp}}`, `{{aio.current_date_time}}`, `{{aio.current_day_hour}}`, `{{aio.current_week_day}}`.
+- **Конверсия:** `{{aio.conversion.uuid}}`, `{{aio.conversion.conversion_type_uuid}}`, `{{aio.conversion.revenue}}`, `{{aio.conversion.payout}}`, `{{aio.conversion.created_at}}`.
+- **Source / время:** `{{aio.source.uuid}}`, `{{aio.source.name}}`, `{{aio.common.current_timestamp}}`, `{{aio.common.current_date}}`, `{{aio.common.current_day_hour}}`, `{{aio.common.current_week_day}}`.
+
+### В URL уехало `%5B309889%5D` вместо ID лэнда — массивные плейсхолдеры `landing_human_ids`, `landing_uuids`, `landing_type_uuids`, `flow_uuids`
+
+**Четыре системных плейсхолдера визита несут не одно значение, а JSON-массив, поэтому без модификатора подставляются со скобками — `[309889]`, — а после URL-кодирования в `URL Parameters` уезжают рекламодателю как `%5B309889%5D`.** Один элемент берётся модификатором позиции: `{{aio.visit.landing_human_ids:json_array_first}}` → `309889` (раздел «Модификаторы плейсхолдеров» этого документа).
+
+- `{{aio.visit.landing_human_ids}}` (в пикере `Landing Human IDs`) — human ID лэндов, которые визит прошёл, в порядке прохода; повторный заход на уже пройденный лэнд в массив не добавляется.
+- `{{aio.visit.landing_uuids}}` (`Landing UUIDs`) и `{{aio.visit.landing_type_uuids}}` (`Landing Type UUIDs`) — те же лэнды и их `Lander Type` в виде UUID.
+- `{{aio.visit.flow_uuids}}` (`Flow UUIDs`) — флоу визита по уровням вложенности: первый элемент — флоу кампании, дальше — по одному `Sub flow` на уровень (вход в другой `Sub flow` того же уровня замещает запись, а не добавляет). Флоу кампании одним значением — `{{aio.visit.flow_uuid}}`.
+
+UUID внутри массива без модификатора теряют кавычки (`[abc,def]`): чистка `default` снимает кавычки, а скобки оставляет.
+
+### Как отдать рекламодателю реферер — `{{aio.visit.fields.referer}}`
+
+**Реферер визита хранится в системном поле `Referer` (slug `referer`; в пикере — группа `Visit Global Fields`), поэтому плейсхолдер — `{{aio.visit.fields.referer}}`; отдельного `{{aio.visit.referer}}` нет.** В поле лежит заголовок `Referer` первого запроса визита на домен кампании — адрес, с которого пришёл клик, если браузер его передал, — а не адрес лэнда.
+
+Сам переход от AIO реферер рекламодателю не передаёт: страницы и редиректы AIO уходят с политикой `no-referrer`, и отключить её нельзя. Если партнёр ждёт реферер, его передают параметром — `ref={{aio.visit.fields.referer}}` в `URL Parameters`. Что именно доезжает до рекламодателя и как это устроено — [how-to/destinations.md](../how-to/destinations.md); два поля `Referer` у визита (колонка и системное поле) — [models/visit.md](../models/visit.md).
+
+### Как разделить трафик по версии ОС, бренду и модели устройства — `os_version`, `brand_name`, `model`
+
+**Кроме `{{aio.visit.os_name}}` и `{{aio.visit.device_name}}` у визита есть три более точных признака устройства: `{{aio.visit.os_version}}` (в пикере — `Os Version`), `{{aio.visit.brand_name}}` (`Brand Name`) и `{{aio.visit.model}}` (`Model`), все три в группе `Visit`.** Значения AIO записывает в визит при его регистрации, распознавая устройство визитора, — поэтому они заполнены и на уже накопленном трафике, а не только на новом.
+
+В конструкторе правил значение `Brand Name` выбирается из готового списка брендов устройств, а не вводится строкой, — так же, как у `Os Name` и `Device Name`.
+
+Доступны эти три ключа в контекстах `Macros`, `Landing`, `Destination`, `Tracker` и `Campaign Split` — то есть на лэнде, в шаблонах дестинейшена и трекера и в условиях сплитов. **В деревьях дистрибуций (`Distribution Revenue`, `Distribution Payout`, `Distribution Fill Field`, `Distribution Campaign Content`, `Distribution Direct Traffic`) их нет** — как нет там и давних `{{aio.visit.os_name}}` и `{{aio.visit.device_name}}`. Развести дистрибуцию по устройству не получится — из признаков визитора в её дереве доступно, например, гео `{{aio.visit.country_code}}`.
 
 ### Иконка PWA-приложения визита — `{{aio.visit.pwa_icon_url}}`
 
@@ -269,6 +304,21 @@ https://broker.example.com/api/leads?
 
 Не-registry поля типов `Landing` и `Destination` в этот субсет тоже входят — но не везде, а в сплите кампании и в дистрибуциях `Campaign Content`, `Revenue`, `Payout`, `Fill Field`. Так значение, заданное в карточке лендинга или дестинейшена, становится ключом правила наравне с обычным полем визита.
 
+### Почему в конструкторе условий `Manage rule` разный набор плиток готовых правил
+
+**Конструктор условий (диалог `Manage rule`) открывается экраном плиток готовых правил, и набор плиток зависит от контекста: плитка есть в списке, только если в этом контексте доступны ВСЕ её плейсхолдеры** — поэтому в сплите кампании плитки все, а в дереве дистрибуции их меньше. Состав плиток, их ключи, оператор упрощённой формы и всегда доступная плитка `Custom` (полный конструктор из любых плейсхолдеров и операторов) — в [models/flow-model.md](../models/flow-model.md).
+
+В контексте `Campaign Split` — условия кампании, правила вариантов и `Allowance Rules` шага флоу, Content Splits — доступны все плитки.
+
+В дереве дистрибуции набор у́же и зависит от типа дерева:
+- плиток по устройству (`Device Name`, `OS Name`, `OS Version`) нет ни в одном контексте дистрибуции;
+- `Visit Country` — во всех пяти (`Distribution Revenue`, `Distribution Payout`, `Distribution Campaign Content`, `Distribution Fill Field`, `Distribution Direct Traffic`);
+- `Visit Language` и `Campaign Owner` — во всех, кроме `Distribution Direct Traffic`;
+- `Visit Domain` (плитка собрана над ключом `{{aio.visit.domain_uuid}}`) — только в `Distribution Campaign Content`, `Distribution Fill Field` и `Distribution Direct Traffic`;
+- составная плитка доступна там, где доступны обе её части.
+
+Дистрибуция типа `Auto Rules` этот конструктор не открывает вовсе: условия её правил собираются отдельным редактором со своим набором операндов ([how-to/auto-rules.md](../how-to/auto-rules.md)).
+
 ### Как прочитать накопленную историю registry-поля — `.comma.` и `.array.`
 
 `{{aio.visit.fields.<slug>}}` отдаёт **одно** (последнее) значение поля. Если у поля включён `Is Registry` ([models/visit-field.md](../models/visit-field.md)), оно копит историю значений (`1,2,3…`) — и на неё есть отдельные плейсхолдеры:
@@ -283,7 +333,7 @@ https://broker.example.com/api/leads?
 
 ### Как достать сырой URL-параметр визита через `{{aio.visit.query.<key>}}`
 
-`aio.visit.query` — в первую очередь **шаблонный плейсхолдер**. Бэйр-форма `{{aio.visit.query}}` подставляет весь исходный query-string визита; форма с ключом `{{aio.visit.query.<key>}}` — значение одного параметра. Эти формы резолвит **AIO на стороне сервера** (по query, захваченному при создании визита), поэтому значение отдаётся даже если параметр скрыт из адресной строки (например при `enableStrangeUrlParameters=true`).
+`aio.visit.query` — в первую очередь **шаблонный плейсхолдер**. Форма с ключом `{{aio.visit.query.<key>}}` подставляет значение одного параметра; бэйр-форма `{{aio.visit.query}}` — все захваченные параметры **одним JSON-объектом** (`{"lp":"1","sub1":"abc"}`), а не строкой `lp=1&sub1=abc`; без модификатора кавычки из него срезаются (`{lp:1,sub1:abc}`), валидный JSON даёт `{{aio.visit.query:raw}}` (раздел «Модификаторы плейсхолдеров» этого документа). Обе формы резолвит **AIO на стороне сервера** по query, захваченному при создании визита, поэтому значение отдаётся даже если параметр скрыт из адресной строки (например при `enableStrangeUrlParameters=true`).
 
 На JS-стороне (`window.aio`) `aio.visit.query` — это **строка** (сериализованный захваченный query), а **не** keyed-объект: обращение `aio.visit.query.<key>` напрямую в JS лэнда вернёт `undefined`. Нужен параметр в JS — бери его через плейсхолдер `{{aio.visit.query.<key>}}` (сервер подставит значение в код лэнда) или распарси строку сам.
 
@@ -331,6 +381,44 @@ window.aioBus.push({ type: "trigger", key: "<slug>", value: "..." });
 Выделенного инструмента ротации контента в MTK-виде нет — логика выбора и подстановки живёт в собственном скрипте на лэнде.
 
 ---
+
+## Модификаторы плейсхолдеров — `{{ключ:modifier}}`: `raw`, `urlencode`, `json_array_first`, `timestamp`, `encrypt`
+
+**К любому плейсхолдеру данных `{{aio.*}}` можно дописать модификатор через двоеточие — `{{aio.visit.uuid:urlencode}}`, `{{aio.visit.landing_human_ids:json_array_first}}` — и AIO подставит уже преобразованное значение.** Список: `raw`, `urlencode`, `json_array_first` … `json_array_ninth` и `json_array_last`, `timestamp`, `encrypt`, `encrypt_url`; без модификатора применяется неявный `default`. В пикере-гексагоне модификаторы не показываются — их дописывают руками к ключу, взятому из пикера.
+
+Правила:
+
+- Работают везде, где раскрываются `{{aio.*}}`: `Redirect URL` и `URL Parameters` дестинейшена, шаблоны интеграций и трекеров, HTML лэнда и макросы, значения `Fill Fields`, тексты сообщений, Source-link плейсхолдеры при генерации ссылки (исключение — `encrypt`/`encrypt_url`: при генерации ссылки они не работают, у Link Generator нет ключа тенанта).
+- Один модификатор на плейсхолдер: запись с двумя (`{{ключ:a:b}}`) AIO не раскрывает — она остаётся в тексте как есть.
+- Неизвестный модификатор ошибки не даёт — значение подставляется как без модификатора.
+- Двоеточие в `{{link:1}}`, `{{form:2}}`, `{{link:s:permanent}}` — не модификатор: это нумерация лэнд-плейсхолдеров, другой механизм (секция «Как вести переходы по флоу через `{{link}}`» этого документа).
+
+### Что происходит со значением без модификатора — неявный `default`
+
+**Без модификатора AIO обрезает пробелы по краям и удаляет из значения двойные и одинарные кавычки, табуляцию, перевод строки и обратный слэш (включая литеральные `\t` и `\n`).** Так значение не рвёт кавычки атрибута HTML, JS-строки или JSON-шаблона, в который подставляется. Следствия:
+
+- кавычки из значения пропадают: `O'Brien` уедет как `OBrien`; нужны как есть — `:raw`;
+- JSON-значение перестаёт быть JSON: `{{aio.visit.query}}` без модификатора даёт `{lp:1,sub1:abc}`, с `:raw` — `{"lp":"1","sub1":"abc"}`;
+
+### `raw` — подставить значение как есть
+
+**`{{ключ:raw}}` отключает чистку `default`: кавычки, переводы строк и слэши остаются в значении.** Нужен, когда значение — JSON или текст с кавычками, который дальше разбирает получатель: `{{aio.visit.query:raw}}`, `{{aio.visit.fields.array.<slug>:raw}}`. В HTML-атрибуте или JS-строке лэнда `:raw` без своего экранирования опасен — кавычка из значения закроет строку раньше времени.
+
+### `urlencode` — закодировать значение для URL
+
+**`{{ключ:urlencode}}` кодирует значение по правилам URL-формы: пробел → `+`, `&` → `%26`, `=` → `%3D`, скобки → `%5B`/`%5D`.** Нужен там, где AIO значение не кодирует сам — в HTML лэнда, в значениях `Fill Fields`. В `URL Parameters` дестинейшена `Simple Redirect` двойного кодирования не будет: склейка URL сначала раскодирует значение параметра, потом кодирует заново ([how-to/destinations.md](../how-to/destinations.md)), так что `%5B` уедет как `%5B`, а пробел из `+` станет `%20`.
+
+### `json_array_first` … `json_array_ninth` — взять один элемент массива
+
+**Модификаторы `json_array_first`, `json_array_second`, `json_array_third`, `json_array_fourth`, `json_array_fifth`, `json_array_sixth`, `json_array_seventh`, `json_array_eighth`, `json_array_ninth` достают из плейсхолдера-массива элемент по позиции — без скобок и кавычек.** Работают на всём, чьё значение — JSON-массив: системные `landing_human_ids`, `landing_uuids`, `landing_type_uuids`, `flow_uuids` (секция «В URL уехало `%5B309889%5D` вместо ID лэнда» этого документа) и `.array.`-формы registry-полей. Позиция за концом массива даёт пустое значение. `json_array_last` в списке есть, но последний элемент не отдаёт — значение приходит как без модификатора; нужен последний — берите его по номеру позиции.
+
+### `timestamp` — дата как unix-время
+
+**`{{ключ:timestamp}}` превращает плейсхолдер-дату в unix-timestamp в секундах: `{{aio.visit.created_at:timestamp}}`, `{{aio.conversion.created_at:timestamp}}`.** Работает только на плейсхолдерах, которые несут дату; на строковом значении (например `{{aio.common.current_date}}`) даёт пустое. Текущее время в секундах есть готовым плейсхолдером — `{{aio.common.current_timestamp}}`.
+
+### `encrypt` и `encrypt_url` — зашифровать значение ключом тенанта
+
+**`{{ключ:encrypt}}` шифрует значение AES-CBC ключом тенанта и отдаёт base64 от «IV (16 байт) + шифротекст» без хвостовых `=`; `{{ключ:encrypt_url}}` — то же в URL-safe base64 (`-` и `_` вместо `+` и `/`).** Каждая подстановка даёт новый шифротекст (случайный IV); получатель расшифровывает тем же ключом. Ключ на тенант заводит команда AIO по запросу, в интерфейсе его нет. **Пока ключа нет, модификатор не шифрует: значение уходит открытым текстом, без ошибки** — проверяйте результат в `destination_url` или в логах, а не по факту написанного модификатора.
 
 ## Как работают Source-link плейсхолдеры в JSON-коде Source
 

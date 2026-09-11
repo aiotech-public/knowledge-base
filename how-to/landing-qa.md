@@ -6,7 +6,7 @@ doc_type: how-to
 builds: [erp, mtk]
 related: [landings]
 language: ru
-updated: 2026-07-07
+updated: 2026-08-26
 ---
 
 # Landing QA (AI-ревью кода лэнда)

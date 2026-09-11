@@ -6,7 +6,7 @@ doc_type: how-to
 builds: [erp]
 related: [server, conversion-model, visit-lifecycle, analytics, permissions-model, notification-center]
 language: ru
-updated: 2026-08-12
+updated: 2026-08-26
 ---
 
 # Live Pulse — живой поток визитов и конверсий

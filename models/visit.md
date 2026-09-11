@@ -4,9 +4,9 @@ title: Visit — концепт (модель)
 description: Что такое визит в AIO как сущность — одна браузерная сессия в кампании (cuuid+suuid+cookie), живой инстанс, идущий по Flow и накапливающий поля; две ортогональные оси (Flow State vs Visit Status), связь с конверсией, какие списки рассылок лежат на визите (RMK Audience — в какие аудитории визит собран, RMK Sent Campaigns — путь отправок). Модель-хаб; процесс — visit-lifecycle.md, данные — visit-field.md.
 doc_type: model
 builds: [erp, mtk]
-related: [visit-lifecycle, visit-field, conversion-model, server, domain-model, remarketing-campaigns, marketing-flow, debug-with-logs, flow-model, landings, campaign, source]
+related: [visit-lifecycle, visit-field, conversion-model, server, domain-model, ui-common, remarketing-campaigns, marketing-flow, debug-with-logs, flow-model, landings, campaign, source]
 language: ru
-updated: 2026-08-11
+updated: 2026-09-11
 ---
 
 # Visit — концепт (модель)
@@ -23,7 +23,7 @@ updated: 2026-08-11
 
 Визит опознаётся **парой `cuuid`+`suuid`** (в какую кампанию и через какой source) плюс **cookie** в браузере посетителя. Новый визит — другой браузер / инкогнито / очистка кук. Тот же браузер остаётся тем же визитом, пока возвращается; окно уникальности и полная механика идентификации, дубли (сессия vs fingerprint) — [mechanics/visit-lifecycle.md](../mechanics/visit-lifecycle.md). Нет `cuuid`/`suuid` → Direct Traffic (`Default Query` / `Direct Traffic Distribution`).
 
-Как ещё называют: «уники», «уникальные визиты» — про уникальность визита (за сколько браузер продолжает считаться тем же визитом — [mechanics/visit-lifecycle.md](../mechanics/visit-lifecycle.md)).
+Как ещё называют: «уники», «уникальные визиты» — про уникальность визита (за сколько браузер продолжает считаться тем же визитом — [mechanics/visit-lifecycle.md](../mechanics/visit-lifecycle.md)). Второй ключ к визиту, кроме куки, — зашифрованный слепок сессии в стартовом URL установленной PWA, в клик-ссылке push-уведомления remarketing-кампании и в постоянных ссылках `{{link:s:permanent}}` / `{{link:h:permanent}}`: срока у него нет, поэтому по такой ссылке визит продолжается под тем же `visit_uuid` и спустя месяцы — разбор в [mechanics/visit-lifecycle.md](../mechanics/visit-lifecycle.md).
 
 ### Две ортогональные оси: Flow State (где в пути) vs Visit Status (живость сессии)
 
@@ -38,7 +38,7 @@ updated: 2026-08-11
 
 Всё, что AIO знает о визите, лежит в его **полях** (visit fields). Значение **аккретит вдоль пути**: Source кладёт URL-параметры → SDK пишет рантайм → Fill-шаги дописывают → постбэк добавляет результат конверсии. Поля — это «состояние» визита, которое читают лэнды, групперы, дистрибуции. Субстрат целиком — [models/visit-field.md](visit-field.md).
 
-Набор колонок в `Tracker → Visits` **не ограничен дефолтными** — любое поле, заведённое в `Settings → Fields`, автоматически становится доступной колонкой в Visits (показ/порядок — через `Presets → Customize table view`). Подробнее про таблицу и колонки — [mechanics/visit-lifecycle.md](../mechanics/visit-lifecycle.md).
+Набор колонок в `Tracker → Visits` **не ограничен дефолтными** — любое поле, заведённое в `Settings → Fields`, автоматически становится доступной колонкой в Visits (показ/порядок — кнопка `Settings` над таблицей → `Table settings`, [reference/ui-common.md](../reference/ui-common.md)). Путь по лэндам и Destination визит копит списками uuid (`landing_uuids`, `destination_uuids`, единая воронка `funnel_uuids`), реферер захода лежит на визите дважды — колонкой и системным полем `Referer`; разбор этих полей и самой таблицы — [mechanics/visit-lifecycle.md](../mechanics/visit-lifecycle.md).
 
 ### Что оставляют на визите рассылки: `RMK Audience` (куда визит собран) vs `RMK Sent Campaigns` (путь отправок)
 

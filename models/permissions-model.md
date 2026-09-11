@@ -1,12 +1,12 @@
 ---
 id: permissions-model
 title: Permissions Model AIO
-description: Как устроены роли, Positions, Imperatives, Teams и Sharing в AIO. Какие комбинации работают, как читать матрицу доступов.
+description: Как устроены роли, Positions, Imperatives, Teams и Sharing в AIO. Какие комбинации работают, как читать матрицу доступов, какие разделы закрыты своими ветками прав (Remarketing — marketing.*, Automations — automation.*).
 doc_type: model
 builds: [erp, mtk]
-related: [analytics, limits, postback-generator, session-analytics, remarketing-campaigns, permissions, registration, custom-fields, architecture, tenant, user, glossary, api]
+related: [analytics, limits, postback-generator, session-analytics, remarketing-campaigns, permissions, auto-rules, meta-ads, auto-rules-engine, notification-center, registration, custom-fields, architecture, tenant, user, glossary, api]
 language: ru
-updated: 2026-08-11
+updated: 2026-09-11
 ---
 
 # Permissions Model AIO
@@ -104,6 +104,43 @@ Feature-императивов семь, каждый закрывает сво�
 
 Что делает сам раздел и как выглядит каждая его страница — [how-to/remarketing-campaigns.md](../how-to/remarketing-campaigns.md); процедура шаринга и скрытия флоу рассылок — [how-to/permissions.md](../how-to/permissions.md).
 
+### Automations закрыт своей веткой прав `automation.*` — доступ к Meta его не даёт
+
+Раздел `Automations` (автоправила над сущностями Meta) гейтится собственной веткой прав `automation.*`, независимой и от трафиковых `tracker.*`, и от `settings.distributions.*`, и от `meta.*`. Права на рекламные кабинеты и страницы Meta автоправил не открывают, и наоборот — право на автоправила само по себе доступа к Meta-страницам не даёт. Ветка объявлена только в ERP-наборе, в MTK её нет.
+
+Отдельного тумблера доступности у раздела нет: включать его тенанту не нужно, видимость решают только права. Роли полного доступа (Owner / Admin) проходят по ветке автоматически, как и по остальным императивам. Симптом «у сотрудника нет раздела `Automations`» разбирается его Position, а не настройкой тенанта. Что делает сам раздел — [how-to/auto-rules.md](../how-to/auto-rules.md).
+
+### Какие императивы `automation.*` бывают — четыре группы
+
+Императивов шестнадцать. В матрице `Settings → Positions` они собраны в секцию `Automation section` (RU `Раздел «Автоматизации»`), подписи гранулярных — вида `Automation: view templates`, `Automation: edit assignments`, `Automation: approve verdicts`.
+
+- Шаблоны правил — `automation.templates.view`, `automation.templates.edit`, `automation.templates.edit.duplicate`, `automation.templates.edit.archive`, `automation.templates.share`, `automation.templates.share.ownership`.
+- Ассайны — `automation.assignments.view`, `automation.assignments.edit`, `automation.assignments.edit.archive`, `automation.assignments.edit.test-run`, `automation.assignments.share`, `automation.assignments.share.ownership`. Из двух share-прав рабочее одно — `.share.ownership`; `automation.assignments.share` объявлен, но ни одного действия в интерфейсе не открывает (секция «Шаблоны автоправил шарятся, ассайны — нет»).
+- Журнал вердиктов — `automation.actions.view`, `automation.actions.edit.approve`, `automation.actions.edit.decline`. Права `.approve` / `.decline` гейтят кнопки на странице `History`.
+- Страница статуса — `automation.status.view`.
+
+Правка дерева шаблона (фазы и правила) идёт по `automation.templates.edit` — отдельного права на узлы дерева нет. Какие императивы собрать в Position под типовые роли — [how-to/permissions.md](../how-to/permissions.md).
+
+### Шаблоны автоправил шарятся, ассайны — нет: какие из `automation.*.share*` работают
+
+Внутри одной ветки `automation.*` шаринг устроен несимметрично. Страница `Rule Templates` — это таблица дистрибуций с зашитым типом `Auto Rules`, и от дистрибуций ей достаётся весь набор действий владения: `Share`, `Share also`, `Force share`, `Unshare` под правом `automation.templates.share`, плюс `Change ownership` и массовый `Mass change ownership` под `automation.templates.share.ownership`. Оба share-права шаблонов рабочие.
+
+У ассайнов из этого набора есть только `Change ownership` (право `automation.assignments.share.ownership`, пункт виден владельцу и роли полного доступа): в диалоге меняются владелец и `Access type`. Действий `Share` / `Share also` / `Force share` / `Unshare` на странице ассайнов нет — адресно пошарить ассайн конкретному юзеру или команде из интерфейса нельзя. Право `automation.assignments.share` объявлено в матрице `Settings → Positions`, но ни одного действия не открывает: включать его в Position можно, эффекта не будет.
+
+Кто видит ассайн — владелец, руководитель его команды, роль полного доступа и все в тенанте при `Access type = Everyone` (новый ассайн создаётся с `By Share`); обходного права вида `Scopes: …` для ассайнов нет, в отличие от флоу (`scopes.tracker.flows`). Практических рычагов два — `Access type = Everyone` и смена владельца; разбор по страницам раздела — [how-to/auto-rules.md](../how-to/auto-rules.md), процедура и то, что `Everyone` открывает ассайн ещё и на правку любому с `automation.assignments.edit`, — [how-to/permissions.md](../how-to/permissions.md) («`Access type = Everyone` открывает не только просмотр, но и правку»).
+
+### Какая страница раздела Automations каким правом открывается
+
+Каждая из четырёх страниц закрыта своим view-императивом: `/app/automations/status` — `automation.status.view`, `/app/automations/assignments` — `automation.assignments.view`, `/app/automations/auto-rules` (`Rule Templates`) — `automation.templates.view`, `/app/automations/actions` (`History`) — `automation.actions.view`. Без нужного права страница не открывается. Заход на `/app/automations` без указания страницы ведёт на последнюю открытую страницу раздела (она запоминается в браузере), а если её нет или права на неё нет — на первую доступную по правам в порядке `Status` → `Assignments` → `Rule Templates` → `History`.
+
+Сам пункт меню `Automations` появляется по любому из трёх прав — `automation.templates.view`, `automation.assignments.view`, `automation.actions.view`. Одного `automation.status.view` для пункта меню мало, хотя страница статуса по прямой ссылке при нём открывается ([how-to/auto-rules.md](../how-to/auto-rules.md)).
+
+Подписи у `automation.status.view` в матрице нет: ряд показывается самим ключом — `automation.status.view` — с иконкой-ключом по умолчанию вместо «глаза», который носят остальные `*.view`. Искать право страницы статуса надо по этому ряду.
+
+### Автоправило исполняет действие правами владельца ассайна, а не апрувера
+
+Действие, которое автоправило отправляет в Meta, уходит с правами **владельца ассайна**, а не того, кто нажал `Approve`. Упирается оно в те же императивы `meta.*`, что и ручной экшен на странице Meta — `meta.campaigns.edit.stop` и соседние ([how-to/meta-ads.md](../how-to/meta-ads.md)); нет такого права у владельца — действие не исполняется. Что при этом попадает в журнал и почему владелец заморожен на момент вердикта — [mechanics/auto-rules-engine.md](../mechanics/auto-rules-engine.md).
+
 ### Как императивы применяются в UI (Settings → Positions)
 
 Модалка `Settings → Positions → + Position`: `Position name` + `Description` + `Assign color` + **`Priority`** (слайдер) + две вкладки — **`Imperatives`** и **`Assigned users`** (кому назначена).
@@ -190,7 +227,7 @@ Grant выдаётся не только на сущность, но и на **�
 - **Share Also** (`Also Share`) — добавить юзера/команду к шарингу (предыдущие шаринги сохраняются).
 - **Unshare** — снять шаринг с указанных.
 - **Force Share** — снять предыдущие шаринги, оставить только новые.
-- **`Mass change ownership`** — массово сменить owner-а (см. ниже). Одиночный пункт правого клика называется иначе — `Change ownership`.
+- **`Mass change ownership`** — массово сменить owner-а (секция «Как передать Ownership другому юзеру»). Одиночный пункт правого клика называется иначе — `Change ownership`.
 
 ## Как Ownership определяет владельца сущности
 
@@ -198,7 +235,9 @@ Grant выдаётся не только на сущность, но и на **�
 
 ### Как передать Ownership другому юзеру
 
-Действие `Change Owner` (или `Change Ownership`) передаёт владение другому юзеру. Прежний owner становится shared-юзером с тем же набором прав, новый — owner.
+Действие `Change Owner` (или `Change Ownership`) передаёт владение другому юзеру: меняется только владелец сущности. Прежний владелец в шаринг автоматически не добавляется — дальше он видит сущность по общим правилам (своя команда, шаринг, `Access type = Everyone`); если доступ ему нужен, сущность шарят ему отдельно.
+
+Имя пункта зависит от сущности: `Change owner` / `Mass change owner` — у сущностей без колонки `Access type` (кампании, лэнды, прокси), выбирается только новый владелец; `Change ownership` / `Mass change ownership` — у сущностей с `Access type` (флоу, дистрибуции, ассайны автоправил, Sources, Destinations, Domains, Servers и т.п.), там же переключается `Everyone` / `By Share`. Что даёт `Everyone` — [how-to/permissions.md](../how-to/permissions.md).
 
 ### Удаление vs деактивация юзера
 

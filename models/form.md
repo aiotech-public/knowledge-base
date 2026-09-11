@@ -6,7 +6,7 @@ doc_type: model
 builds: [erp, mtk]
 related: [sdk, forms, landing, placeholders, flow-model, visit-field, destination, conversion-model, custom-fields, glossary, ui-map]
 language: ru
-updated: 2026-08-12
+updated: 2026-08-26
 ---
 
 # Form (захват лида) — концепт (модель)

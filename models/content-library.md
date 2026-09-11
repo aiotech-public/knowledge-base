@@ -6,7 +6,7 @@ doc_type: model
 builds: [erp]
 related: [landings, custom-fields, placeholders, visit-field, flow-model, distributions-model, limits, landing, ui-map, destination, advertiser, campaign-defaults, glossary]
 language: ru
-updated: 2026-08-11
+updated: 2026-08-26
 ---
 
 # Content Library — концепт (модель)

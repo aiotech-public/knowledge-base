@@ -6,7 +6,7 @@ doc_type: model
 builds: [erp, mtk]
 related: [flow-model, visit-lifecycle, glossary, destination, tracker, postback-generator, source-trackers, debug-with-logs, business-model, distributions-model, notifications-flow, remarketing-campaigns, destinations, conversion-ai-testing, campaigns, meta-spend-allocation, sdk, api, metric, marketing-flow]
 language: ru
-updated: 2026-08-12
+updated: 2026-09-11
 ---
 
 # Модель конверсий в AIO
@@ -190,6 +190,12 @@ Slug типа конверсии работает вместо UUID во все�
 `{CLICK_ID}` = UUID визита AIO. Если в партнёрку слался `{{aio.visit.uuid}}` в `sub1`, то на их стороне `{CLICK_ID}` подставляется как `{sub1}`. В query-style `{CLICK_ID}` — это значение `visit_uuid`.
 
 В `arrived_revenue={revenue}` плейсхолдер `{revenue}` заменяется соответствующим плейсхолдером на стороне Destination (например, `{payout}`) или статическим значением. Собрать такую ссылку в UI, а не набирать руками, — [how-to/postback-generator.md](../how-to/postback-generator.md).
+
+### Партнёрка умеет слать постбэк только `POST`-ом — метод не важен
+
+Приёмник конверсий принимает постбэк и `GET`-ом, и `POST`-ом: у всех четырёх эндпоинтов приёма метод не ограничен. Параметры читаются одинаково из query-строки и из тела запроса, поэтому рекламодатель, который умеет отбивать только `POST` с параметрами в теле, настраивается без обходных путей — ссылка та же, менять в ней ничего не нужно.
+
+Это верно для всех трёх форматов постбэк-URL: path-style, query-style и `conversion-by-key`. То же и у постбэка на счётчик Destination (`/api/v1/trigger/conversion-by-destination-counter/...`).
 
 ### Рекламодатель не может переименовать свои параметры — формат `conversion-by-key`
 
@@ -466,8 +472,8 @@ https://<домен>/api/v1/trigger/conversion-by-key
 
 ## AIO Meta и потерянные косты — две причины
 
-AIO Meta атрибутирует по `FB Ad ID` (соответствие на уровне объявления). Две причины «потерянных» костов:
-1. Запуск без UTM-хвостика → нет привязки → косты не зальются.
+`Meta Spend` матчится с трафиком по Meta-идентификаторам визита на выбранном уровне матчинга: уровень переключается кнопкой `Meta Engine attribution level` (`Campaign` / `Adset` / `Ad`) в тулбаре таблицы, дефолт — `campaign`, выбор хранится в браузере; полный разбор аллокации и уровней — [mechanics/meta-spend-allocation.md](../mechanics/meta-spend-allocation.md). Две причины «потерянных» костов:
+1. Запуск без UTM-хвостика → в визите нет Meta-идентификаторов → привязки нет, косты не зальются.
 2. На FB-аккаунте кампании, которых нет в AIO (старые/сторонние) → нет соответствия.
 
 ## FB CAPI — что AIO отправляет в событии

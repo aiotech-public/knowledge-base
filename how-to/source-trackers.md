@@ -4,9 +4,9 @@ title: Sources / Trackers / Postbacks (How-to)
 description: Source Rewrites (UTM → slug), создание постбэк-трекеров, FB CAPI кастомные события, чтение логов трекеров.
 doc_type: how-to
 builds: [erp, mtk]
-related: [source, tracker, glossary, conversion-model, custom-fields, campaigns, sdk, placeholders, visit-lifecycle, debug-with-logs]
+related: [source, tracker, glossary, conversion-model, ui-map, custom-fields, campaigns, sdk, placeholders, ui-common, visit-lifecycle, debug-with-logs]
 language: ru
-updated: 2026-08-11
+updated: 2026-09-11
 ---
 
 # Sources / Trackers / Postbacks (How-to)
@@ -19,9 +19,9 @@ updated: 2026-08-11
 
 ## TL;DR
 
-- **Создать Source** — `Tracker → Sources → + Source` (зелёная кнопка). Сначала выбираете маркетинг-платформу (FB CAPI / Google Ads / TikTok …) → подгружается шаблон → правите `Name` и код источника в JSON.
+- **Создать Source** — `Tracker → Sources → + Source` (зелёная кнопка). Сначала диалог `Choose source template` — выбираете шаблон площадки (FB CAPI / Google Ads / TikTok …), затем в форме `Create source` правите `Name` и код источника.
 - **Source Rewrites** = маппинг входящего параметра ссылки на slug поля визита. `Tracker → Sources → <Source> → правый клик → Edit source` → ключ `rewrites` в JSON.
-- **Постбэк-трекер** создаётся в `Tracker → Trackers → +Add`. Обязательно указать Source-фильтр, тип конверсии, URL.
+- **Постбэк-трекер** создаётся в `Tracker → Trackers → + Tracker`. Обязательно указать Source-фильтр, тип конверсии, URL.
 - **FB CAPI кастомное событие** — в настройках FB CAPI трекера, поля `Custom Key` / `Custom Value`.
 - Логи отправки в FB CAPI — `Tracker → Trackers → ПКМ → Tracker logs`.
 
@@ -35,17 +35,29 @@ updated: 2026-08-11
 
 **Шаги:**
 
-1. Открывается поп-ап **Create Source** — сначала выбираете **маркетинг-платформу**, под которую делается Source (FB CAPI, Google Ads, TikTok и т.д.). Выбор платформы **подгружает преднастроенный Source** — ссылки и параметры уже разложены, с нуля ничего писать не нужно.
-2. Открывается окно редактора Source с полями:
+1. Открывается диалог **`Choose source template`** (`Выбор шаблона источника`) — выбираете шаблон площадки, под которую делается Source (FB CAPI, Google Ads, TikTok и т.д.). Шаблон **подгружает преднастроенный код источника** — ссылки и параметры уже разложены, с нуля ничего писать не нужно. Клик по карточке выбирает шаблон, двойной клик подтверждает сразу; кнопка **`Create source`** внизу диалога неактивна, пока шаблон не выбран.
+2. Открывается форма **`Create source`** с полями:
    - **`Name`** — имя источника.
    - **Структурированный редактор** с вкладками: **`Links`** — готовые ссылки для рекламного кабинета и их `Parameters` (маппинг URL-параметров на поля визита через плейсхолдеры), **`Rewrites`** — правила «ключ URL → slug поля», **`Replaces`**, **`Raw`** — сырой JSON источника целиком.
 3. `Confirm` — Source готов и доступен в `Campaigns → Link Generator`.
 
-> Тип источника при создании (`Facebook` / `Google UAC` / `Unknown`) **не несёт функциональной разницы** — разбивка только для удобства навигации и поиска. Также Source-ы можно создавать из быстрого меню на Dashboard (верхний-левый угол).
+> Отдельного «типа источника» в форме нет: под какую площадку заточен пресет, определяет выбранный шаблон — его ссылки, поля Link Generator и `rewrites` ([models/source.md](../models/source.md)). Source-ы создаются и из быстрого меню на Dashboard (верхний-левый угол) — открывается тот же диалог выбора шаблона. В ERP и MTK диалог одинаковый.
+
+### Как найти нужный шаблон в `Choose source template`
+
+Слева в диалоге — сайдбар категорий со счётчиком у каждого пункта, справа — карточки шаблонов.
+
+- **`All templates`** (`Все шаблоны`) — все шаблоны сразу; популярные вынесены наверх отдельной группой и в категориях ниже не повторяются.
+- **`Popular`** (`Популярные`) — шаблоны, помеченные звездой (тултип на звезде — `Popular template`); пункт появляется, только если помеченные шаблоны есть.
+- **Категории** — по алфавиту, за ними **`Other`** (`Другое`) для шаблонов без категории; `Other` показывается только рядом с настоящими категориями.
+
+Поиск в шапке списка мгновенный и **глобальный**: пока в строке есть запрос, выбранная слева категория выдачу не сужает, а ищет он по имени, описанию и категории шаблона. Клик по категории во время поиска очищает строку. Пусто по запросу — `No templates match your search`; в системе нет ни одного шаблона — `No source templates yet`; список не загрузился — `Couldn't load source templates` и кнопка `Retry`.
+
+Если в сайдбаре нет ни одной категории и остался единственный пункт `All templates` — это не поломка пикера: категории у шаблонов просто не проставлены, поэтому все они лежат одним списком.
 
 ### После создания Source — поля, расходы, постбэки
 
-Код источника **обязан содержать поля, заведённые в AIO под этот Source** — иначе параметры из tracking-ссылки не захватятся. Поля заводятся заранее в `Settings → Fields` (см. [how-to/custom-fields.md](custom-fields.md)).
+Код источника **обязан содержать поля, заведённые в AIO под этот Source** — иначе параметры из tracking-ссылки не захватятся. Поля заводятся заранее в `Settings → Fields` (см. [how-to/custom-fields.md](custom-fields.md)). Часть полей может приехать из самого шаблона: если в коде источника есть блок `fields`, AIO при сохранении Source заводит недостающие поля сам — механика и её ограничение в [models/source.md](../models/source.md).
 
 > Source может принимать **URL-параметры** (напр. CPC, tracking-плейсхолдеры рекламных платформ) через `rewrites` / JSON-конфиг и маппить их в поле `Cost` визита. Это **не** автоматический pullback расходов через Meta-интеграцию — тот работает на **уровне кампании** через `Cost Update Strategy` (см. [how-to/campaigns.md](campaigns.md)).
 
@@ -61,6 +73,10 @@ updated: 2026-08-11
   - Примеры полей в редакторе: `creative` (Creative, использует launcher), `fb_account_id` (Account ID, напр. `200000000002`), `fb_capi_token` (FB CAPI Token, `EAAd…`-токен из BM), `fb_pixel` (FB Pixel, напр. `1000000000000000`), плюс `fb_pixel_domain` как replace-параметр.
 - **`links`** — три варианта генерируемой ссылки: `FB Ad Short Link` (type `link`), `FB AD Parameters` (type `url_parameters` — добавляется к FB-объявлению как appendix с FB-макросами `{{ad.id}}`, `{{adset.id}}` и т.д.), `FB Ad Full Link` (type `link`, для теста).
 - **`settings`** / **`placeholders`** / **`rewrites`** — доп. настройки источника и маппинг URL→поля (см. ниже).
+
+### Флаг `luuid` у ссылки типа `link`
+
+У элемента `links` типа `link` есть булевый флаг `luuid`; во вкладке `Links` он показан тумблером `Use luuid`.
 
 ---
 
@@ -99,6 +115,8 @@ Source настраивается **JSON-конфигом** (поле `Source co
 
 **Экшены источника (правый клик):** `Edit source`, `Copy source`, `Source logs`, `Assign to folder`, `Source visits`, `Source conversions`, `Show sessions`, `Build Roll Up report`, `Share`, `Change ownership`, `Archive`.
 
+Правку можно открыть и без меню: иконка-карандаш у первой колонки строки открывает то же окно `Edit source` в один клик ([reference/ui-common.md](../reference/ui-common.md)).
+
 Также см. [mechanics/visit-lifecycle.md](../mechanics/visit-lifecycle.md) → как заполняются поля визита.
 
 ## Создать постбэк-трекер
@@ -112,7 +130,7 @@ Source настраивается **JSON-конфигом** (поле `Source co
 1. **Name** — имя трекера.
 2. **Sources** — для каких Source-ов трекер срабатывает (мульти-селект). **Обязательно**.
 3. **Conversion type** — тип конверсии (`Lead`, `Purchase`, `Push Subscribe`, кастомные из `Settings → Conversion types`).
-4. **Tracker type** — механизм отправки (полный список 9 типов — [models/tracker.md](../models/tracker.md)). **От типа зависят поля payload ниже.** Если у Source нет conversion API (как Facebook CAPI / TikTok Events API) — выбирают `HTTP Get`.
+4. **Tracker type** — механизм отправки (полный список 11 типов — [models/tracker.md](../models/tracker.md)). **От типа зависят поля payload ниже.** Если у Source нет conversion API (как Facebook CAPI / TikTok Events API) — выбирают `HTTP Get`.
 5. **Delay in seconds** — задержка перед отправкой (`No delay` / N секунд).
 6. `Confirm`. Вкл/выкл трекера — тоггл `Switch Activity` в редакторе (или экшен `Switch activity` правым кликом).
 
@@ -129,6 +147,26 @@ Source настраивается **JSON-конфигом** (поле `Source co
 В списке трекеров есть колонка **`Quality`** — ранний индикатор поломки отбивки без захода в логи; метрика применима ко всем типам трекеров (`HTTP Get`, CAPI, TikTok и т.д.). Механика и определение — [models/tracker.md](../models/tracker.md).
 
 Также см. [models/conversion-model.md](../models/conversion-model.md) → Conversion Types и постбэк-URL формат.
+
+### Поля payload `TikTok Events API` — `Price` и `Quantity`
+
+Цену и количество внутри товарной позиции события `TikTok Events API` задают поля payload **`Price`** и **`Quantity`** в настройках трекера. Оба принимают плейсхолдеры полей визита/конверсии, запятая как десятичный разделитель допустима.
+
+Пустое или нечисловое значение откатывается на дефолт — подсказки в самих полях об этом и говорят: `Leave blank to use conversion revenue` у `Price` (тогда цена = выручка конверсии) и `Leave blank to use 1` у `Quantity`; значение `Quantity` меньше 1 поднимается до 1. Сумму самого события TikTok получает из выручки конверсии независимо от `Price` — это поле её не подменяет.
+
+### Поля payload `ChatGPT Conversion API` — обязательные и `Event Type`
+
+Форма трекера не даст сохранить без четырёх полей: **`Pixel ID`**, **`API Key`**, **`Event Type`** и **`Click ID (oppref)`**.
+
+`Event Type` — обычное текстовое поле, но принимаются только тринадцать значений: `app_installed`, `app_opened`, `appointment_scheduled`, `checkout_started`, `contents_viewed`, `custom`, `items_added`, `lead_created`, `order_created`, `page_viewed`, `registration_completed`, `subscription_created`, `trial_started`. Любое другое значение — отправка падает, а допустимые перечислены в тексте ошибки в `Tracker logs`. Для `Event Type = custom` дополнительно обязательно **`Custom Event Name`**.
+
+Остальные поля payload: `Action Source` (по умолчанию `web`), `Browser Reference (obref)`, `Email Field` / `Phone Field` / `External ID`, `First Name` / `Last Name`, `City` / `Zip Code` / `Region`, `Revenue` / `Currency` / `Plan ID`, `Event Source Domain`, `Validate Only (test mode)`.
+
+### Поля payload `Bing Conversion API` — обязательные и имя события
+
+Обязательны три поля: **`UET Tag ID`**, **`CAPI Token`** и **`Event Name`**. В отличие от `ChatGPT Conversion API`, закрытого списка событий здесь нет — `Event Name` пишется произвольной строкой.
+
+Остальные поля payload: `Event Category` / `Event Label`, `MSCLKID Field`, `Anonymous ID Field`, `Email Field` / `Phone Field`, `Value` / `Currency`.
 
 ### Когда нужен отдельный трекер на каждое событие
 
@@ -196,7 +234,7 @@ Source настраивается **JSON-конфигом** (поле `Source co
 
 - [models/conversion-model.md](../models/conversion-model.md) — Conversion Types, формат постбэк-URL, обновление полей визита через `visit[<field>]=`.
 - [models/source.md](../models/source.md) — концепт-модель Source (suuid, rewrites, двунаправленность).
-- [models/tracker.md](../models/tracker.md) — концепт-модель Tracker (исходящая отбивка, 9 Tracker type, Retrigger trackers).
+- [models/tracker.md](../models/tracker.md) — концепт-модель Tracker (исходящая отбивка, 11 Tracker type, Retrigger trackers).
 - [mechanics/visit-lifecycle.md](../mechanics/visit-lifecycle.md) — как Source формирует визит, какие поля он пишет.
 - [how-to/campaigns.md](campaigns.md) — генерация ссылки, Lead Action и событие покупки.
 - [how-to/debug-with-logs.md](debug-with-logs.md) — чтение логов FB CAPI и Destination Handler.

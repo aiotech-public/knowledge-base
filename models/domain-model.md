@@ -4,9 +4,9 @@ title: Доменная модель AIO — карта сущностей и с
 description: Корневой спайн доменной модели. Что за сущности есть в AIO (Tenant, Campaign, Flow, Visit, Conversion, Destination, Distribution…) и как они сцеплены. Точка входа во все concept-слои.
 doc_type: model
 builds: [erp, mtk]
-related: [tenant, user, permissions-model, source, campaign, flow-model, visit, visit-lifecycle, visit-field, landing, sdk, form, content-library, landings, destination, advertiser, conversion-model, tracker, distributions-model, business-model, domain, server, architecture, marketing-flow, notifications-flow, metric, analytics, domains, glossary, placeholders, ui-map]
+related: [tenant, user, permissions-model, source, campaign, flow-model, visit, visit-lifecycle, visit-field, landing, sdk, form, content-library, landings, destination, advertiser, conversion-model, tracker, auto-rules, distributions-model, business-model, domain, server, architecture, marketing-flow, notifications-flow, metric, analytics, domains, glossary, placeholders, ui-map]
 language: ru
-updated: 2026-08-12
+updated: 2026-09-11
 ---
 
 # Доменная модель AIO — карта сущностей и связей
@@ -77,7 +77,7 @@ Flow — это граф: узлы (**Flow State**, «шаг») + рёбра (**
 - **Advertiser** — компания/сеть, кому отдаём лиды (платит Revenue); контейнер Destination-ов. → [models/advertiser.md](advertiser.md)
 - **Conversion** · **Conversion Type** — событие(я) по визиту из постбэка (Lead/Registration/Purchase…); привязка через `visit_uuid`. → [models/conversion-model.md](conversion-model.md)
 - **Tracker** (`Tracker → Trackers`) — исходящая отбивка конверсии наружу (FB CAPI / TikTok / HTTP Get…); ребёнок Source, реагирует на Conversion Type. → [models/tracker.md](tracker.md)
-- **Distribution** (8 типов) — rule-деревья: Payout/Revenue settings (деньги), Campaign/Flow content, Fill field, Direct traffic, Remarketing, `Message Templates` (шаблоны сообщений для ремаркетинг-рассылок). → [models/distributions-model.md](distributions-model.md)
+- **Distribution** (9 типов) — rule-деревья: Payout/Revenue settings (деньги), Campaign/Flow content, Fill field, Direct traffic, Remarketing, `Message Templates` (шаблоны сообщений для ремаркетинг-рассылок), `Auto Rules` (шаблон автоправил над Meta-сущностями; с визитом не работает, живёт в разделе `Automations`, только ERP → [how-to/auto-rules.md](../how-to/auto-rules.md)). → [models/distributions-model.md](distributions-model.md)
 - **Business Model** — формула расчёта Revenue/Payout (лист Finance-дерева). → [models/business-model.md](business-model.md) *(движок дерева — [models/distributions-model.md](distributions-model.md))*
 
 ### Фильтрация и антифрод: Filter, Traffic Filter, AIO Antifraud

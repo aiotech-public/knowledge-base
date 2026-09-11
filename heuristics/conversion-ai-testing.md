@@ -6,7 +6,7 @@ doc_type: heuristic
 builds: [erp, mtk]
 related: [metric, conversion-model, mechanics-pwa, landings]
 language: ru
-updated: 2026-08-11
+updated: 2026-08-26
 ---
 
 # Эвристики: Conversions AI и тестирование

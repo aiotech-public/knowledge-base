@@ -1,12 +1,12 @@
 ---
 id: destinations
 title: Destinations / Advertisers / Caps (How-to)
-description: Создание Advertiser-ов, Destination через By Advertiser / By Integration / Simple Redirect / Telegram, капы, PWA-destinations (AIO и сторонние сервисы).
+description: Создание Advertiser-ов, Destination через By Advertiser / By Integration / Simple Redirect / Telegram, капы, PWA-destinations (AIO и сторонние сервисы); что уезжает рекламодателю — реферер (Referrer-Policy no-referrer на любом ответе AIO, как отдать реферер параметром), `#` и списковые плейсхолдеры в URL Parameters; позиция пуша `#1` в списке Destinations.
 doc_type: how-to
 builds: [erp, mtk]
-related: [conversion-model, flow-model, push-notifications, glossary, user-fields, flow-editor, destination, notification-center, landings, user, mechanics-pwa, source-trackers, how-to-pwa, advertiser]
+related: [conversion-model, placeholders, flow-model, visit-lifecycle, how-to-pwa, push-notifications, glossary, ui-common, destination, user-fields, flow-editor, notification-center, landings, user, mechanics-pwa, source-trackers, advertiser]
 language: ru
-updated: 2026-08-11
+updated: 2026-09-11
 ---
 
 # Destinations / Advertisers / Caps (How-to)
@@ -34,20 +34,52 @@ updated: 2026-08-11
 
 **Путь:** `Settings → Advertisers → +Advertiser`.
 
-**Перед формой — выбор `Destination Type`.** По `+Advertiser` сначала открывается grid-выбор «Select a destination type to create advertiser»: плитки типов дестинейшна. Выбор плитки предвыбирает `Integration Type` будущего адвертайзера (значение из плитки подставляется в поле `Integration type` формы, шаг 3) — поэтому создать адвертайзер «в вакууме» без типа нельзя. После выбора плитки открывается собственно форма.
+**Перед формой — выбор `Destination Type`.** По `+Advertiser` сначала открывается grid-выбор «Select a destination type to create advertiser»: плитки типов дестинейшна. Выбор плитки предвыбирает `Integration type` будущего адвертайзера (значение из плитки подставляется в поле `Integration type` формы, шаг 3) — поэтому создать адвертайзер «в вакууме» без типа нельзя. После выбора плитки открывается собственно форма.
 
 **Шаги:**
 
 1. **Name** — имя (обязательно).
 2. **Advertiser type** — тип Advertiser (опционально, для группировки в UI; см. «Как сгруппировать Advertiser-ов по типу» ниже). Для адвертайзеров под обычные редирект-URL обычно `Offer`.
 3. **Integration type** (обяз.) — конкретная партнёрка/сеть из **большого каталога интеграций** (`AdCombo`, `Adbrt`, `Adpulse`, `Adw`, `Aff1`, `AffBay`, `AffGenius`, `AffScale`, … — десятки CPA/affiliate-сетей, каждая = свой постбэк/API-шаблон). Предвыбирается плиткой `Destination Type` (см. выше), в форме остаётся доступным. Помимо каталога есть значение **`Simple Redirect`** — для адвертайзеров под обычные редирект-URL без API. *(В UI 2026-06-06 поле называется `Integration type`; для raw-шаблонов вроде `Bridge`/`IREV` см. Destination → `By Integration`.)*
-4. **URL Parameters** — параметры адвертайзера; они **автоматически дописываются** к URL каждого Destination, созданного `By Advertiser` для этого адвертайзера (список AIO-плейсхолдеров — по иконке-шестиграннику).
+4. **URL Parameters** — параметры адвертайзера. Поле лежит в блоке `Settings` и есть только у `Integration type` = `Simple Redirect`; заданные в нём параметры **автоматически дописываются** к URL каждого Destination, созданного `By Advertiser` для этого адвертайзера (список AIO-плейсхолдеров — по иконке-шестиграннику).
 5. **Image** / **Logo** — опционально (для UI). Картинку можно загрузить **с компьютера** или выбрать из **Content Library**.
 6. `Save` / `Confirm`.
 
+### Параметр из `URL Parameters` не подставился в ссылку оффера
+
+Параметр из `URL Parameters` адвертайзера **не перезаписывает** одноимённый параметр, у которого в `Redirect URL` дестинейшена уже есть значение: то, что задано прямо в ссылке, сильнее. Правило склейки у адвертайзера с `Integration type` = `Simple Redirect`:
+
+- **Параметра с таким именем в ссылке нет** — пара дописывается в хвост URL.
+
+- **Параметр есть, но пустой** (`?click_id=` или `?click_id` вообще без знака равенства) — значение из `URL Parameters` его заполняет. Рабочий приём: оставить параметр в `Redirect URL` пустым, чтобы его подставил адвертайзер.
+
+- **Параметр есть и заполнен** — значение из `URL Parameters` пропускается, к рекламодателю уходит то, что стояло в ссылке.
+
+Если один и тот же ключ встречается в `Redirect URL` дважды, решение принимается по первому вхождению, а оба дубликата в ссылке остаются.
+
+Ведущие `?` и `&` и пробелы вокруг имени параметра в `URL Parameters` срезаются — вычищать их руками не нужно. Всё, что написано в `URL Parameters` после `#`, отбрасывается; собственный `#fragment` ссылки `Redirect URL` при этом сохраняется и остаётся в самом конце готового URL.
+
+### Часть параметров не доехала до рекламодателя — `#` внутри подставленного значения режет хвост `URL Parameters`
+
+Обрезка по `#` в `URL Parameters` происходит **после** подстановки плейсхолдеров, поэтому `#` внутри подставленного значения обрубает строку так же, как `#`, написанный руками: решётка в значении поля визита (ответ юзера в поле формы вроде `Promo #3`, значение, записанное в поле шагом `Fill Fields`) — и все пары `URL Parameters`, стоящие после этой, к рекламодателю не уезжают. Симптом: у части визитов в `destination_url` не хватает хвоста параметров, у остальных всё на месте.
+
+Лечится модификатором `{{...:urlencode}}` на плейсхолдере, в значение которого может попасть `#`: он уходит как `%23` и хвост остаётся целым. Синтаксис и полный список модификаторов — [reference/placeholders.md](../reference/placeholders.md).
+
+### Какие символы можно писать в именах параметров `URL Parameters`
+
+Имя параметра доезжает к рекламодателю тем же, каким его написали: точка идёт в URL как есть (`s2s.req_id=...` так и уходит `s2s.req_id=...`), пробел и квадратные скобки — в URL-кодировке (`%20`, `%5B`), которая на стороне получателя разворачивается обратно в исходное имя.
+
+Пары, которые уже стояли в `Redirect URL` и которых склейка не касалась, уходят байт-в-байт: `+`, готовые `%XX`-последовательности и неразвёрнутые `{{плейсхолдеры}}` не перекодируются. Дописанные и заполненные из `URL Parameters` пары, наоборот, собираются заново с URL-кодированием — поэтому `+` в значении, написанном в `URL Parameters`, уедет к рекламодателю как `%20`.
+
+### Плейсхолдеры дестинейшена в `URL Parameters`
+
+Помимо обычных `{{aio.visit.*}}` в `URL Parameters` работают три плейсхолдера уровня самого дестинейшена — `{{destination_domain}}`, `{{destination_human_id}}` и `{{destination_name}}`; их же перечисляет тултип поля. Где именно они разворачиваются, что подставляют и полный список плейсхолдеров — [reference/placeholders.md](../reference/placeholders.md).
+
+Списковые плейсхолдеры визита — `{{aio.visit.landing_human_ids}}`, `{{aio.visit.landing_uuids}}`, `{{aio.visit.landing_type_uuids}}`, `{{aio.visit.flow_uuids}}` — без модификатора уезжают целым JSON-массивом: `[309889]`, в URL это `%5B309889%5D` (а `{{aio.visit.query}}` — целым JSON-объектом). Чтобы отдать один элемент, ставится модификатор `{{aio.visit.landing_human_ids:json_array_first}}` (первый лэнд; есть `json_array_second` … `json_array_ninth`). Разбор модификаторов — [reference/placeholders.md](../reference/placeholders.md).
+
 ### Почему у разных Advertiser-ов разные поля (settings)
 
-**Набор полей формы Advertiser-а меняется под выбранную интеграцию** (`Integration type` / плитку `Destination Type`) — это не баг и не разные версии UI. У Advertiser-а есть блок настроек интеграции `settings` (json-схема): её поля **приходят от выбранной интеграции**, поэтому под `AdCombo`, `IREV`, `Simple Redirect` форма показывает разные поля. Общие поля (`Name`, `Advertiser type`, `URL Parameters`, `Image`) есть всегда; интеграционная часть — своя у каждой платформы.
+**Набор полей формы Advertiser-а меняется под выбранную интеграцию** (`Integration type` / плитку `Destination Type`) — это не баг и не разные версии UI. У Advertiser-а есть блок настроек интеграции `settings` (json-схема): её поля **приходят от выбранной интеграции**, поэтому под `AdCombo`, `IREV`, `Simple Redirect` форма показывает разные поля. Общие поля (`Name`, `Description`, `Tags`, `Advertiser type`, `Integration type`, `Image`) есть всегда; блок `Settings` — свой у каждой платформы, и `URL Parameters` — как раз его поле, объявленное интеграцией `Simple Redirect`.
 
 Конкретный набор полей под платформу — из её API-документации (как и у Destination `By Integration` — см. «Обязательные поля популярных интеграций» ниже).
 
@@ -87,13 +119,23 @@ Advertiser Types — группировка Advertiser-ов под одной к
 
 Для реального оффера — `By Advertiser` (редирект/ссылка) или `By Integration` (API) (см. эвристику в [models/conversion-model.md](../models/conversion-model.md)): аналитика по Advertiser и `Offer Visits` работают именно потому, что у `By Advertiser` есть Advertiser, которого у `Simple Redirect` нет.
 
-### Утечёт ли referrer на редиректе
+## Какой реферер уезжает рекламодателю — `Referrer-Policy: no-referrer` на любом ответе AIO
 
-**Реферер рекламной площадки на редиректе через `Destination` не передаётся.** Любой редирект, идущий через `Destination` (то есть через AIO-агент), отдаёт заголовок `Referrer-Policy: no-referrer`; это в силе для всех редирект-Destination без исключений: `Simple Redirect`, `By Advertiser` с редирект-URL, `By Integration`.
+**Реферер (referer / referrer, «откуда пришёл юзер») до рекламодателя не доезжает.** На любом редиректе через `Destination` (`301` по умолчанию и `302`) и на любом HTML, который отдаёт AIO, — лэнд, страница-прослойка, страница `Field verification` — стоит заголовок `Referrer-Policy: no-referrer`. Это в силе для всех типов Destination (`Simple Redirect`, `By Advertiser` с редирект-URL, `By Integration`) и для переходов с лэнда, включая переходы по JS: политику задаёт сам документ лэнда, поэтому браузер не шлёт `Referer` ни на клик по `{{link}}`, ни на `location.href` из скрипта. Настройки, которая это выключает, нет — заголовок ставится всегда.
 
-Передачу sub-параметров при желании убирают самостоятельно — из ссылки или из настроек Destination.
+На sub-параметры это не влияет: они уезжают параметрами URL / полями payload, и если передавать их не нужно — убираются из ссылки или из настроек Destination.
 
-Оговорка: кастомный JS-редирект в обход `Destination` AIO не трекает, и `Referrer-Policy` на нём не проставляется — но так путь строить не нужно: весь трафик идёт через `Destination` ради аналитики.
+### Safari игнорирует `Referrer-Policy` на 30x — когда нужна стратегия `Meta Refresh No Referer`
+
+Safari/WebKit не учитывает `Referrer-Policy` на 30x-ответах и на прямом редиректе без лэнда (визит уходит на оффер сразу) может дослать реферер входящего запроса. Если срез реферера нужен во всех браузерах, на шаге ставится `Redirect strategy` = `Meta Refresh No Referer` — вместо 30x визитёру отдаётся HTML-прослойка с политикой документа. Стратегии редиректа и на каких узлах они есть — [models/flow-model.md](../models/flow-model.md).
+
+### Рекламодателю нужен реферер — отдать его параметром `{{aio.visit.fields.referer}}` или `{{aio.visit.domain}}`
+
+Реферер, который AIO хранит на визите, — это реферер **первого захода**: заголовок `Referer` запроса, которым визит создался (площадка или страница, с которой пришёл клик). Он пишется один раз и по пути визита не меняется; на визите лежит дважды — колонкой `Referer` и системным полем `Referer` (slug `referer`) — разбор в [mechanics/visit-lifecycle.md](../mechanics/visit-lifecycle.md). Рекламодатель же под «реферером» обычно ждёт адрес страницы, с которой пришёл лид, — то есть домен лэнда. Отдаётся параметром `URL Parameters` / полем payload:
+
+- `{{aio.visit.fields.referer}}` — реферер захода (площадка). Отдельного `{{aio.visit.referer}}` нет — только через поле.
+
+- `{{aio.visit.domain}}` — домен визита; в примерах дестинейшенов из шаблона тенанта поле интеграции `referrer` (у интеграций, где оно есть) заполнено именно им.
 
 ## Destination типа Telegram (Telegram Destination)
 
@@ -156,6 +198,10 @@ https://t.me/<bot_username>?start={{aio.visit.uuid}}
 
 В таблице `Tracker → Destinations` нужный дестинейшн ищется строкой поиска по **имени, номеру или UUID**, либо отбирается кнопкой-фильтром **`Advertiser`**.
 
+### Кнопка `#1` над таблицей Destinations — у оффера нули, хотя лиды на него идут
+
+Метрики строки в `Tracker → Destinations` считаются **по позиции пуша**: жёлтая кнопка `#1` в блоке быстрых фильтров задаёт, за какую позицию в визите дестинейшн получает цифры, клик переключает `#1` → `#2` → `#1`. Позиция — это порядковый номер **успешного** пуша в визите (реджекты и повторный пуш в тот же дестинейшн позицию не добавляют), а не место ноды во флоу. Поэтому оффер, в который визиты уходят вторым пушем (после реджекта первого или вторым шагом `Destination`), при `#1` показывает нули — переключите на `#2`. Значение хранится в браузере и общее для списков Landings и Destinations; разбор кнопки и тулбара — [reference/ui-common.md](../reference/ui-common.md), как визит нумерует офферы — [models/destination.md](../models/destination.md).
+
 `Tracker → Destinations` → правый клик → **Edit destination**. Поля:
 
 - Name, Description, Tags, Countries, Languages.
@@ -179,7 +225,7 @@ https://t.me/<bot_username>?start={{aio.visit.uuid}}
 
 `Conversion Cap` — капа дестинейшена: лимит конверсий, после которого лиды на этот дестинейшн перестают уходить. **Путь:** `Tracker → Destinations → <D>` → правый клик → **`Edit conversion cap`**. Соседний экшен **`Reset cap`** обнуляет счётчик. На странице дестинейшенов MTK капов нет.
 
-Капа гейтит **исходящую доставку лида в получателя**: когда счётчик конверсий достигает лимита, новый пуш лида в дестинейшн не уходит — визит отправляется в fallback `Destination Full` (разбор — секция «Fallback при переполнении капы» этого дока). Приём входящих постбэков капа **не** блокирует — постбэк создаёт конверсию и инкрементит счётчик капы. Симптом «конверсия по офферу не растёт» смотри со стороны исходящего пуша (`Destination Full` / реджект получателя), а не приёма постбэка.
+Капа гейтит **исходящую доставку лида в получателя**: когда счётчик конверсий достигает лимита, новый пуш лида в дестинейшн не уходит — визит отправляется в fallback `Destination Full` (разбор — секция «Fallback при переполнении капы» этого дока). Так работает стратегия `When the cap is full` = `Reject traffic` — дефолт; при `Do nothing` капа только считает и трафик не режет (секция «`When the cap is full`» ниже). Приём входящих постбэков капа **не** блокирует — постбэк создаёт конверсию и инкрементит счётчик капы. Симптом «конверсия по офферу не растёт» смотри со стороны исходящего пуша (`Destination Full` / реджект получателя), а не приёма постбэка.
 
 ### Экшен `Reset cap` — что именно он обнуляет
 
@@ -189,16 +235,20 @@ https://t.me/<bot_username>?start={{aio.visit.uuid}}
 
 ### Как читать колонку `Conversions Cap` в таблице
 
-Колонка `Conversions Cap` в `Tracker → Destinations` собрана из четырёх элементов: иконка типа капы (календарь — `Daily`, флажок — `Lifetime`, знак бесконечности — `Infinity`; тултип на иконке — `Daily cap` / `Lifetime cap` / `Infinity cap`), шкала заполнения, числа `использовано / лимит` (тултипы `Used` и `Total cap`) и красный бейдж `+N` с числом отклонённых по капе (тултип `Rejected`).
+Колонка `Conversions Cap` в `Tracker → Destinations` собрана из четырёх элементов: иконка типа капы (календарь — `Daily`, флажок — `Lifetime`, знак бесконечности — `Infinity`; тултип на иконке — `Daily cap` / `Lifetime cap` / `Infinity cap`), шкала заполнения, числа `использовано / лимит` (тултипы `Used` и `Total cap`) и красный бейдж `+N` (тултип `Rejected`) — он рисуется только при ненулевом счётчике отклонённых по капе.
 
-Отклонённые вынесены отдельным бейджем, потому что места в капе они не занимают. У безлимитной капы числа расхода не выводятся вовсе — только иконка и нейтрально-полная шкала.
+У безлимитной капы числа расхода не выводятся вовсе — только иконка и нейтрально-полная шкала.
+
+### Бейджа `+N` нет, хотя лиды отбиваются по капе — счётчик отклонённых не растёт
+
+Счётчик отклонённых по капе, который стоит за бейджем `+N`, при реджекте по капе не увеличивается: пуш пишет реджект на визит, но счётчик дестинейшена не трогает. Поэтому у переполненного дестинейшена бейджа, как правило, нет, а `Reset cap` и полуночный сброс `Daily` обнуляют и так нулевое значение. Сколько лидов отбила капа, считается по визитам: в `Tracker → Visits` у них `Last Rejection Type` = `Cap` и `Last Rejection Reason` = `Conversion Cap is Full` ([models/destination.md](../models/destination.md)).
 
 ### Ограничения Cap — что не поддерживается и как считается
 
 - **Месячных кап нет** — период капы либо сутки (`Daily`), либо всё время жизни дестинейшена (`Lifetime`).
 - **Под-кап на один оффер под разных байеров — нет**.
 - Механика подсчёта и блокирующая логика кап — [models/conversion-model.md](../models/conversion-model.md).
-- При переполнении капы — алерт в Telegram назначенному `Cap Monitoring User` (доставка требует привязки аккаунта к Telegram, как у любого Monitoring User; 2FA через Google Authenticator привязку не даёт).
+- При переполнении капы со стратегией `Reject traffic` — алерт в Telegram назначенному `Cap Monitoring User` (доставка требует привязки аккаунта к Telegram, как у любого Monitoring User; 2FA через Google Authenticator привязку не даёт).
 
 ### Fallback при переполнении капы (Destination Full)
 
@@ -218,9 +268,9 @@ Fallback при переполнении — через `Destination Full` trans
 
 Счётчик при `Unlimited` не заморожен: если в капе выбран `Conversion type`, конверсии этого типа его увеличивают, а полуночный пересчёт обнуляет. Поэтому дестинейшн, переведённый с `Unlimited` на `Daily` или `Lifetime` среди дня, стартует не с нуля, а с расходом, накопленным с прошлой полуночи.
 
-### `Daily` — счётчик обнуляется в 0:00 UTC
+### `Daily` — счётчик обнуляется в полночь зоны `Reset timezone` (по умолчанию UTC)
 
-`Daily` — суточная капа: счётчик обнуляется раз в сутки по **UTC-полуночи**, а не по локальному времени (подсказка в диалоге — `The counter resets every day at midnight.`). Обнуление делает фоновый пересчёт вскоре после `00:00 UTC`, с лагом в несколько минут — механика подсчёта в [models/destination.md](../models/destination.md).
+`Daily` — суточная капа: счётчик обнуляется раз в сутки в полночь той таймзоны, что выбрана в поле `Reset timezone` диалога `Edit conversion cap` (подсказка в диалоге — `The counter resets every day at midnight.`, тултип поля — `Daily cap resets at local midnight of this timezone. Empty — UTC.`). Поле появляется только при `Cap type` = `Daily`, значение выбирается из списка таймзон, пустое (плейсхолдер `UTC (default)`) = полночь по UTC. Обнуление делает фоновый пересчёт, который идёт раз в пять минут, — то есть с лагом до нескольких минут после полуночи; механика подсчёта в [models/destination.md](../models/destination.md).
 
 Вместе со счётчиком обнуляется и число отклонённых по капе, и двигается дата начала периода.
 
@@ -232,14 +282,22 @@ Fallback при переполнении — через `Destination Full` trans
 
 ## Диалог `Edit conversion cap` — какие поля заполнять
 
-Диалог `Edit conversion cap` состоит из четырёх блоков:
+Диалог `Edit conversion cap` состоит из шести блоков:
 
 - **`Conversion type`** — обязательное поле: тип конверсии, который капа считает. Счётчик растёт **только** на конверсиях этого типа, конверсии других типов капу не расходуют.
 - **`Cap type`** — три кнопки выбора типа (`Unlimited` / `Daily` / `Lifetime`) с подсказкой под ними.
 - **`Limit`** (`Лимит`, плейсхолдер `Conversions allowed`) — числовой лимит.
+- **`Reset timezone`** — только при `Daily`: таймзона, по чьей полуночи обнуляется счётчик; пусто = UTC (секция «`Daily`» выше).
+- **`When the cap is full`** — две кнопки `Reject traffic` / `Do nothing` с подсказкой (секция ниже).
 - **`Current usage`** (`Текущий расход`) — шкала с числами «использовано / лимит» и кнопка сброса счётчика.
 
-При `Cap type = Unlimited` последние два блока скрыты: ограничивать и считать там нечего.
+При `Cap type = Unlimited` остаются только первые два блока: ограничивать, считать и выбирать стратегию там нечего.
+
+### `When the cap is full` — `Reject traffic` (дефолт) или `Do nothing`: капа только считает
+
+`When the cap is full` — что делать с трафиком, когда капа заполнена; дефолт и историческое поведение — `Reject traffic`. С ним при полной капе пуш в получателя не уходит, визит получает реджект с `Last Rejection Type` = `Cap` и уходит во флоу по переходу `Destination Full` (подсказка под кнопкой: `Traffic is not pushed to the advertiser: a reject conversion is spawned and the flow gets a Destination Full event — it can be routed to a fallback.`).
+
+`Do nothing` делает капу информативной: лиды продолжают уходить в получателя, счётчик просто растёт дальше (подсказка: `Traffic keeps going through — the cap only counts. Set up a notification rule for alerts.`). Про заполнение тогда узнают только из уведомления — правило по капе дестинейшена на вкладке `Tenant alerts` ([mechanics/notification-center.md](../mechanics/notification-center.md)); Telegram-алерт `Cap Monitoring User` о заполненной капе при `Do nothing` не шлётся, переход `Destination Full` не срабатывает, реджектов по капе на визитах нет.
 
 ### Что делает кнопка `Reset counter`
 
@@ -274,7 +332,7 @@ Fallback при переполнении — через `Destination Full` trans
 Если нужного PWA-сервиса нет среди дефолтных advertiser-ов, его можно добавить вручную.
 
 1. **Создать Advertiser Type** (если такого типа ещё нет): `Settings → Advertisers → стрелка у +Advertiser → Manage Types → +Advertiser Type`. Поля: `Name` (можно `PWA`), `Color`, `Icon`, `Description` и обязательно **`Metrics Event Group = PWA`** — без него метрики по PWA-полям не работают.
-2. **Создать Advertiser:** `+Advertiser` с `Advertiser Type = PWA`, `Integration Type = Simple Redirect`. Заполнить `Parameters Type` (параметры, что допишутся к Destination URL; список плейсхолдеров — по иконке-шестиграннику), `Logo`/`Description`/`Tags`.
+2. **Создать Advertiser:** `+Advertiser` с `Advertiser type` = `PWA`, `Integration type` = `Simple Redirect`. Заполнить `URL Parameters` (параметры, что допишутся к Destination URL; список плейсхолдеров — по иконке-шестиграннику), `Logo`/`Description`/`Tags`.
 3. **Создать Destination:** через `By Advertiser`, выбрав этот Advertiser (поля — как в списке выше).
 
 ### Как настроить постбэк-трекер для стороннего PWA-сервиса

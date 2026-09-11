@@ -6,7 +6,7 @@ doc_type: heuristic
 builds: [erp, mtk]
 related: [glossary, distributions-model, campaigns, source-trackers, sdk, forms, flow-model, landings]
 language: ru
-updated: 2026-07-03
+updated: 2026-08-26
 ---
 
 # Эвристики: Campaign Template и дефолты

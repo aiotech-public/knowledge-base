@@ -6,7 +6,7 @@ doc_type: how-to
 builds: [erp]
 related: [meta-ads, meta-spend-allocation, permissions]
 language: ru
-updated: 2026-08-11
+updated: 2026-08-26
 ---
 
 # Как в AIO смотрят рекламу Google Ads — модуль Google (кабинет Google Ads внутри платформы)

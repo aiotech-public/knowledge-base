@@ -4,9 +4,9 @@ title: Custom Fields (How-to)
 description: Создание полей визита в Settings → Fields — шесть значений Type, атрибуты и тогглы карточки поля, папки по Type и Group (вид зафиксирован), состав колонок и экшенов, массовые действия по выделению (With selection), пачка полей под интеграцию обогащения, Geo Code как select.
 doc_type: how-to
 builds: [erp]
-related: [visit-lifecycle, glossary, user-fields, forms, visit-field, sdk, landings, flow-model, placeholders, source-trackers, meta-spend-allocation, campaigns, analytics, permissions]
+related: [visit-lifecycle, glossary, user-fields, forms, source, visit-field, sdk, placeholders, landings, ui-common, flow-model, source-trackers, meta-spend-allocation, campaigns, analytics, permissions]
 language: ru
-updated: 2026-08-12
+updated: 2026-09-11
 ---
 
 # Custom Fields (How-to)
@@ -30,6 +30,8 @@ updated: 2026-08-12
 
 **Путь:** `Settings → Fields → +Field`.
 
+Часть полей появляется в тенанте без этой формы: если в коде источника есть блок `fields`, AIO при сохранении Source заводит недостающие поля сам, дедуплицируя по slug. Механика и её ограничение — [models/source.md](../models/source.md).
+
 ### Два режима создания — `Visit string field` vs `Create manually`
 
 При `+Field` система предлагает два режима:
@@ -39,7 +41,7 @@ updated: 2026-08-12
 
 ### Что выставлять в `Create manually` для типового строкового поля
 
-Для типового строкового поля визита в `Create manually` выставляют: `Type = Visit`, `Format = String`, `Data source = Agent Init`. `Type` и `Format` — **два раздельных select** (`Type` = сущность-владелец поля и неймспейс адресации — `Visit` / `Campaign` / `Source` / `Conversion` / `Landing` / `Destination`; для обычного поля визита это `Visit`; концепт и роутинг неймспейсов — [models/visit-field.md](../models/visit-field.md). `Format` = как хранить/показать + дефолт/formatter, select из ~20 значений — `String`/`Number`/`Boolean`/`Placeholder`/`Variant`/`Money`/`Phone`/`Ip`/… и др.); подробно — в шагах создания поля. `Is Visible` обычно on; `Is Macro Visible` — on только если поле читается на лэнде через AIO SDK (см. [reference/sdk.md](../reference/sdk.md)); `Is 2FA Protected` обычно off. Чтобы поле сразу было доступно как группер в отчётах — в `Availability as grouper` выбрать `Analytics` и `Tables` (см. секцию «Поле как группер» ниже). Если при создании `Is Visible` не включён, поле можно добавить в таблицы позже через `Presets → Table Settings`.
+Для типового строкового поля визита в `Create manually` выставляют: `Type = Visit`, `Format = String`, `Data source = Agent Init`. `Type` и `Format` — **два раздельных select** (`Type` = сущность-владелец поля и неймспейс адресации — `Visit` / `Campaign` / `Source` / `Conversion` / `Landing` / `Destination`; для обычного поля визита это `Visit`; концепт и роутинг неймспейсов — [models/visit-field.md](../models/visit-field.md). `Format` = как хранить/показать + дефолт/formatter, select из ~20 значений — `String`/`Number`/`Boolean`/`Placeholder`/`Variant`/`Money`/`Phone`/`Ip`/… и др.); подробно — в шагах создания поля. `Is Visible` обычно on; `Is Macro Visible` — on только если поле читается на лэнде через AIO SDK (см. [reference/sdk.md](../reference/sdk.md)); `Is 2FA Protected` обычно off. Чтобы поле сразу было доступно как группер в отчётах — в `Availability as grouper` выбрать `Analytics` и `Tables` (см. секцию «Поле как группер» ниже). Колонку поля в таблицах сущностей `Is Visible` не включает — её добавляют вручную через кнопку `Settings` в тулбаре таблицы → `Table settings` (секция «Поставил `Is Visible`, а колонки поля в таблице кампаний нет» этого документа).
 
 ### Какие атрибуты заполнять при создании поля
 
@@ -57,6 +59,7 @@ updated: 2026-08-12
 `Format` — не косметика: выбирает дефолт значения, formatter и тип плейсхолдера, а не только отображение. Список **не исчерпывающий** (~20 значений); грузонесущие:
 
 - `String` — строка (дефолт пусто); `Number` — число (дефолт `0`); `Boolean` — true/false.
+- `Url Encode` — для значений, которые приходят в URL-кодировке: хранится и подставляется в плейсхолдеры как обычная строка, отличие только в таблицах — ячейка показывает значение раскодированным и копируется в один клик; иконка `#` в заголовке такой колонки переключает на исходную, закодированную запись (тултип `Click to show original` / `Click to show decoded`). Кодировать значение при подстановке в URL этот формат не заставляет — для этого есть модификатор `:urlencode` ([reference/placeholders.md](../reference/placeholders.md)).
 - `Placeholder` — поле-плейсхолдер (используется в Content Library).
 - `Variant` — часто для `LP_*` сплитов; для поля под **Split Key** контент-сплитов `Format = Variant`, slug вставляется в `Split Key` лэнда, бэкфилла нет ([how-to/landings.md](landings.md) → Content Splits).
 - `Money`, `Percentage`, `Time Seconds`, `Progress Number` — числовые (дефолт `0`).
@@ -66,13 +69,23 @@ updated: 2026-08-12
 ### Тогглы поля (`Is Registry`, `Is Macro Visible`, `2FA Protected`) и `Available Values`
 
 7. **Атрибуты** (toggle):
-   - **`Is Visible`** — отображать в UI визита.
+   - **`Is Visible`** (в форме поля — `Is visible?`) — показывать колонку поля по умолчанию, тултип `Visibility by default at columns etc`. Работает не на всех таблицах — секция «Поставил `Is Visible`, а колонки поля в таблице кампаний нет» этого документа.
    - **`Is Registry`** — поле хранит секвенцию значений (история всех записей `1,2,3...`); если выключено — каждый постбэк перезаписывает.
    - **`Is Macro Visible`** — поле доступно через объект `aio` на лэнде (JS-доступ в рантайме, не плейсхолдеры).
    - **`2FA Protected`** — значение скрыто в UI без 2FA-кода (для phone, email).
 
 8. **Available Values** — если поле должно быть select: список значений (секция «Geo Code как select (Available Values)» этого документа).
 9. `Save`.
+
+### Поставил `Is Visible`, а колонки поля в таблице кампаний нет
+
+**Флаг `Is Visible` кладёт колонку поля по умолчанию только в событийные таблицы — `Tracker → Visits` и `Tracker → Conversions`. В таблицах сущностей (`Tracker → Campaigns`, `Tracker → Sources`, `Tracker → Destinations`, `Content → Landings`) колонки пользовательских полей скрыты по умолчанию независимо от флага** — нужную добавляют настройкой колонок — кнопка `Settings` в тулбаре таблицы (при выбранном пресете на ней стоит имя пресета) → `Table settings` ([reference/ui-common.md](../reference/ui-common.md)).
+
+В MTK так же: колонки полей скрыты по умолчанию на вкладках `Campaigns`, `Sources`, `Destinations` и `Landings`, а на `Visits` и `Conversions` их по-прежнему включает `Is Visible` поля.
+
+В `Tracker → Sources` (и в MTK `Sources`) по умолчанию скрыты ещё и служебные колонки `Access type`, `Owner` и `Shares` — они включаются там же.
+
+Значение поля от этого никуда не девается: оно записано на визите и читается плейсхолдером ([reference/placeholders.md](../reference/placeholders.md)), скрыта только колонка.
 
 ### `Type = Campaign` — тоже поле визита, дефолт из кампании
 

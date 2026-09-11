@@ -1,12 +1,12 @@
 ---
 id: ui-map
 title: Карта интерфейса AIO (где что лежит)
-description: Полная карта навигации app.aio.tech — топ-меню (Dashboard/Tracker/Content/Marketing/Finance/Tech/Meta/Analytics/Settings), подразделы каждого, меню профиля (Billing, смена тенанта, Manage tenant). Чтобы быстро находить нужный раздел.
+description: Полная карта навигации app.aio.tech — топ-меню (Tracker/Content/Marketing/Finance/Tech/Automations/Meta/Analytics/Settings; Dashboard из меню убран, но остаётся стартовой страницей), подразделы каждого, меню профиля (Billing, смена тенанта, Manage tenant). Чтобы быстро находить нужный раздел.
 doc_type: reference
 builds: [erp, mtk]
-related: [postback-generator, landing, sdk, remarketing-campaigns, meta-ads, google-ads, events-exporter, live-pulse, session-analytics, registration, glossary, permissions-model, debug-with-logs, custom-fields, api, ui-common, profile-settings, placeholders]
+related: [postback-generator, landings, analytics, landing, sdk, remarketing-campaigns, auto-rules, meta-ads, google-ads, events-exporter, live-pulse, session-analytics, registration, source-trackers, glossary, permissions-model, debug-with-logs, custom-fields, api, ui-common, profile-settings, placeholders]
 language: ru
-updated: 2026-08-12
+updated: 2026-09-11
 ---
 
 # Карта интерфейса AIO (где что лежит)
@@ -19,7 +19,7 @@ updated: 2026-08-12
 
 ## Где смотреть Dashboard и что на нём отображается — `/app/dashboard`
 
-Dashboard — сводка по тенанту. Раскладка кастомизируется под вас.
+Dashboard — сводка по тенанту, раскладка кастомизируется под вас. **Пункта `Dashboard` в верхнем меню нет** — как и в билдах MTK и AFF. Страница осталась стартовой: корень кабинета ведёт на `/app/dashboard`, туда же попадают сразу после регистрации, и адрес открывается напрямую.
 
 - **Верхняя панель** — ключевые метрики: визиты лэндов, лиды, конверсии, Revenue$, ROI% (набор метрик зависит от настройки тенанта).
 - **Средняя панель** — инфографика по тем же показателям: **Performance-чарт** (динамика метрик из верхней панели за выбранный период, можно переключать отображаемую метрику) + боковой чарт с переключателем **Campaigns ↔ Sources**.
@@ -52,7 +52,7 @@ Content — раздел для управления лэндами, креат�
 
 ### Где находятся лэнды, PWA-шки и макросы — Landings, PWA и Macros
 
-- **Landings** `/landers` — лэнды в режиме `Editor`. В MTK Landings доступны как отдельная вкладка верхнего меню (`/app/mtk/landers-creatives/landers`).
+- **Landings** `/landers` — лэнды в режиме `Editor`. В MTK Landings доступны как отдельная вкладка верхнего меню (`/app/mtk/landers-creatives/landers`). Слева в шапке таблицы — переключатель типов лэндов (по умолчанию `All`, в меню `All types` и список типов): выбранный тип сужает список до лэндов этого типа и переводит колонки метрик на роль-группер `LP: <Тип>` вместо позиции `#N`; выбор запоминается в браузере. Разбор — [how-to/landings.md](../how-to/landings.md), роль-групперы — [how-to/analytics.md](../how-to/analytics.md).
 - **PWA** `/pwa` — лэнды в режиме `PWA` (только ERP; пункт закрыт правом `content.landings.view`). Разделение по режиму лэнда навязано: на `Landings` видны только лэнды режима `Editor`, на `PWA` — только режима `PWA`, переключить или снять этот фильтр в интерфейсе нельзя ([models/landing.md](../models/landing.md)).
 - **Macros** `/macros` — макросы (в т.ч. `AIO SDK Macros Collection`, см. [reference/sdk.md](sdk.md)). В MTK Macros перенесены в `Settings → Macros`, см. *Как устроен MTK-вид AIO: навигация, пресеты из шаблона и методы под типовые задачи*.
 
@@ -96,6 +96,23 @@ Tech — инфраструктура: серверы, домены, прокс�
 - **DNS providers** `/dns-providers`, **Domain providers** `/domain-providers`, **Server providers** `/server-providers`, **Proxy providers** `/proxy-providers` — провайдеры.
 - **Domain checkers** `/domain-checkers` — чекеры доменов (бан/репутация).
 - **Deployments** `/deployments` — деплои.
+
+## Где лежат автоправила над Meta — Automations `/app/automations`
+
+Automations — раздел автоправил над сущностями Meta: движок сам считает метрики кампании, адсета или объявления и сам делает то, что делают руками экшенами `Start`, `Stop`, `Change budget`. Только ERP; в главном меню пункт стоит между `Tech` и `Analytics`. Полный список вердиктов правила и как повесить его на сущности — [how-to/auto-rules.md](../how-to/auto-rules.md).
+
+- **Status** `/app/automations/status` — обзор движка по тенанту: KPI-полоса, счётчик `Pending approvals`, список ассайнов с временем прогонов и кнопкой `Live check`. Дефолтный экран раздела.
+- **Assignments** `/app/automations/assignments` — ассайны: какой шаблон правил на каком скоупе Meta-сущностей работает.
+- **Rule Templates** `/app/automations/auto-rules` — таблица шаблонов правил.
+- **History** `/app/automations/actions` — журнал вердиктов и очередь апрувов; заголовок страницы — `Auto Rules Log`, в подменю она отделена разделителем от трёх настроечных страниц.
+
+### Что открывается по клику на `Automations` и почему пункта может не быть в меню
+
+Клик по пункту `Automations` открывает последнюю посещённую страницу раздела, а при первом заходе — первую доступную по правам, начиная со `Status`. Сам пункт показывается по любому из трёх прав: `automation.templates.view`, `automation.assignments.view`, `automation.actions.view`. Роль, у которой есть только `automation.status.view`, пункта в меню не увидит, хотя страница `/app/automations/status` открывается по прямой ссылке ([how-to/auto-rules.md](../how-to/auto-rules.md)).
+
+### Где правится дерево фаз и правил — `Rule Template Tree` `/app/automations/auto-rules/tree`
+
+Дерево шаблона автоправил правится на отдельной странице `/app/automations/auto-rules/tree` — своего пункта в подменю раздела у неё нет. Открывается она из таблицы `Rule Templates`, требует право `automation.templates.edit`, ссылка возврата подписана `Rule Templates`. Ноды дерева — `Phase` в корне и `Auto Rule` внутри фазы; что из них собирается — [how-to/auto-rules.md](../how-to/auto-rules.md).
 
 ## Где находятся Facebook-аккаунты и рекламные кампании Meta — `/app/facebook`
 
@@ -156,7 +173,7 @@ Settings — настройки тенанта. Состав подраздел�
 
 ### Какие подразделы Settings доступны только в ERP
 
-- **Distributions** `/distributions` — все Distributions (Direct Traffic / Campaign Content / Fill Field / Flow Content / Remarketing Content / Revenue и т.д.). Страница показана раскрывающимися папками по типу дистрибуции — переключателя на плоскую таблицу нет.
+- **Distributions** `/distributions` — все Distributions (Direct Traffic / Campaign Content / Fill Field / Flow Content / Remarketing Content / Revenue и т.д.). Страница показана раскрывающимися папками по типу дистрибуции — переключателя на плоскую таблицу нет. Шаблоны автоправил лежат здесь же папкой типа `Auto Rules`, но своя страница у них в разделе `Automations` ([how-to/auto-rules.md](../how-to/auto-rules.md)).
 - **Fields** `/fields` — поля визита (custom fields). Страница выглядит не плоской таблицей, а раскрывающимися папками по `Type` и `Group`; вернуться к плоскому виду нельзя — переключателя вида на странице нет ([how-to/custom-fields.md](../how-to/custom-fields.md)).
 - **Forms** `/forms` — настройки SDK-форм (поля, Required, min/max).
 - **Conversion types** `/conversion-types` — типы конверсий.
@@ -191,7 +208,7 @@ Settings — настройки тенанта. Состав подраздел�
 ## Смежные темы
 
 - [reference/glossary.md](glossary.md) — что значит каждая сущность из меню.
-- [reference/ui-common.md](ui-common.md) — общий UI таблиц (тулбар, Presets/Table settings, общие right-click экшены, Share).
+- [reference/ui-common.md](ui-common.md) — общий UI таблиц (тулбар, кнопка `Settings` → `Table settings` и пресеты, кнопка правки прямо в строке, общие right-click экшены, Share).
 - [reference/profile-settings.md](profile-settings.md) — детали пункта `Profile settings` (вкладки Profile/Appearance: поля, форматы, опции).
 - [reference/sdk.md](sdk.md) — `Content → Macros` → AIO SDK Macros Collection.
 - [reference/placeholders.md](placeholders.md) — плейсхолдеры (пункт `Placeholders` в меню профиля).

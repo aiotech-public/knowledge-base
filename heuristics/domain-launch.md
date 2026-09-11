@@ -6,7 +6,7 @@ doc_type: heuristic
 builds: [erp, mtk]
 related: [domains, flow-model, landings, distributions]
 language: ru
-updated: 2026-08-12
+updated: 2026-08-26
 ---
 
 # Эвристики: запуск и защита домена

@@ -4,9 +4,9 @@ title: Remarketing Campaigns — рассылки по собранной ауд
 description: Канон рассылки в AIO — remarketing-кампания (тип кампании Notifications) — чем отличается от трафиковой, отдельные права marketing.campaigns.*, триггеры Schedule и Conversion и почему стоящий по умолчанию Manual не запускает ничего, семь сущностей привязки аудитории и три экрана, где привязка не сохраняется, два числа колонки Audience и почему RMK Audience — история, прогоны и статусы, режим Seeding без запусков, семь причин скипа, блок Sending rules с платформенными дефолтами лимитов, серия Drip schedule и где на самом деле живёт Stop conversion, эталонный сетап, метрика Remarketing count, колонки RMK у визита и как собрать CTR/open-rate формулой. Только ERP.
 doc_type: how-to
 builds: [erp]
-related: [marketing-flow, campaign, permissions-model, permissions, distributions-model, distributions, notifications-flow, conversion-model, how-to-pwa, visit-lifecycle, user-fields, debug-with-logs, metric, analytics, visit, push-notifications]
+related: [marketing-flow, campaign, permissions-model, permissions, distributions-model, distributions, notifications-flow, conversion-model, how-to-pwa, visit-lifecycle, user-fields, debug-with-logs, metric, analytics, ui-common, visit, push-notifications]
 language: ru
-updated: 2026-08-26
+updated: 2026-09-11
 ---
 
 # Remarketing Campaigns — рассылки по собранной аудитории визитов
@@ -123,7 +123,9 @@ Remarketing Campaign — кампания, которая не принимае�
 
 **Кампания сама по себе пуста: создал — аудитории нет.** Она набирается не запросом внутри кампании, а пометкой кампании на сущностях, через которые идёт трафик.
 
-В карточке такой сущности есть блок `Remarketing campaigns` с кнопкой `Add campaign` (`No campaigns added yet` — пусто, `All available campaigns are already added` — добавлять нечего, `Remove campaign` — снять строку). В пикер попадают только кампании типа `Notifications`; архивные в нём не предлагаются, но уже добавленные из набора не пропадают.
+В карточке такой сущности есть блок привязки с кнопкой `Add campaign` (`No campaigns added yet` — пусто, `All available campaigns are already added` — добавлять нечего, `Remove campaign` — снять строку). В пикер попадают только кампании типа `Notifications`; архивные в нём не предлагаются, но уже добавленные из набора не пропадают.
+
+Ориентир на экране — именно кнопка `Add campaign`, а не заголовок: в карточке трафиковой кампании, в диалоге лендинга и в PWA-билдере блок рисуется без подписи. Заголовок `Remarketing campaigns` над блоком остался в карточках `Source`, `Destination`, `Advertiser`, `Lander Type`, в диалоге флоу, в генерации лендинга и в диалоге загрузки ZIP.
 
 Блок есть только в ERP-билде. На самой remarketing-кампании его нет, у флоу он показан только для флоу типа `Campaigns` — ни на `Notifications`, ни на `SubFlow` его нет.
 
@@ -339,7 +341,7 @@ Remarketing Campaign — кампания, которая не принимае�
 
 Каналы в таблицах подписаны `WebPush`, `Telegram`, `SMS`, `Email`, но рассылка remarketing-кампании реально уходит пушами: серия `Drip schedule` шлёт только push. **SMS и email не отправляются вообще, и отказ молчаливый** — ни записи в логе рассылки, ни события `Sent` / `Failed` по ним не появится. Механика каналов — [mechanics/notifications-flow.md](../mechanics/notifications-flow.md).
 
-### Какие группировки есть на вкладке `Remarketing`
+### Какие группировки есть на страницах раздела `Remarketing`
 
 Группировок девять, в двух группах:
 
@@ -347,6 +349,15 @@ Remarketing Campaign — кампания, которая не принимае�
 - группа **`Time`** — `Day`, `Hour`, `Month`, `Year`.
 
 Это **отдельный namespace** аналитики — в Roll Up трекера эти группировки недоступны (устроено как у Meta-группировок). Группировки, у которых нет своей страницы-сущности, открываются на странице `Remarketing → Other`. Как читать отчёты вообще — [how-to/analytics.md](analytics.md).
+
+### Фильтр или группировка по рассылке на трекерной странице не применяется
+
+Событийные группировки раздела `Remarketing` — `Campaign`, `Flow`, `Templates`, `Channel`, `Send Result` из группы `Remarketing` и `Day` / `Hour` / `Month` / `Year` из группы `Time` — работают только на страницах раздела `Remarketing`. Если такой ключ всё-таки приехал на трекерную страницу — старым пресетом или пресетом, полученным кодом от коллеги, — исход зависит от того, где он стоит:
+
+- **фильтром в трекерной таблице** ключ отбрасывается **молча**: ни ошибки, ни пометки, таблица просто показывает неотфильтрованные данные. Отсюда симптом «в пресете фильтр по рассылке есть, а цифры как без фильтра»;
+- **группировкой в конструкторе графиков** график не строится и отдаёт ошибку `invalid_group`.
+
+Позиционных `RMK`-группировок трекера (`RMK Audience #1`…`#3`, `RMK Campaign #1`…`#3` и ещё пять таких же категорий) это не касается: они читают колонки визита и на трекерных страницах фильтруются и группируются как всегда. Лечится так: разбивку по рассылкам собирать на страницах раздела `Remarketing`, а из трекерного пресета событийный ключ убрать. Каталог групперов — [how-to/analytics.md](analytics.md), как устроены пресеты таблиц — [reference/ui-common.md](../reference/ui-common.md).
 
 ### Что видно по визиту — колонки `RMK`
 

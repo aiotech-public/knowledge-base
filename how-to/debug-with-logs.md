@@ -4,9 +4,9 @@ title: Debug с логами AIO (How-to)
 description: Settings → Logs, дропдаун Namespace (Destination Handler, Tracker, Traffic Filter, Conversions, Remarketing и др.), Loggable UUID, Show Logs (JSON-снапшоты + Domain logs), debug JSON визита, 2FA для нотификаций.
 doc_type: how-to
 builds: [erp, mtk]
-related: [visit-timeline, remarketing-campaigns, domains, tracker, landings, architecture, conversion-model]
+related: [visit-timeline, ui-common, remarketing-campaigns, domains, tracker, landings, architecture, conversion-model]
 language: ru
-updated: 2026-08-12
+updated: 2026-09-11
 ---
 
 # Debug с логами AIO
@@ -37,9 +37,9 @@ updated: 2026-08-12
 
 Рядом в контекстном меню — **`Visit timeline`**: та же диагностика визита, но как хронология событий (какие поля когда и на что менялись, какие конверсии заспавнились, в какие Destination визит попал). Разбор — [how-to/visit-timeline.md](visit-timeline.md).
 
-## Как открыть логи компонента — Presets → Table Settings → Namespace
+## Как открыть логи компонента — кнопка Settings → Table settings → Namespace
 
-Когда нужно посмотреть логи конкретного компонента (Destination Handler / Traffic Filter / Tracker): **`Settings → Logs` → справа `Presets` → `Table Settings` → выбрать `Namespace` (например, `Destination Handler`) → `Apply`.**
+Когда нужно посмотреть логи конкретного компонента (Destination Handler / Traffic Filter / Tracker): **`Settings → Logs` → справа над таблицей кнопка `Settings` (если выбран пресет — на ней стоит его имя) → пункт `Table settings` → выбрать `Namespace` (например, `Destination Handler`) → `Apply`.** Как устроены настройки таблицы и пресеты — [reference/ui-common.md](../reference/ui-common.md).
 
 **Дропдаун `Namespace` перечисляет все неймспейсы системы — их больше двух десятков, закрытым списком из четырёх он не ограничен.** Ходовые в разборах:
 
@@ -51,11 +51,11 @@ updated: 2026-08-12
 
 Нужного типа логов в этом списке нет — открой дропдаун целиком: у подсистем есть собственные неймспейсы помимо перечисленных.
 
-**Фильтрация по сущности (Presets):** ввести UUID сущности (Visit, Conversion, а для логов рассылки — сообщения) в поле `Loggable UUID` + выбрать `Namespace` — останутся только логи этой сущности. Под задачу: `Destination Handler` — ошибка пуша в Destination; `Conversions` — логи по конверсиям.
+**Фильтрация по сущности (`Table settings`):** ввести UUID сущности (Visit, Conversion, а для логов рассылки — сообщения) в поле `Loggable UUID` + выбрать `Namespace` — останутся только логи этой сущности. Под задачу: `Destination Handler` — ошибка пуша в Destination; `Conversions` — логи по конверсиям.
 
 ### Где кнопка Severity (Debug / Info / Success / Warning / Error)
 
-**`Severity` — кнопка рядом с фильтром, а не внутри `Presets`.** Уровни: Debug / Info / Success / Warning / Error. Для максимума деталей выбирайте `Debug` — на этом уровне видны ответы интеграций и вся отладочная информация по визиту. Уровень работает вместе с остальными фильтрами — например, с `Loggable UUID`, когда разбираете один конкретный визит.
+**`Severity` — отдельная кнопка рядом с фильтром, а не пункт внутри `Table settings`.** Уровни: Debug / Info / Success / Warning / Error. Для максимума деталей выбирайте `Debug` — на этом уровне видны ответы интеграций и вся отладочная информация по визиту. Уровень работает вместе с остальными фильтрами — например, с `Loggable UUID`, когда разбираете один конкретный визит.
 
 ### Поле Message пустое или скрыто — нужен 2FA-код
 
@@ -93,9 +93,9 @@ updated: 2026-08-12
 
 1. Перейти `Tracker → Visits`.
 2. Найти нужный визит (через фильтр по дате / гео / Source).
-3. Добавить колонку `UUID` через `Presets → Table Settings` (если её нет) → копировать значение.
+3. Добавить колонку `UUID` через кнопку `Settings` → `Table settings` (если её нет) → копировать значение.
 4. Перейти `Settings → Logs`.
-5. Сбросить **дефолтные фильтры** (важно — иначе UUID-фильтр не сработает).
+5. Сбросить **дефолтные фильтры** (важно — иначе UUID-фильтр не сработает): пункт `Reset settings` в меню кнопки `Settings` снимает фильтры, пресет, сортировку и порядок колонок разом (период дат не трогает).
 6. Добавить фильтр **`Loggable UUID = <UUID визита>`**.
 7. Поставить **Log Level = `Debug`**.
 8. Авторизоваться через **2FA** (требуется для просмотра логов).

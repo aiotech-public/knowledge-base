@@ -6,7 +6,7 @@ doc_type: how-to
 builds: [erp, mtk]
 related: [registration, server, domains, destinations, landings, campaigns, source-trackers, visit-lifecycle, conversion-model, ai-chat]
 language: ru
-updated: 2026-08-11
+updated: 2026-08-26
 ---
 
 # Подсказки в интерфейсе — чеклист запуска и туры по страницам

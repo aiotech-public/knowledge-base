@@ -1,12 +1,12 @@
 ---
 id: metric
 title: Metric / Custom Metric — концепт (модель)
-description: Что такое Metric в AIO как сущность — настраиваемый числовой показатель-колонка в отчётах аналитики; 4 типа (Conversions count = штуки, Remarketing count = события рассылок, Computable = формула, Data feed = фид событий; деньги = Data feed + source Conversions By Type Revenue/Payout), адресация по UUID, ось всех отчётов; Remarketing count считает события отправок, а не визиты (Delivered/Opened только у пушей remarketing-кампании, по SMS/Email событий не бывает вовсе), заводится руками и правится диалогом Edit data feed metric под правом settings.metrics.edit.data-feed; процент по рассылкам (CTR/open-rate) — формула над Remarketing count, и на страницах раздела Marketing (рассылки) видны только такие метрики и формулы целиком над ними; список метрик в Settings → Metrics — папками, два вида Groups / Order, колонка Definition (из чего метрика собрана), порядок перетаскиванием в Order под правом settings.metrics.edit. Концепт; где и как используются метрики — how-to/analytics.md.
+description: Что такое Metric в AIO как сущность — настраиваемый числовой показатель-колонка в отчётах аналитики; 4 типа (Conversions count = штуки, Remarketing count = события рассылок, Computable = формула, Data feed = фид событий; деньги = Data feed + source Conversions By Type Revenue/Payout), адресация по UUID, ось всех отчётов; Remarketing count считает события отправок, а не визиты (Delivered/Opened только у пушей remarketing-кампании, по SMS/Email событий не бывает вовсе), заводится руками и правится диалогом Edit data feed metric под правом settings.metrics.edit.data-feed; процент по рассылкам (CTR/open-rate) — формула над Remarketing count, и на страницах раздела Marketing (рассылки) видны только такие метрики и формулы целиком над ними; список метрик в Settings → Metrics — папками, два вида Groups / Order, колонка Definition (из чего метрика собрана), порядок перетаскиванием в Order под правом settings.metrics.edit; на вкладках Meta → Campaigns / Ad Sets / Ads колонок Meta Spend / Meta Impressions / Meta Inline Link Clicks нет — скрыты как дубли нативных Meta Insights (Total Spend / Impressions / Clicks), сами метрики считаются. Концепт; где и как используются метрики — how-to/analytics.md.
 doc_type: model
 builds: [erp]
-related: [analytics, conversion-model, visit-field, custom-fields, remarketing-campaigns, debug-with-logs, permissions-model, glossary, api, visit-lifecycle, campaigns, conversion-ai-testing, ui-map]
+related: [analytics, conversion-model, visit-field, custom-fields, remarketing-campaigns, debug-with-logs, permissions-model, meta-spend-allocation, glossary, api, visit-lifecycle, campaigns, conversion-ai-testing, ui-map]
 language: ru
-updated: 2026-08-11
+updated: 2026-09-11
 ---
 
 # Metric / Custom Metric — концепт (модель)
@@ -81,6 +81,12 @@ updated: 2026-08-11
 - **`Main for`** (select) — служебное поле механизма approximation (`Approximate metrics` — пропорция от более полной метрики).
 - **`Hidden at groupers`** (multi-select) — список групперов, при разбивке по которым колонка метрики **скрывается**. Объясняет практику «метрика в списке есть, а в конкретной разбивке колонки нет»: при чтении отчёта проверь `Hidden at groupers` метрики, прежде чем считать колонку пропавшей.
 - **`Categories`** (multi-select) — теги-категории метрики; справочник категорий **per-tenant**. Служит для группировки/фильтрации метрик в списке.
+
+## На вкладках `Meta` нет колонки `Meta Spend` / `Meta Impressions` / `Meta Inline Link Clicks` — это не `Hidden at groupers`
+
+На страницах Meta-модуля `Meta → Campaigns`, `Ad Sets` и `Ads` трекерные метрики `Meta Spend`, `Meta Impressions` и `Meta Inline Link Clicks` в набор колонок не выводятся: они дублируют нативные инсайт-колонки группы `Meta Insights` — `Total Spend`, `Impressions` и `Clicks`. Скрыта только колонка: сами метрики на этих вкладках по-прежнему считаются, и формулы `Computable metric` (ROI, профит), которые на них ссылаются, работают. `Meta Commission` не скрывается — её колонка на вкладках Meta есть.
+
+Симптом «на `Meta → Campaigns` в наборе колонок нет `Meta Spend`, метрика пропала» — это не `Hidden at groupers` и не потеря метрики: цифра спенда на этих вкладках читается из `Total Spend` группы `Meta Insights`. На остальных таблицах (`Tracker → Campaigns`, Roll Up) все четыре метрики `Meta` доступны колонками как обычно; что они считают и на каком уровне матчится спенд — [mechanics/meta-spend-allocation.md](../mechanics/meta-spend-allocation.md).
 
 ## Как устроен список метрик в `Settings → Metrics` — папки и два вида, `Groups` / `Order`
 
@@ -172,6 +178,7 @@ updated: 2026-08-11
 - **Computable ссылается на UUID, не на имена** — в формуле используются именно uuid метрик (`[uuid1]/[uuid2]`).
 - **Видимость управляется флагом `Visible`** — метрика может существовать, но быть скрытой из колонок. «Метрики не видно» → проверить `Visible`/`Order`, а не считать, что её нет.
 - **Колонка пропала только в конкретной разбивке** — у метрики заполнен `Hidden at groupers` (список групперов, при которых колонка скрывается). Метрика есть, но в этой разбивке намеренно спрятана — проверь `Hidden at groupers`, прежде чем считать колонку пропавшей.
+- **Колонки `Meta Spend` / `Meta Impressions` / `Meta Inline Link Clicks` нет на вкладках `Meta → Campaigns / Ad Sets / Ads`** — вторая причина, не связанная с `Hidden at groupers`: там эти три метрики скрыты как дубли нативных колонок `Meta Insights` (`Total Spend` / `Impressions` / `Clicks`), см. секцию «На вкладках `Meta` нет колонки `Meta Spend`…» выше.
 
 ## Подводные камни чтения значений метрики
 

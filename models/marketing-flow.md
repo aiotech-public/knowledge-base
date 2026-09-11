@@ -6,7 +6,7 @@ doc_type: model
 builds: [erp]
 related: [remarketing-campaigns, notifications-flow, push-notifications, campaign, distributions-model, user-fields, visit-lifecycle, visit, conversion-model, flow-model]
 language: ru
-updated: 2026-08-11
+updated: 2026-08-26
 ---
 
 # Модуль ремаркетинга — кампания, аудитория, триггер, флоу, шаблоны (модель)

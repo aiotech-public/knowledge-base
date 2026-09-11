@@ -1,12 +1,12 @@
 ---
 id: tracker
 title: Tracker (Tracker → Trackers — исходящая отбивка событий/конверсий) — концепт (модель)
-description: Что такое Tracker в AIO — конфиг отправки события/конверсии ИЗ AIO наружу (FB CAPI / TikTok / HTTP Get…); ребёнок Source, один трекер = один Conversion Type, 9 Tracker type, Tracker logs vs Retrigger trackers. Концепт; процедуры — how-to/source-trackers.md.
+description: Что такое Tracker в AIO — конфиг отправки события/конверсии ИЗ AIO наружу (FB CAPI / TikTok / HTTP Get…); ребёнок Source, один трекер = один Conversion Type, 11 Tracker type, Tracker logs vs Retrigger trackers. Концепт; процедуры — how-to/source-trackers.md.
 doc_type: model
 builds: [erp, mtk]
-related: [source-trackers, source, conversion-model, ui-map, destination, placeholders, distributions-model, sdk, glossary]
+related: [source-trackers, source, conversion-model, ui-map, destination, ui-common, placeholders, distributions-model, sdk, glossary]
 language: ru
-updated: 2026-07-07
+updated: 2026-09-11
 ---
 
 # Tracker (Tracker → Trackers — исходящая отбивка событий/конверсий) — концепт (модель)
@@ -48,7 +48,11 @@ Conversion Types и их семантика — [models/conversion-model.md](con
 
 ### Какие бывают Tracker type — механизмы отправки
 
-При создании (`+ Tracker` → модалка `Create tracker`) выбирается механизм отправки (карточки `Integration Type`): **Facebook Conversion API, TikTok Events API, SnapChat Conversion API, Quora Conversion API, AppsFlyer, Affise, AIO Push, HTTP Get** (generic постбэк-URL). После выбора карточки открывается модалка `Create new tracker` — **набор обязательных полей зависит от выбранного типа**. От типа зависят поля payload. Детально поля payload документированы только для **Facebook Conversion API** (см. ниже); для остальных типов известны только названия.
+При создании (`+ Tracker` → модалка `Create tracker`) выбирается механизм отправки (карточки `Integration Type`): **Facebook Conversion API, TikTok Events API, SnapChat Conversion API, Quora Conversion API, ChatGPT Conversion API, Bing Conversion API, AppsFlyer, Affise, AIO Push, HTTP Get** (generic постбэк-URL). После выбора карточки открывается форма трекера (заголовок тот же — `Create tracker`): **набор обязательных полей зависит от выбранного типа**. От типа зависят и поля payload — они разобраны для **Facebook Conversion API** (см. ниже), а для `ChatGPT Conversion API`, `Bing Conversion API`, `TikTok Events API` и `HTTP Get` — в [how-to/source-trackers.md](../how-to/source-trackers.md).
+
+### `ChatGPT Conversion API` и `Bing Conversion API` — серверные CAPI, а не постбэк-URL
+
+Типы `ChatGPT Conversion API` и `Bing Conversion API` шлют платформе **серверное событие собственным запросом AIO** — постбэк-ссылку никуда вставлять не нужно. В форме трекера настраиваются идентификатор пикселя площадки, ключ доступа и сам состав события: у `ChatGPT Conversion API` это `Pixel ID` + `API Key` + `Event Type` (закрытый список событий), у `Bing Conversion API` — `UET Tag ID` + `CAPI Token` + `Event Name` (произвольная строка). Полный состав полей payload обоих типов — [how-to/source-trackers.md](../how-to/source-trackers.md).
 
 ### 4a. Какие трекеры заведены по дефолту в шаблоне тенанта
 
@@ -56,7 +60,7 @@ Conversion Types и их семантика — [models/conversion-model.md](con
 
 ### Что в таблице Tracker → Trackers
 
-Раздел `Tracker → Trackers` показывает все трекеры тенанта в таблице. Колонки: Tracker type, Conversion type, привязанные Sources, Description, delay details, статус активности. Состав и порядок колонок настраиваются через `Presets → Customize table view` (включить/выключить колонку, переставить). Чтобы проверить, доходят ли отбивки наружу, смотри `Tracker logs` (см. секцию про Tracker logs ниже): там виден полный outgoing-запрос и ответ платформы.
+Раздел `Tracker → Trackers` показывает все трекеры тенанта в таблице. Колонки: Tracker type, Conversion type, привязанные Sources, Description, delay details, статус активности. Состав и порядок колонок настраиваются кнопкой `Settings` над таблицей → `Table settings` (включить/выключить колонку, переставить — [reference/ui-common.md](../reference/ui-common.md)). Чтобы проверить, доходят ли отбивки наружу, смотри `Tracker logs` (см. секцию про Tracker logs ниже): там виден полный outgoing-запрос и ответ платформы.
 
 ### 4c. Список трекеров в MTK — где найти (Settings → Trackers)
 
@@ -92,7 +96,7 @@ Conversion Types и их семантика — [models/conversion-model.md](con
 
 `Retrigger trackers` — это экшен на **конверсии**, не на трекере: `Tracker → Conversions` (или Analytics → Conversions) → ПКМ по конверсии → `Retrigger trackers` (открывает pop-up). Он перезапускает все трекеры, под условие которых попадает конверсия, и повторно шлёт событие наружу (FB CAPI / Google / партнёрка) с **актуальными** значениями.
 
-Когда нужно: пиксель/токен на момент создания конверсии были невалидны, первый отстрел не дошёл, или настройка отбивки была сломана — надо переотбить уже пришедшие конверсии. Важно: `Retrigger trackers` перепушивает постбэки в Source, но **НЕ меняет** payout/revenue в AIO — это отдельное от Distribution действие ([models/distributions-model.md](distributions-model.md)).
+Когда нужно: пиксель/токен на момент создания конверсии были невалидны, первый отстрел не дошёл, или настройка отбивки была сломана — надо переотбить уже пришедшие конверсии. У типов `ChatGPT Conversion API` и `Bing Conversion API` есть нюанс с датой: площадки не принимают события старше 7 суток, поэтому AIO подрезает метку времени события под это окно — переотбитая старая конверсия дойдёт, но с подрезанной датой, а не с исходной. Важно: `Retrigger trackers` перепушивает постбэки в Source, но **НЕ меняет** payout/revenue в AIO — это отдельное от Distribution действие ([models/distributions-model.md](distributions-model.md)).
 
 ### Где найти Retrigger trackers в MTK
 

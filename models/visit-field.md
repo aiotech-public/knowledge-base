@@ -6,7 +6,7 @@ doc_type: model
 builds: [erp, mtk]
 related: [custom-fields, placeholders, user-fields, visit-lifecycle, sdk, how-to-pwa, flow-model, analytics, source, distributions-model, ui-map]
 language: ru
-updated: 2026-08-12
+updated: 2026-09-11
 ---
 
 # Visit Field — концепт
@@ -34,7 +34,7 @@ updated: 2026-08-12
 - `Conversion`-поля читаются через отдельный неймспейс — `{{aio.conversion.fields.<slug>}}` (данные конверсии, не визита);
 - остальные пять типов (`Visit` / `Campaign` / `Source` / `Landing` / `Destination`) читаются как поля визита — `{{aio.visit.fields.<slug>}}` — и предлагаются в пикере плейсхолдеров в группе `Visit Fields`.
 
-По источнику дефолта значения: `Visit` — дефолт из ссылки/URL; `Campaign` — дефолт из карточки кампании (напр. FB Pixel/CAPI Token, чтобы не светить в URL); `Source` — дефолт из source-маппинга; `Landing` — из карточки лендинга или его `Lander Type`; `Destination` — из карточки дестинейшена или его `Advertiser`.
+По источнику дефолта значения: `Visit` — дефолт из ссылки/URL; `Campaign` — дефолт из карточки кампании (напр. FB Pixel/CAPI Token, чтобы не светить в URL); `Source` — из карточки конкретного `Source` (секция `User fields`): у самого поля дефолта нет, поэтому новый source стартует с пустым значением, и настройка с других source на него не переносится — вписывается в каждом (копия source экшеном `Copy` значения переносит), разбор — [how-to/user-fields.md](../how-to/user-fields.md); `Landing` — из карточки лендинга или его `Lander Type`; `Destination` — из карточки дестинейшена или его `Advertiser`.
 
 Значение при любом типе живёт **на визите**, тип отвечает только за то, где задаётся дефолт и каким неймспейсом поле читается. Как значение вписывается в карточку сущности — [how-to/user-fields.md](../how-to/user-fields.md). `Campaign`-поле — тоже поле визита: значение может быть перезаписано по конкретному визиту (разбор — таблица «Visit field vs Campaign field» в этом документе). Плейсхолдеры — [reference/placeholders.md](../reference/placeholders.md).
 
@@ -131,7 +131,7 @@ Trash-визиту значения карточек лендинга и дес�
 - **`Is Registry`** — хранить **последовательность** значений (история `1,2,3…`) vs перезаписывать каждым новым;
 - **`Is Macro Visible`** — JS-доступ через объект `aio` на лэнде;
 - **`2FA Protected`** (он же Unsecured Mode) — значение скрыто в UI без 2FA;
-- **`Is Visible`** — показывать в UI визита;
+- **`Is Visible`** — показывать колонку поля по умолчанию (тултип тоггла — `Visibility by default at columns etc`). На таблицах настроечных сущностей (кампании, источники, дестинейшены, лендинги) флаг колонку не включает — там она добавляется настройкой колонок ([how-to/custom-fields.md](../how-to/custom-fields.md));
 - **`Available Values`** — превратить строковое поле в select из фикс-списка.
 
 Особняком — **`Is Used For Cost`**: атрибут включает поле в ручной `Update Costs By <Field>` (агрегация костов по визитам с одинаковым значением поля). Механика работает, но **выставить флаг из интерфейса нельзя** — контрола у него в карточке поля больше нет ([how-to/custom-fields.md](../how-to/custom-fields.md)).

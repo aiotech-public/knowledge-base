@@ -1,12 +1,12 @@
 ---
 id: visit-lifecycle
 title: Жизнь визита в AIO
-description: Что такое визит, как он распознаётся через cuuid/suuid, путь от клика до конверсии, фрод-фильтрация, дубли, потеря, колонки RMK у визита и три точки пути, где визит попадает в remarketing-аудиторию.
+description: Что такое визит, как он распознаётся через cuuid/suuid, окно уникальности и слепок сессии без срока (PWA, пуши, постоянные ссылки), путь от клика до конверсии, фрод-фильтрация, дубли, потеря, два поля Referer, списки пройденных лэндов/Destination и воронка funnel_*, колонки RMK и Funnel Raw, три точки пути, где визит попадает в remarketing-аудиторию.
 doc_type: mechanic
 builds: [erp, mtk]
-related: [conversion-model, source, source-trackers, visit, session-analytics, server, distributions-model, live-pulse, domains, glossary, flow-model, domain, sdk, destination, remarketing-campaigns, visit-field, user-fields, placeholders, mechanics-pwa, analytics, limits, marketing-flow, debug-with-logs, visit-timeline, metric, architecture]
+related: [conversion-model, source, source-trackers, placeholders, visit-timeline, visit, session-analytics, server, distributions-model, live-pulse, domains, glossary, flow-model, domain, sdk, destination, destinations, remarketing-campaigns, visit-field, user-fields, mechanics-pwa, analytics, ui-common, limits, marketing-flow, debug-with-logs, metric, architecture]
 language: ru
-updated: 2026-08-12
+updated: 2026-09-11
 ---
 
 # Жизнь визита в AIO
@@ -51,6 +51,12 @@ Source — это набор преднастроек для генерации 
 Таймеры продлевает только запрос, на который AIO реально ответил. Не продлевают: запрос по под-пути вне `Allowed paths` (ответ `404`), запрос, отбитый ограничением частоты запросов, и запрос, закончившийся `502`.
 
 Сессия сбрасывается, и заход считается **новым визитом**, если в ссылке пришли другая кампания или другой source, чем сохранены в сессии.
+
+### Визит «ожил» спустя месяцы — слепок сессии в постоянных ссылках, PWA и пушах не имеет срока
+
+**Кроме куки у визита есть второй ключ — зашифрованный слепок сессии в URL, и у него, в отличие от 30-дневного окна куки, срока нет.** Слепок AIO вкладывает в стартовый URL установленной PWA, в ссылку клика по push-уведомлению remarketing-кампании (параметр `sess`) и в постоянные ссылки `{{link:s:permanent}}` / `{{link:h:permanent}}` ([reference/placeholders.md](../reference/placeholders.md)). Агент разбирает такой параметр раньше куки и без проверки давности: браузер, открывший ссылку, продолжает **тот же визит с тем же `visit_uuid`** — и спустя месяцы, без куки и даже если это другой браузер.
+
+Отсюда картина «старый визит внезапно ожил»: у визита, созданного месяцы назад, появляются новый переход по флоу, новый пуш в Destination или конверсия. Так выглядит открытие давно установленной PWA или старого пуша — это не сбой уникальности. Как отличить от поздней конверсии по старому идентификатору: в `Visit timeline` ([how-to/visit-timeline.md](../how-to/visit-timeline.md)) продолжение сессии оставляет **новые события перед конверсией** — переход в другую ноду флоу, строку `Destination arrived`, изменения полей; если же рекламодатель прислал постбэк со старым `visit_uuid`, на визите появится только `Conversion created` без нового движения по пути — срока привязки конверсии к визиту нет ([models/conversion-model.md](../models/conversion-model.md)).
 
 ### Сколько живёт сессия визита — 24 часа
 
@@ -230,7 +236,8 @@ Destination возвращает исход (`Pushed` / `Rejected`) и, при �
 - **Facebook:** `field_fb_ad_name`, `field_fb_campaign_name`, `field_fb_ad_id`, `field_fb_placement`, `field_fb_pixel`, `field_fb_capi_token`, и т.д.
 - **Antifraud:** `fraud_score`, `triggered_rules`, `fingerprint`.
 - **Time:** `created_at_day/hour/...`.
-- **Web:** `domain` / `domain_uuid` (домен, на котором визит инициализировался), `initial_path`, `referer`, `agent_version`. Отдельной колонки `initial_domain` в хранилище визита нет — «initial»-поле пути это `initial_path`; исходный домен несут `domain`/`domain_uuid`.
+- **Web:** `domain` / `domain_uuid` (домен, на котором визит инициализировался), `initial_path`, `referer` (реферер захода, он же системное поле `Referer` — раздел «Два `Referer` у визита» этого документа), `agent_version`. Отдельной колонки `initial_domain` в хранилище визита нет — «initial»-поле пути это `initial_path`; исходный домен несут `domain`/`domain_uuid`.
+- **Path:** списки пройденных лэндов и Destination — `landing_uuids`, `destination_uuids`, единая воронка `funnel_uuids` (раздел «Путь визита по лэндам и Destination» этого документа).
 - **Destination:** поля результата пуша — в отдельной подсекции ниже.
 
 ### Поля Destination на визите
@@ -243,6 +250,18 @@ Destination возвращает исход (`Pushed` / `Rejected`) и, при �
 - `last_rejection_reason` / `last_rejection_type` — причина и тип последнего реджекта пуша (пишет `Destination Handler`).
 
 Сам запрос/ответ пуша — не в полях визита, а в логах `Destination Handler`. Полная модель полей — [models/conversion-model.md](../models/conversion-model.md).
+
+### Два `Referer` у визита — колонка и системное поле с одним значением
+
+**Реферер захода хранится на визите дважды: колонкой `Referer` (`referer`) и системным полем визита `Referer` (slug `referer`) — в `Tracker → Visits` это две разные колонки с одинаковой подписью, обе скрыты по умолчанию.** Значение одно: HTTP-заголовок `Referer` того запроса, которым визит создался, — агент передаёт заголовки визитёра в AIO при регистрации. Пишется один раз, при создании, и дальше по пути не обновляется; SDK на лэнде `document.referrer` в визит не пишет. Поэтому здесь лежит реферер **первого захода** — площадка, с которой пришёл клик, — а не адрес страницы AIO, с которой визит ушёл дальше.
+
+Расходятся две колонки только у trash-визитов: поле визита trash-визиту не записывается, колонка заполняется (у визита, опознанного ботом, пуста и колонка). На лэнде и в Destination значение читается плейсхолдером `{{aio.visit.fields.referer}}` ([reference/placeholders.md](../reference/placeholders.md)); что из реферера доезжает до рекламодателя при редиректе и почему браузер его режет — [how-to/destinations.md](../how-to/destinations.md).
+
+### Путь визита по лэндам и Destination — списки `landing_uuids`, `destination_uuids` и единая воронка `funnel_*`
+
+**Какие лэнды визит видел и в какие Destination успешно ушёл, визит копит списками uuid — по одной записи на сущность, без повторов.** `landing_uuids` / `landing_type_uuids` пополняются на шаге `Content` при первом показе лэнда (повторный показ того же лэнда записи не добавляет); `destination_uuids` / `advertiser_uuids` / `advertiser_type_uuids` — на шаге `Destination` после успешного пуша (реджект и повторный пуш в тот же Destination записи не добавляют). Позиционные ключи по этим спискам (`landing_uuids[1..3]`, `destination_uuids[1..3]`) — [reference/glossary.md](../reference/glossary.md) → `Fields & Groupers Catalog`.
+
+Поверх них визит ведёт **единую воронку** — три параллельных списка: `funnel_uuids` (лэнд или Destination каждой ступени), `funnel_type_uuids` (для лэнда — его `Lander Type`, для Destination — тип его `Advertiser`; нет типа — пустая строка) и `funnel_object_types` (`landing` / `destination` на той же позиции). В отличие от раздельных списков воронка хранит ступени **в хронологии прохождения** — чередование лэнд → Destination → лэнд из раздельных списков не восстановить. Уникальность та же: путь `lp1 → lp2 → lp1` даёт `[lp1, lp2]`. У визита, созданного до появления воронки, она достраивается приближением «сначала все лэнды, потом все Destination» при следующем шаге пути. Групперов, фильтров, плейсхолдеров и ключей API по воронке нет — в интерфейсе её показывают только четыре колонки категории `Funnel Raw` таблицы визитов ERP (раздел «Категория колонок `Funnel Raw`» этого документа).
 
 ### Когда визит попадает в remarketing-аудиторию — три точки пути
 
@@ -323,7 +342,7 @@ AIO записывает **любой дошедший клик** — визит
 
 ### Visits-таблица (`Tracker → Visits`) — колонки и экшены
 
-`Tracker → Visits` — список визитов. Колонки: **State** (на каком шаге Campaign визит сейчас стоит или где закончилось его взаимодействие — Preland / White Page / Offer и т.п., напр. `LP1`), **Status** (On landing — **`Wait`** / **`Live`** / **`Left`**), `Geo`, `Owner` (Campaign creator = байер), `Source`, `Campaign`, `Flow`, `Destinations`, `Pushed`, `Created`, а также **`Bot?`** (визит опознан как бот) и **`Trash?`** (визиту проставлен `is_trash` — визит вне основной аналитики, причина в поле `Trash Reason`). **Скролл вправо** раскрывает **поля визита** колонками (Lead: Email/Phone; LP Content Variables; Showcase; интеграционные — Bridge buyer UTM, DV360 Click ID; Screen resize и т.д.) — состав настраивается через `Presets → Customize table view`. Набор колонок не ограничен дефолтными: любое поле из `Settings → Fields` автоматически доступно как колонка (см. [models/visit.md](../models/visit.md)).
+`Tracker → Visits` — список визитов. Колонки: **State** (на каком шаге Campaign визит сейчас стоит или где закончилось его взаимодействие — Preland / White Page / Offer и т.п., напр. `LP1`), **Status** (On landing — **`Wait`** / **`Live`** / **`Left`**), `Geo`, `Owner` (Campaign creator = байер), `Source`, `Campaign`, `Flow`, `Destinations`, `Pushed`, `Created`, а также **`Bot?`** (визит опознан как бот) и **`Trash?`** (визиту проставлен `is_trash` — визит вне основной аналитики, причина в поле `Trash Reason`). **Скролл вправо** раскрывает **поля визита** колонками (Lead: Email/Phone; LP Content Variables; Showcase; интеграционные — Bridge buyer UTM, DV360 Click ID; Screen resize и т.д.) — состав настраивается кнопкой `Settings` над таблицей → `Table settings` ([reference/ui-common.md](../reference/ui-common.md)). Набор колонок не ограничен дефолтными: любое поле из `Settings → Fields` автоматически доступно как колонка (см. [models/visit.md](../models/visit.md)).
 
 Свежий хвост таблицы визитов читается напрямую, поэтому самый недавний трафик виден в ней сразу — без задержки фоновой пересборки аналитики. Это хвост **только этой таблицы**: у метрик и виджетов дашборда свой механизм и своя длина свежего отрезка, и цифры между экранами из-за этого могут расходиться.
 
@@ -350,6 +369,12 @@ AIO записывает **любой дошедший клик** — визит
 Колонка `Remarketing` в таблице визитов (категория `Forced steps`, соседняя с `Back Fix`) к remarketing-кампаниям отношения не имеет — её легко перепутать с `RMK Audience`. Это отдельное поле визита `is_remarketing`, и проставляется оно из параметра `remarketing` во входящей ссылке, а не рассылкой.
 
 Про рассылки говорят только колонки с префиксом `RMK` — `RMK Audience` и семь колонок пути отправок (раздел «Колонки `RMK` у визита» этого документа).
+
+### Категория колонок `Funnel Raw` в `Tracker → Visits` — сырой путь визита списками uuid
+
+**`Funnel Raw` — категория из четырёх колонок таблицы визитов, скрытых по умолчанию: `Advertiser Types (raw)`, `Funnel (raw)`, `Funnel Types (raw)`, `Funnel Objects (raw)`.** Каждая показывает содержимое одноимённого поля визита как есть — списком uuid в квадратных скобках, без имён сущностей и форматирования: `Funnel (raw)` — ступени пути (uuid лэндов и Destination в хронологии прохождения), `Funnel Types (raw)` — тип каждой ступени, `Funnel Objects (raw)` — `landing` или `destination` на той же позиции, `Advertiser Types (raw)` — тип адвертайзера каждого успешного пуша. Подписи колонок и категории не переводятся — в русском интерфейсе они тоже английские. Включаются как любая колонка: кнопка `Settings` над таблицей → `Table settings` ([reference/ui-common.md](../reference/ui-common.md)).
+
+У визита, созданного до появления воронки, эти колонки показывают пустой список `[]`, пока он не пройдёт лэнд или не уйдёт в Destination ещё раз либо воронку не заполнят задним числом на стороне AIO. Что лежит в этих полях и как они пополняются — раздел «Путь визита по лэндам и Destination» этого документа; группировать или фильтровать аналитику по ним нельзя.
 
 ### Экшены таблицы Visits (правый клик по визиту)
 

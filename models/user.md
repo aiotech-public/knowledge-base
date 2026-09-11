@@ -4,9 +4,9 @@ title: User — концепт (модель)
 description: Что такое User в AIO как сущность — ОДИН аккаунт человека, который может состоять сразу в нескольких тенантах; actor и владелец сущностей. Идентичность, мульти-тенантность, ownership, жизненный цикл. Доступ (роль/позиция/команда) — отдельная модель models/permissions-model.md.
 doc_type: model
 builds: [erp, mtk]
-related: [permissions-model, permissions, architecture, tenant, ui-map]
+related: [permissions-model, permissions, architecture, notification-center, tenant, ui-map]
 language: ru
-updated: 2026-07-07
+updated: 2026-09-11
 ---
 
 # User — концепт (модель)
@@ -24,6 +24,7 @@ updated: 2026-07-07
 - **User — глобальный аккаунт, не привязан к одному тенанту.** Один и тот же человек **состоит сразу в нескольких тенантах** (membership многие-ко-многим), переключается между ними через **смену тенанта** в меню профиля (см. `reference/ui-map.md`).
 - **Доступ — свой в каждом тенанте.** В одном тенанте юзер может быть Admin, в другом — Employee с узкой позицией. Права не «перетекают» между тенантами (изоляция тенанта — `models/tenant.md`).
 - **Аккаунт:** name + email + telegram + password; **2FA через Telegram-бота или Google Authenticator** ([context/architecture.md](../context/architecture.md) → 2FA). Без активной 2FA (`Unsecured Mode`) часть полей юзера в UI скрыта (`telegram`, `email`, `name`) — это by design.
+- **Язык уведомлений — тоже на аккаунте** (`notification_language`, дефолт английский): один на все тенанты юзера, а не на тенант и не на браузер. Отдельной настройки нет — значение проставляет переключатель языка интерфейса ([mechanics/notification-center.md](../mechanics/notification-center.md)).
 - **Как юзер попадает в тенант:** инвайт (`Settings → Users → + User` → инвайт-линк, роль Admin/Employee) — если у человека уже есть аккаунт, он входит в тенант этим же аккаунтом; либо саморегистрация по коду/триалу создаёт аккаунт + тенант (`how-to/registration.md`). **Tenant Owner** — тот, кто создал тенант.
 
 ### Что у User есть в тенанте (Role / Position / Team) — это отдельная модель доступа

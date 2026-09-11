@@ -1,12 +1,12 @@
 ---
 id: permissions
 title: Permissions / Users / Sharing (How-to)
-description: Добавление и деактивация юзеров, привязка к Position, Share связок и папок, скрытие флоу через Change ownership — и в Tracker, и в Marketing → Flows; ветка Scopes для обратного хода.
+description: Добавление и деактивация юзеров, привязка к Position, Share связок и папок, скрытие флоу через Change ownership — и в Tracker, и в Marketing → Flows; Access type = Everyone открывает и правку, не только просмотр; ветка Scopes для обратного хода; какие императивы automation.* включить под автоправила и почему они не открывают чужие ассайны.
 doc_type: how-to
 builds: [erp, mtk]
-related: [permissions-model, user, ui-common, marketing-flow, campaigns, architecture, glossary]
+related: [permissions-model, user, auto-rules, ui-common, marketing-flow, campaigns, architecture, glossary]
 language: ru
-updated: 2026-08-11
+updated: 2026-09-11
 ---
 
 # Permissions / Users / Sharing (How-to)
@@ -22,7 +22,9 @@ updated: 2026-08-11
 - Привязка Position юзеру: `Settings → Positions → выбрать → assign`.
 - Share на сущности (Campaign / Landing): ПКМ → `Share`.
 - Пошарить можно и **папку**: доступ получает всё её содержимое, включая сущности, добавленные в неё позже.
+- Доступ к автоправилам (раздел `Automations`) выдаётся своей веткой императивов `automation.*`; права на Meta его не открывают. Чужие ассайны права не открывают — их видимость решают владение и `Access type`.
 - Скрыть флоу от байеров — `Change ownership` (массовый пункт — `Mass change ownership`) + access type «по пошарке» (`By Share`). Работает и на `Tracker → Flows`, и на флоу рассылок в `Marketing → Flows`.
+- `Access type = Everyone` открывает не только просмотр, но и правку — любому с edit-императивом раздела. Нужен «видит, но не трогает» — `By Share` + шаринг на просмотр.
 
 ---
 
@@ -76,6 +78,29 @@ updated: 2026-08-11
 Когда: проверить, что входит в стандартную позицию `Buyer` до раздачи юзерам.
 
 **Путь:** `Settings → Positions → Buyer` (или зарегать тестового юзера на `Buyer` и зайти в инкогнито).
+
+### Какие императивы включить, чтобы сотрудник работал с автоправилами
+
+Раздел `Automations` (автоправила над сущностями Meta) открывается только своей веткой прав `automation.*` — доступ к рекламным кабинетам и страницам Meta его не даёт. Полный список императивов и что каким правом закрыто — [models/permissions-model.md](../models/permissions-model.md).
+
+Два типовых набора для Position:
+
+- **Собирает правила сам:** `automation.templates.view` и `automation.templates.edit` (шаблоны правил), `automation.assignments.view` и `automation.assignments.edit` (ассайны), `automation.assignments.edit.test-run` (прогон `Backtest Rules`), `automation.status.view` (страница статуса и проверка `Live check`).
+- **Только подтверждает вердикты:** `automation.actions.view`, `automation.actions.edit.approve`, `automation.actions.edit.decline`. Права на шаблоны и ассайны такому человеку не нужны, но в `History` он увидит вердикты только тех ассайнов, что видны ему по владению — свои, своей команды или с `Access type = Everyone` (секция «Выдал все права `automation.*`, а сотрудник не видит чужие ассайны»).
+
+Наборы складываются: тому, кто и строит правила, и сам подтверждает их вердикты, нужны оба.
+
+Если из всего перечисленного выдан только `automation.status.view`, пункт меню `Automations` не появится — меню открывают `automation.templates.view`, `automation.assignments.view` или `automation.actions.view`.
+
+Помимо прав на сам раздел стоит проверить права **владельца ассайна** на сущностях Meta: действие уходит в рекламный кабинет с его правами, а не с правами того, кто его подтвердил. Как устроены сами правила — [how-to/auto-rules.md](auto-rules.md).
+
+### Выдал все права `automation.*`, а сотрудник не видит чужие ассайны — это владение, не права
+
+Императивы `automation.assignments.*` открывают страницу ассайнов, а не чужие записи на ней: ассайн виден своему владельцу, руководителю его команды (`Team Head` / `Team Leader`), ролям полного доступа (Owner / Admin) и всем в тенанте — только если у ассайна `Access type = Everyone`. Новый ассайн создаётся с `Access type = By Share`, то есть по умолчанию его видит один владелец. Кто и что видит на каждой странице раздела — [how-to/auto-rules.md](auto-rules.md).
+
+Обходного права «видеть все ассайны тенанта» нет: у флоу такой рычаг есть (`Scopes: tracker flows`), у ассайнов автоправил в ветке `Scopes` записи нет. Пошарить ассайн конкретному юзеру или команде из интерфейса тоже нельзя — на странице ассайнов нет действий `Share` / `Share also` / `Force share` / `Unshare` (какие из `automation.*.share*` реально работают — [models/permissions-model.md](../models/permissions-model.md)).
+
+Практических рычагов два: ПКМ по ассайну → `Change ownership` (право `automation.assignments.share.ownership`, пункт виден владельцу и роли полного доступа) → либо `Access type = Everyone` — ассайн видят все в тенанте, либо смена владельца на того, кому он нужен. `Everyone` при этом открывает и правку любому с `automation.assignments.edit` — секция «`Access type = Everyone` открывает не только просмотр, но и правку».
 
 ## Как пошарить сущность (Campaign / Landing / Domain) конкретному юзеру
 
@@ -183,7 +208,7 @@ updated: 2026-08-11
 
 Список `Marketing → Flows` показывает не все флоу тенанта: юзер видит свои, пошаренные ему, флоу с access type `Everyone` и флоу подчинённых; роль полного доступа (Owner / Admin) видит все. Новый флоу рассылок создаётся с access type `By Share` — по умолчанию его видит только владелец, остальным его нужно пошарить.
 
-В списке есть колонки `Owner` и `Access type`; у `Access type` тултип `Using for visibility only, everyone shared cannot edit anyway.` — access type управляет **только видимостью**, права на правку он не выдаёт. Колонка `Shares` (кому флоу пошарен) по умолчанию скрыта и включается в настройках таблицы.
+В списке есть колонки `Owner` и `Access type`; у `Access type` тултип `Using for visibility only, everyone shared cannot edit anyway.` — но действующее поведение другое: флоу с `Everyone` правится любым, у кого есть `marketing.flows.edit`, — секция «`Access type = Everyone` открывает не только просмотр, но и правку». Колонка `Shares` (кому флоу пошарен) по умолчанию скрыта и включается в настройках таблицы.
 
 Экшены те же, что на трафиковых сущностях: `Change ownership` / `Mass change ownership` и шаринг `Share also` / `Force share` / `Unshare`. Закрыты они собственной веткой прав — доступ к трафиковым флоу и кампаниям её не даёт (ветки перечислены в [models/permissions-model.md](../models/permissions-model.md)). Сама сущность — [models/marketing-flow.md](../models/marketing-flow.md).
 
@@ -193,9 +218,23 @@ updated: 2026-08-11
 
 Право снимает ограничение **только на просмотр**. Править чужой флоу оно не разрешает: правку без владения снимает ветка `Editor Scopes`, а она существует только для лэндов ([models/permissions-model.md](../models/permissions-model.md)). «Видит все флоу» и «может их менять» — разные вещи.
 
-### Change Ownership на кампании
+### `Access type = Everyone` открывает не только просмотр, но и правку
 
-Аналогично — ПКМ на кампании → `Change ownership` (на выделении из нескольких — `Mass change ownership`) → выбрать целевого юзера + access type.
+`Access type = Everyone` («доступен всем») кладёт сущность и в выборку на просмотр, и в выборку на редактирование: править её может любой пользователь тенанта, у которого есть edit-императив раздела (`tracker.flows.edit`, `marketing.flows.edit`, `automation.assignments.edit` и т.п.), — владение, шаринг на редактирование или `Editor Scopes` не нужны. Тултип колонки `Access type` в таблицах (`Using for visibility only, everyone shared cannot edit anyway.`) описывает другое поведение; действующее — это. В списке флоу пункт `Edit` на строке с `Everyone` показывается каждому, у кого есть право раздела.
+
+Так ведут себя все сущности с колонкой `Access type`, у которых правка идёт через ту же выборку, что и просмотр: флоу (`Tracker → Flows` и `Marketing → Flows`), дистрибуции (включая шаблоны автоправил `Rule Templates`), ассайны автоправил, Sources, Destinations, Domains, Servers, провайдеры доменов / DNS / серверов, Presets, Fields, Metrics, Money Streams, Message Templates, External Reports.
+
+Вывод для настройки: `Everyone` — это «все видят и все с правом раздела правят». Нужно «видит, но не трогает» — держать `By Share` и шарить с уровнем просмотра (глаз, `Allowed to view`) либо дать право ветки `Scopes` (только просмотр). Раздельного «всем видно, правит только владелец» через `Access type` не собрать.
+
+### Где `Everyone` даёт только просмотр — исключения
+
+Content Library (`Lander Placeholders` и их группы): колонка `Access type` и пункт `Change ownership` у них есть, но выборка на редактирование ограничена владением, шарингом на редактирование и руководством командой владельца — `Everyone` там открывает только просмотр, как и обещает тултип.
+
+У кампаний, лэндов, прокси, Meta-профилей и Google-аккаунтов колонки `Access type` нет вовсе: видимость у них решают только владение, команда и шаринг, а пункт смены владельца называется `Change owner`, не `Change ownership`.
+
+### Change owner на кампании
+
+На кампании пункт называется иначе и делает меньше: ПКМ → `Change owner` (на выделении из нескольких — `Mass change owner`) → выбрать только целевого юзера. `Access type` у кампаний нет, поэтому «спрятать кампанию от всех, кроме пошаренных» через смену владельца не получится — видимость кампании определяют владение, команда и шаринг. Пункт виден владельцу и роли полного доступа, право — `tracker.campaigns.share.ownership`.
 
 Также см. [how-to/campaigns.md](campaigns.md) → Change Owner.
 
@@ -206,6 +245,7 @@ updated: 2026-08-11
 - **Без 2FA — часть полей скрыта.** Это by design. Включить 2FA через `@aio_tech_bot` (Telegram) или Google Authenticator.
 - **Сделал Change Owner на кампании, но не стал Tenant Owner.** `Owner сущности` ≠ `Tenant Owner` — разные вещи; механика — [models/permissions-model.md](../models/permissions-model.md).
 - **«Скройте этого юзера от других байеров».** Глобального скрытия нет by design.
+- **Поставил `Access type = Everyone`, чтобы все видели флоу, — а его стали править.** `Everyone` открывает и правку любому с edit-императивом раздела; «видеть, но не менять» = `By Share` + шаринг на просмотр.
 - **Действие отклонено — `Read access denied` / `Edit access denied`.** У юзера роль не Owner/Admin и в Position нет нужного view/Action-императива; видеть ≠ редактировать — разбор.
 
 ## Смежные темы

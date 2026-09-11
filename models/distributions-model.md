@@ -1,17 +1,17 @@
 ---
 id: distributions-model
 title: Distributions Model AIO
-description: Как устроены Distributions в AIO — 8 типов (включая Message Templates — дерево текстов ремаркетинг-рассылки), структура дерева (Folder + Strategy + Rule + Payload), Business Models, типичные use case'ы (Buyer UTM Distribution, Direct Traffic, Payout rules).
+description: Как устроены Distributions в AIO — 9 типов (включая Message Templates — дерево текстов ремаркетинг-рассылки и Auto Rules — шаблон автоправил Meta с деревом из фаз и правил), структура дерева (Folder + Strategy + Rule + Payload), Business Models, типичные use case'ы (Buyer UTM Distribution, Direct Traffic, Payout rules).
 doc_type: model
 builds: [erp, mtk]
-related: [distributions, remarketing-campaigns, notifications-flow, push-notifications, permissions, glossary, flow-model, business-model, visit-lifecycle, conversion-model]
+related: [auto-rules, distributions, remarketing-campaigns, notifications-flow, push-notifications, permissions, glossary, flow-model, business-model, visit-lifecycle, conversion-model]
 language: ru
-updated: 2026-08-12
+updated: 2026-09-11
 ---
 
 # Distributions Model AIO
 
-**Distribution** — централизованное дерево правил (`Settings → Distributions`), которое автоматически подставляет значения по визиту: payout, revenue, buyer-метка, лэнд по гео, поле визита. Вместо настройки каждой кампании отдельно, правило задаётся один раз и применяется ко всем визитам. Поддерживается 8 типов: `Payout`, `Revenue`, `Campaign Content`, `Flow Content`, `Fill Field`, `Direct Traffic`, `Remarketing Content`, `Message Templates`. Структура дерева: `Folder` + `Strategy` (полный набор в дереве Distribution — `First` / `Weights` / `Conversions AI` / `Metrics AI`) + `Rule to pass` + `Payload`-ноды. Конкретные процедуры — в [how-to/distributions.md](../how-to/distributions.md). В MTK-билде раздел открывается платным модулем `MTK Distribution` (*Билды, тарифы, триал и статусы тенанта*), в ERP доступен всем.
+**Distribution** — централизованное дерево правил (`Settings → Distributions`), которое автоматически подставляет значения по визиту: payout, revenue, buyer-метка, лэнд по гео, поле визита. Вместо настройки каждой кампании отдельно, правило задаётся один раз и применяется ко всем визитам. Поддерживается 9 типов: `Payout`, `Revenue`, `Campaign Content`, `Flow Content`, `Fill Field`, `Direct Traffic`, `Remarketing Content`, `Message Templates`, `Auto Rules`. Структура дерева: `Folder` + `Strategy` (полный набор в дереве Distribution — `First` / `Weights` / `Conversions AI` / `Metrics AI`) + `Rule to pass` + `Payload`-ноды. Девятый тип `Auto Rules` (только ERP) под это описание не подходит: значения по визиту он не подставляет, а держит автоправила над Meta-сущностями, дерево у него собрано из двух других нод (`Phase` и `Auto Rule`), и настраивают его в собственном разделе `Automations` — хотя создать и увидеть его можно и в `Settings → Distributions` ([how-to/auto-rules.md](../how-to/auto-rules.md)). Конкретные процедуры — в [how-to/distributions.md](../how-to/distributions.md). В MTK-билде раздел открывается платным модулем `MTK Distribution` (*Билды, тарифы, триал и статусы тенанта*), в ERP доступен всем.
 
 ## Зачем нужны Distributions
 
@@ -19,9 +19,9 @@ updated: 2026-08-12
 
 **С Distributions:** правила вынесены централизованно. «Buyer X — метка Y» / «Гео IT, источник FB — payout $5» / «Голый домен без UTM — этой кампании» — заданы один раз в `Settings → Distributions`, применяются ко всем визитам.
 
-## Какие 8 типов Distributions существуют и когда каждый применяется
+## Какие 9 типов Distributions существуют и когда каждый применяется
 
-Все 8 создаются из `Settings → Distributions → + Distribution`; плитки пикера в порядке показа: **Payout settings · Revenue settings · Campaign content · Fill field · Direct traffic · Message templates · Flow content · Remarketing content**. На плитках `Flow content` и `Remarketing content` стоит бейдж **`Advanced`** — плитка при этом остаётся видимой и кликабельной, бейдж только помечает «не для беглого выбора»; из пикера плитки убираются исключительно по правам. `Payout settings` / `Revenue settings` — те же money-деревья, что в разделе `Finance` (см. раздел «Как настроить Revenue и Payout Distribution в разделе Finance» ниже). В фильтре `Type` таблицы `Settings → Distributions` значений больше восьми: фильтр отдаёт весь внутренний список типов, включая те, которые в пикере создания не предлагаются.
+Все 9 создаются из `Settings → Distributions → + Distribution`; плитки пикера в порядке показа: **Payout settings · Revenue settings · Campaign content · Fill field · Direct traffic · Message templates · Auto rules · Flow content · Remarketing content** (плитка `Auto rules` есть только в ERP-билде, и у этого типа есть второй вход — своя страница `Automations → Rule Templates`, [how-to/auto-rules.md](../how-to/auto-rules.md)). На плитках `Flow content` и `Remarketing content` стоит бейдж **`Advanced`** — плитка при этом остаётся видимой и кликабельной, бейдж только помечает «не для беглого выбора»; из пикера плитки убираются исключительно по правам. `Payout settings` / `Revenue settings` — те же money-деревья, что в разделе `Finance` (см. раздел «Как настроить Revenue и Payout Distribution в разделе Finance» ниже). В фильтре `Type` таблицы `Settings → Distributions` значений больше девяти: фильтр отдаёт весь внутренний список типов, включая те, которые в пикере создания не предлагаются.
 
 ### Payout — автоматический payout по правилам
 
@@ -83,9 +83,17 @@ updated: 2026-08-12
 
 **«Право на дистрибуции шаблонов выдал, а раздела у юзера нет».** Пункт `Marketing` в главном меню открывается по другим правам раздела (`marketing.messages.view`, `marketing.message-templates.view`, `marketing.sender-providers.view`, `marketing.flows.view`) — `marketing.template-distributions.view` в этот список не входит. Роли, у которой есть только оно, до страницы не дойти: выдавай его вместе с одним из прав, открывающих сам раздел `Marketing` ([how-to/permissions.md](../how-to/permissions.md)).
 
+### Auto Rules — шаблон автоправил над Meta-сущностями, живущий в разделе `Automations`
+
+Дистрибуция типа `Auto Rules` — шаблон автоправил (`Rule Template`): дерево фаз и правил, по которому движок сам останавливает, запускает и меняет бюджет кампаний, адсетов и объявлений Meta. Значения по визиту этот тип не подставляет — с визитами он не работает вообще. Тип есть только в ERP-билде.
+
+Основной дом типа — раздел `Automations` со страницей `Rule Templates` и своей веткой прав `automation.templates.*`. Плитка `Auto rules` («Stop, start or change budget of Meta entities by phases and rules.») в пикере `Settings → Distributions → + Distribution` открывается по тому же праву `automation.templates.edit`, а не по `settings.distributions.*`. Как собрать шаблон, повесить ассайн и запустить — [how-to/auto-rules.md](../how-to/auto-rules.md).
+
+Готовые шаблоны видны в обоих местах: таблица `Settings → Distributions` показывает шаблоны автоправил тенанта наравне с остальными дистрибуциями, а значение `Auto Rules` есть в её фильтре `Type`. Дерево у этого типа устроено иначе, чем у остальных типов, — см. «Дерево `Auto Rules` — только `Phase` и `Auto Rule`» ниже.
+
 ## Как устроено дерево дистрибуций: Folder, Strategy, Rule, Payload
 
-Distribution = **дерево**. Чтение сверху вниз. Каждый Distribution состоит из `Folder`, `Strategy`, `Rule to pass` и `Payload`-нод, описанных ниже.
+Distribution = **дерево**. Чтение сверху вниз. Каждый Distribution состоит из `Folder`, `Strategy`, `Rule to pass` и `Payload`-нод, описанных ниже. Единственное исключение — тип `Auto Rules`: у него ни `Folder`, ни `Strategy`, ни payload-нод нет (см. «Дерево `Auto Rules` — только `Phase` и `Auto Rule`» ниже).
 
 ### Две оси выбора: сколько нод берётся из дерева vs как выбирается вариант внутри Strategy-узла
 
@@ -148,11 +156,23 @@ Distribution = **дерево**. Чтение сверху вниз. Кажды�
 
 Результат, который применяется к визиту. Тип payload зависит от типа Distribution.
 
+### Дерево `Auto Rules` — только `Phase` и `Auto Rule`, без `Folder`, `Strategy` и payload-нод
+
+Дерево дистрибуции типа `Auto Rules` собирается ровно из двух нод: в корне — только `Phase` (фаза), внутри фазы — только `Auto Rule` (правило). Правило — лист, фазы друг в друга не вкладываются, глубже двух уровней дерево не уходит. Нод `Folder`, `Strategy` и payload-нод (`Landing`, `Destination`, `Fill Field` и остальных) у этого типа нет вовсе.
+
+Форму дерева проверяет не только интерфейс, но и сервер, поэтому нода, положенная не туда, отбивается сообщением:
+
+- `Only Phase nodes are allowed at the root of an Auto Rules template` — в корень кладут не фазу;
+- `Auto Rules nodes can be added only inside a Phase` — ноду кладут не в фазу;
+- `Only Auto Rule nodes are allowed inside a Phase` — внутрь фазы кладут не правило.
+
+Ось фаз (`Phase axis`) и переменные шаблона задаются в шапке самой дистрибуции, а не в нодах дерева. Что настраивается в фазе и в правиле — [how-to/auto-rules.md](../how-to/auto-rules.md).
+
 ## Какие Distribution Nodes можно добавить в дерево
 
 | Нода | Иконка | Что | Где используется |
 |---|---|---|---|
-| Add Folder | | контейнер для правил | в любом типе Distribution |
+| Add Folder | | контейнер для правил | в любом типе Distribution, кроме `Auto Rules` |
 | Add Strategy | | стратегия выбора | внутри Folder |
 | Add Destination | | нода дестинейшна | Campaign Content, Flow Content |
 | Add Landing | | нода лэнда | Campaign Content, Flow Content |
@@ -165,7 +185,7 @@ Distribution = **дерево**. Чтение сверху вниз. Кажды�
 | Add Payout | | payout-значение | Payout |
 | Add Fill Field | | заполнение поля визита (с подтипами `Text`/`Image`/`Landing`/`Library`/`Destination`) | Fill Field |
 
-Листья дерева `Message Templates` — отдельной таблицей ниже.
+Листья дерева `Message Templates` — отдельной таблицей ниже. Ноды `Phase` и `Auto Rule` в таблицу не входят: они бывают только в дереве типа `Auto Rules` ([how-to/auto-rules.md](../how-to/auto-rules.md)) и ни в одном другом типе не предлагаются.
 
 ### Ноды дерева `Message Templates` — четыре листа-шаблона и где их ставить
 
@@ -395,6 +415,7 @@ Revenue- и Payout-дистрибуции редактируются в разд
 - [how-to/distributions.md](../how-to/distributions.md) — пошаговое создание Distribution (вкл. Buyer UTM / Fill Field)
 - [how-to/remarketing-campaigns.md](../how-to/remarketing-campaigns.md) — рассылки по аудитории визитов: где выбирается дистрибуция `Message Templates`
 - [how-to/push-notifications.md](../how-to/push-notifications.md) — как собирается текст сообщения в нодах-шаблонах
+- [how-to/auto-rules.md](../how-to/auto-rules.md) — автоправила Meta: шаблон типа `Auto Rules`, ассайн, режимы запуска
 
 ## Как правильно структурировать Distribution и Flow дерево — эвристики
 

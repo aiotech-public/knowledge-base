@@ -4,9 +4,9 @@ title: Distributions (How-to)
 description: Создание Distributions всех типов — Direct Traffic, Content, Fill Field, Message templates (тексты ремаркетинг-рассылки), money-деревья в Finance. Управление деревом (Duplicate, Disable, Clear recursively).
 doc_type: how-to
 builds: [erp, mtk]
-related: [distributions-model, flow-model, remarketing-campaigns, flow-editor, push-notifications, domains, glossary]
+related: [distributions-model, auto-rules, flow-model, remarketing-campaigns, flow-editor, push-notifications, domains, glossary]
 language: ru
-updated: 2026-08-12
+updated: 2026-09-11
 ---
 
 # Distributions (How-to)
@@ -24,6 +24,7 @@ updated: 2026-08-12
 - Внешний сайт как payload — нода `Add Reflect` **внутри** Campaign content; механика внешних лэндов.
 - На каждом домене для DTD/CD должна быть **явно выбрана** дистрибуция в `Tech → Domains → Edit Domain` — иначе домен её не использует.
 - **Message templates** — дерево текстов для ремаркетинг-рассылки; у него есть своя страница `Marketing → Template distributions` (см. секцию ниже).
+- **Auto rules** — плитка шаблона автоправил над Meta-сущностями (только ERP). Дерево у типа другое (`Phase` → `Auto Rule`), а настраивают и запускают его в разделе `Automations` — [how-to/auto-rules.md](auto-rules.md).
 - Управление нодами — ПКМ или scroll: `Duplicate recursively`, `Disable node` → `Clear recursively` (активные ноды нельзя удалить).
 - Глобальной (системной) дистрибуции в списке нет — её выбирают в селекте тумблером `Show global only`, править её из тенанта нельзя ([models/distributions-model.md](../models/distributions-model.md)).
 
@@ -36,6 +37,8 @@ updated: 2026-08-12
 ### Создать дистрибуцию (Name, Description, Tags, тип)
 
 `Settings → Distributions → +Distribution → выбрать тип`. В окне создания: `Name`, `Description` (опц.), `Tags` (опц. — для поиска: гео, тест-метка и т.п.). Подтверждение — `Confirm`. Для типа `Flow Content` дополнительно появляется обязательное поле выбора `Flow` (флоу, к которому применяется дистрибуция). Готовую `Flow Content`-дистрибуцию можно подключить **к одному конкретному шагу кампании или сразу ко всем шагам** (в отличие от `Campaign Content`, которая управляет одним элементом за раз). Для money-дистрибуций сначала выбирается плитка `Payout settings` / `Revenue settings`, затем те же `Name` / `Description` / `Tags`.
+
+Плитка `Auto rules` в пикере `Settings → Distributions → +Distribution` открывает не общую форму создания дистрибуции, а свой редактор шаблона автоправил (`Create auto rules template`): кроме `Name`, `Description` и `Tags` в нём задаются ось фаз и переменные шаблона. Премодалка выбора `Simple rule` / `Advanced` есть только на странице `Automations → Rule Templates` — из пикера настроек сразу открывается полный редактор. Процедура целиком — [how-to/auto-rules.md](auto-rules.md).
 
 ### Построить дерево дистрибуции (Manage Tree, Add Folder, ноды)
 
@@ -55,8 +58,10 @@ Money-дистрибуции (`Payout` / `Revenue`) создаются в `Setti
 
 ### Подключение дистрибуции во флоу — два способа
 
-1. **Отдельный шаг-нода.** Для `Fill Field` — нода `Fields by Distribution`; для рассылки — узел `Drip schedule` во флоу типа `Notifications`, он выбирает дистрибуцию типа `Message Templates` ([how-to/remarketing-campaigns.md](remarketing-campaigns.md)). Открывается шестерёнкой (cogwheel) шага, дистрибуция выбирается из выпадающего списка.
-2. **Новый payload внутри существующего шага.** На шаге кликнуть cogwheel, в поле `Payload type` выбрать `Content Distribution`, затем выбрать дистрибуцию. Выбор доступен в самом Flow либо в кампаниях через `+Add Another Variant → Content Distribution` (зависит от того, flow-only шаг или доступен в кампаниях).
+1. **Отдельный шаг-нода.** Для `Fill Field` — нода `Fields by Distribution`; для рассылки — узел `Drip schedule` во флоу типа `Notifications`, он выбирает дистрибуцию типа `Message Templates` ([how-to/remarketing-campaigns.md](remarketing-campaigns.md)). Настройки шага открываются **модалкой** по клику на ноду в редакторе флоу (по шестерёнке или любой другой точке ноды), дистрибуция выбирается из выпадающего списка.
+2. **Новый payload внутри существующего шага.** В редакторе флоу кликнуть по ноде шага — откроется модалка настроек; в поле `Payload type` выбрать `Content Distribution`, затем выбрать дистрибуцию. Выбор доступен в самом Flow либо в кампаниях через `+Add Another Variant → Content Distribution` (зависит от того, flow-only шаг или доступен в кампаниях).
+
+Кнопка `Apply settings` внизу модалки шага ничего не применяет — форма пишет в шаг живьём, кнопка только закрывает окно; флоу после этого всё равно нужно сохранить ([models/flow-model.md](../models/flow-model.md)).
 
 ## Direct Traffic Distribution + привязка к домену
 
@@ -139,7 +144,7 @@ Money-дистрибуции (`Payout` / `Revenue`) создаются в `Setti
 
 Нода **`Add Reflect`** внутри `Campaign content` (как и `Add Redirect`) даёт тот же payload-тип, что одноимённая опция шага во флоу: в самой ноде указывается целевой внешний URL.
 
-Подключается дистрибуция в Content step флоу так же, как обычная Content Distribution (через cogwheel шага → выбор дистрибуции, см. выше).
+Подключается дистрибуция в Content step флоу так же, как обычная Content Distribution (клик по ноде шага → модалка настроек → выбор дистрибуции; см. «Подключение дистрибуции во флоу — два способа»).
 
 ## Как управлять нодами дерева дистрибуций (Duplicate, Disable, Clear)
 
@@ -170,7 +175,8 @@ Money-дистрибуции (`Payout` / `Revenue`) создаются в `Setti
 
 ## Смежные темы
 
-- [models/distributions-model.md](../models/distributions-model.md) — концепт-уровень: 8 типов, дерево, Strategy, Business Models, Buyer UTM Distribution.
+- [models/distributions-model.md](../models/distributions-model.md) — концепт-уровень: 9 типов, дерево, Strategy, Business Models, Buyer UTM Distribution.
+- [how-to/auto-rules.md](auto-rules.md) — дистрибуция типа `Auto Rules`: шаблон автоправил Meta, ассайн и запуск в разделе `Automations`.
 - [models/flow-model.md](../models/flow-model.md) — Content step, Fill Fields step, Fields by Distribution.
 - [how-to/domains.md](domains.md) — `Default Query Code`, привязка домена к серверу.
 - [how-to/push-notifications.md](push-notifications.md) — как собирается текст сообщения (плейсхолдеры, спинтакс).

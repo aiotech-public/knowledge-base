@@ -6,7 +6,7 @@ doc_type: model
 builds: [erp, mtk]
 related: [architecture, domains, glossary, sdk, visit-lifecycle, flow-model, tenant, domain, landing, domain-launch, landings, permissions-model, ui-map]
 language: ru
-updated: 2026-08-12
+updated: 2026-09-11
 ---
 
 # Server / Agent — концепт (модель)
@@ -27,16 +27,15 @@ updated: 2026-08-12
 
 ### Сервера агностичны — лэнды живут на CDN, а не на сервере
 
-Файлы лэндов (HTML/JS/CSS/картинки/видео) лежат на **CDN**, не на серверах клиента — сервера агностичны. Следствия: мгновенная замена (не нужно переносить файлы, как в классических трекерах), быстрый репойнт, взаимозаменяемость. Детально — [context/architecture.md](../context/architecture.md) §Лэнды на агенте, *уточните у поддержки*.
+Файлы лэндов (HTML/JS/CSS/картинки/видео) лежат на **CDN**, не на серверах клиента — сервера агностичны. Следствия: мгновенная замена (не нужно переносить файлы, как в классических трекерах), быстрый репойнт, взаимозаменяемость. Детально — [context/architecture.md](../context/architecture.md) §Лэнды на агенте.
 
-### Как добавить сервер: Buy vs Add manually vs Request
+### Как добавить сервер: `Buy a server` vs `Add manually`
 
-`Tech → Servers → +Server` открывает окно **Add Server to AIO** с вариантами добавления:
-- **Buy a server** (самый частый) — AIO реквестит дроплет у Server Provider (DigitalOcean, Vultr через BitLaunch и т.д.), ждёт пока поднимется, и автоматически раскатывает Deploy. API-ключ провайдера задаётся в `Tech → Server providers`.
-- **Add manually** — указать IP, скопировать Deploy-скрипт (поле `Script Content`) и выполнить его на сервере по SSH вручную (модалка: Name + Description + Tags + IP address + Monitoring user + Repoint group + Deployment script + Script content).
-- **Request from partners** — запросить новый сервер у партнёров AIO (третий вариант в окне Add Server to AIO).
+`Tech → Servers → +Server` открывает окно выбора способа (`Choose how to add a server`) с двумя карточками:
+- **`Buy a server`** (рекомендуемый, `Order a server from a connected provider`) — AIO заказывает машину у подключённого `Server Provider` (DigitalOcean, Hetzner, Vultr, BitLaunch и др.; API-ключ провайдера задаётся в `Tech → Server providers`), ждёт, пока она поднимется и получит IP, а выбранный в поле `Deployment` скрипт передаёт провайдеру как стартовый скрипт машины — провайдер выполняет его при первом запуске. Поля модалки: `Description`, `Tags`, `Monitoring user`, `Repoint group`, `Server provider`, `Deployment`.
+- **`Add manually`** (`Add a server you already own`) — указать публичный `IP address` своего сервера; AIO на него не заходит и ничего не ставит — содержимое выбранного `Deployment script` показывается в поле `Script content` (только чтение), его выполняют на машине по SSH самостоятельно. Поля: `Name`, `Description`, `Tags`, `IP address`, `Monitoring user`, `Repoint group`, `Deployment script`, `Script content`.
 
-В обоих случаях Deploy-скрипт ставит **Docker, Squid и AIO-агент**. Пошагово (процедура установки, Buy/Manual, SSH-команды) — [how-to/domains.md](../how-to/domains.md) §Add server и [context/architecture.md](../context/architecture.md) §Как добавляется сервер.
+Стандартный Deploy-скрипт ставит **Docker, Squid и AIO-агент**. В обоих путях установку AIO подтверждает одинаково — по ответу агента на `GET http://<ip>/ping` (до ~30 минут ожидания), после чего сервер получает `Running` / `Installed`. Что означает каждая строка статуса, почему сервер завис в `Processing` или упал в `Danger` с `All install checks failed` и что на самом деле делает `Reinstall`.
 
 ### Какие атрибуты у сервера и где их задать
 
@@ -66,9 +65,9 @@ updated: 2026-08-12
 
 ### Мониторинг сервера: Pinging, Monitoring User и привязка к Telegram
 
-Пинг по кворуму (больше двух гео из 4) каждые 5 минут — [context/architecture.md](../context/architecture.md) §Pinging. Статусы: серый — ок; красный — недоступен; жёлтый — suspicious-malicious (Domain Checkers). Алерты шлёт **AIO-tech-bot** назначенному **Monitoring User**-у — **только в Telegram**. Частая причина «не приходят алерты» — у аккаунта нет привязки к Telegram (AIO не может связать аккаунт с TG); 2FA через Google Authenticator привязку к TG не даёт. Механика и как проверить — [context/architecture.md](../context/architecture.md) §Monitoring User + § «AIO-tech-bot и 2FA».
+Сервер пингуется раз в 5 минут с нескольких точек мониторинга, решение «упал/жив» — по кворуму, и недоступность должна продержаться ~150 секунд подряд, поэтому `Danger` наступает через 5–10 минут после реального падения, а не сразу (канон механики — [context/architecture.md](../context/architecture.md) → «Мониторинг и нотификации»). Статусы сервера: `Running` (иконки нет), `Processing` (синий вращающийся значок — установка или удаление идёт), `Danger` (красный крестик; подсказка у иконки показывает `status_text` — при падении `Current Incident: <причина>`, после восстановления сервер снова `Running` с `Last Incident: <причина>`). Колонка `Monitoring` (Yes/No) показывает, включён ли uptime-мониторинг; переключается экшенами `Place monitor` / `Delete monitor`. Сервер в `Processing` мониторинг не проверяет. Алерты шлёт **AIO-tech-bot** назначенному **Monitoring User**-у — **только в Telegram**. Частая причина «не приходят алерты» — у аккаунта нет привязки к Telegram (AIO не может связать аккаунт с TG); 2FA через Google Authenticator привязку к TG не даёт. Механика и как проверить — [context/architecture.md](../context/architecture.md) §Monitoring User + § «AIO-tech-bot и 2FA».
 
-Uptime-проверки серверов и разбор инцидентов AIO делает сам по расписанию — домены упавшего сервера переезжают на живой сервер той же группы без ручного действия (когда и как часто — *Что AIO проставляет и делает сам — фоновые задачи и их расписание*; сам механизм репойнта — §Repoint Group ниже).
+Uptime-проверки серверов и разбор инцидентов AIO делает сам по расписанию — домены упавшего сервера переезжают на живой сервер той же группы без ручного действия, **один раз на инцидент**: если репойнт домена не удался, AIO его не повторяет, домен остаётся в `Danger` с `Repoint failed: …`, и переезд запускают руками (*уточните у поддержки* → «Домен ушёл в репойнт»). Когда и как часто идут проверки — *Что AIO проставляет и делает сам — фоновые задачи и их расписание*; сам механизм репойнта — §Repoint Group выше.
 
 ### Deploy, Squid Proxy и self-update агента — что ставится на сервер
 
@@ -186,12 +185,19 @@ Server Provider — где живёт сервер (DigitalOcean…). Domain Pro
 ## Подводные камни Server и Repoint Group
 
 - **Один сервер в Repoint Group** — самая частая ошибка: репойнту некуда переезжать. Минимум 2, лучше у разных провайдеров/аккаунтов. При «почему репойнт не сработал» первое — сколько серверов в группе.
+
 - **Нет привязки к Telegram у Monitoring User** → алерты AIO-tech-bot доставлять некуда (алерты идут только в TG). 2FA через Google Authenticator привязку к TG не даёт — проверять надо наличие TG-привязки. Механика — [context/architecture.md](../context/architecture.md) § «AIO-tech-bot и 2FA».
+
 - **Вся группа у одного Server Provider / в одном аккаунте** → сбой/блокировка аккаунта кладёт всю группу разом (проблема на уровне аккаунта). Держать серверы группы у разных провайдеров — резервирование.
+
 - **Слишком слабый сервер** — рискует пробуксовывать под нагрузкой (рекомендованный размер — у команды AIO).
+
 - **Agent Cluster нельзя на реальном трафике** сейчас: агент держит сессию визита локально у себя и с другими агентами её не делит — при перебалансировке визит «прыгает» между агентами и стартует заново.
+
 - **`Destroy Server` необратим** — сервер перестаёт быть операционным навсегда.
-- **Самостоятельно добавленные серверы** (по IP, без интеграции провайдера) менее автоматизированы — Deploy накатывается вручную.
+
+- **Самостоятельно добавленные серверы** (по IP, без интеграции провайдера) менее автоматизированы — Deploy накатывается вручную, а AIO только ждёт ответа агента на `/ping` около 30 минут; не успели выполнить скрипт — сервер уйдёт в `Danger` с `All install checks failed`. `Reinstall` при этом не переустанавливает сервер, а лишь перезапускает эту проверку из `Danger` — разбор.
+
 - **Прямой доступ к серверу без Cloudflare** — если домен не за Cloudflare, IP сервера открыт наружу, и весь сервер уязвим к DDoS. Держать домены за Cloudflare. → [context/architecture.md](../context/architecture.md)
 
 ## Смежные материалы по Server, Domain и инфраструктуре

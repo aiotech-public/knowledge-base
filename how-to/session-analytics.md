@@ -6,7 +6,7 @@ doc_type: how-to
 builds: [erp]
 related: [landings, visit-lifecycle]
 language: ru
-updated: 2026-08-11
+updated: 2026-08-26
 ---
 
 # Session Analytics — записи сессий и сравнение карт лэндов

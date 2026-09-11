@@ -6,7 +6,7 @@ doc_type: how-to
 builds: [erp]
 related: [api, glossary, limits, notification-center, landings]
 language: ru
-updated: 2026-08-11
+updated: 2026-08-26
 ---
 
 # Events Exporter — выгрузка больших таблиц событий (Visits / Trash Visits / Conversions) в файл

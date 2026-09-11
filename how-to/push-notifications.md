@@ -6,7 +6,7 @@ doc_type: how-to
 builds: [erp]
 related: [remarketing-campaigns, distributions-model, permissions, notifications-flow, placeholders, mechanics-pwa, postback-generator, conversion-model, destinations, custom-fields, distributions, metric]
 language: ru
-updated: 2026-08-11
+updated: 2026-08-26
 ---
 
 # Тексты рассылки — дистрибуция Message Templates и наборы AIO

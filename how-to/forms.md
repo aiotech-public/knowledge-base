@@ -6,7 +6,7 @@ doc_type: how-to
 builds: [erp, mtk]
 related: [form, sdk, custom-fields, placeholders, destinations, debug-with-logs, visit-lifecycle, flow-editor]
 language: ru
-updated: 2026-08-12
+updated: 2026-08-26
 ---
 
 # Forms (How-to)

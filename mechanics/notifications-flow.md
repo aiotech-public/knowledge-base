@@ -6,7 +6,7 @@ doc_type: mechanic
 builds: [erp]
 related: [remarketing-campaigns, marketing-flow, distributions-model, debug-with-logs, sdk, push-notifications, conversion-model, metric, notification-center, visit-lifecycle, flow-model, placeholders, mechanics-pwa, glossary]
 language: ru
-updated: 2026-08-11
+updated: 2026-09-11
 ---
 
 # Notifications Flow / Push / Marketing
@@ -229,7 +229,7 @@ JS-макрос, выводящий браузерный prompt подписки
 
 ## Что трекается по пушам — Delivered / Opened только у remarketing-кампаний
 
-Зависит от того, кто отправил пуш. У пушей **remarketing-кампании** доставка и открытие трекаются: события `Delivered` и `Opened` доезжают до аналитики и видны через метрику `Remarketing count` и группировки Remarketing (метрики — [models/metric.md](../models/metric.md)). У пушей флоу рассылки, **не привязанных к remarketing-кампании**, таких событий нет вообще — там по-прежнему только лог в `Marketing → Messages`.
+Зависит от того, кто отправил пуш. У пушей **remarketing-кампании** доставка и открытие трекаются: события `Delivered` и `Opened` доезжают до аналитики и видны через метрику `Remarketing count` и группировки Remarketing (метрики — [models/metric.md](../models/metric.md)). Группировки Remarketing работают только на страницах раздела Remarketing: в трекерных таблицах, в аналитике и в конструкторе графиков этих колонок нет, а сохранённая раскладка или share-code с таким фильтром на трекерной странице отдаст неотфильтрованные данные без ошибки (сборка аналитики рассылки — [how-to/remarketing-campaigns.md](../how-to/remarketing-campaigns.md)). У пушей флоу рассылки, **не привязанных к remarketing-кампании**, таких событий нет вообще — там по-прежнему только лог в `Marketing → Messages`.
 
 Готовой колонки-процента CTR продукт не отдаёт ни на одном из путей: есть счётчики `Delivered` / `Opened`, а не посчитанный коэффициент. Процент считается своей метрикой — `Computable metric` поверх `Remarketing count` (тип метрики и её формула — [models/metric.md](../models/metric.md), сборка на remarketing-пути — [how-to/remarketing-campaigns.md](../how-to/remarketing-campaigns.md)).
 
@@ -265,7 +265,7 @@ JS-макрос, выводящий браузерный prompt подписки
 
 ## Уведомление о бане рекламного аккаунта / новой конверсии — это НЕ рассылка
 
-Если речь про алерт **тебе-медиабайеру** о твоём аккаунте — бан рекламного аккаунта Facebook (`Facebook ad account "..." disabled (...)`), новая конверсия, сбой пуллинга рекламного аккаунта, отчёт по расписанию — это **Notification Center** (колокольчик в UI, self-notification-алерты), а не Marketing/push-рассылка визитёрам из этого дока. Такой алерт наружу проксирует сам Notification Center, а не Sender Providers и ноды-каналы этого флоу; отчёт по расписанию, например, приходит в Telegram и Slack готовой картинкой-таблицей, а не текстом. Дословные тексты этих уведомлений, их триггеры и настройка — [mechanics/notification-center.md](notification-center.md). Здесь — только рассылки push/Telegram визитам.
+Если речь про алерт **тебе-медиабайеру** о твоём аккаунте — бан рекламного аккаунта Facebook (`🚫 Facebook ad account «<имя>» disabled (<статус>)`), новая конверсия, сбой пуллинга рекламного аккаунта, отчёт по расписанию — это **Notification Center** (колокольчик в UI, self-notification-алерты), а не Marketing/push-рассылка визитёрам из этого дока. Такой алерт наружу проксирует сам Notification Center, а не Sender Providers и ноды-каналы этого флоу; отчёт по расписанию, например, приходит в Telegram и Slack готовой картинкой-таблицей, а не текстом. Дословные тексты этих уведомлений, их триггеры и настройка — [mechanics/notification-center.md](notification-center.md). Здесь — только рассылки push/Telegram визитам.
 
 ## Не воспроизводится сессия / Replayer not enough events
 
@@ -288,7 +288,9 @@ JS-макрос, выводящий браузерный prompt подписки
 
 ### Что задаётся в конфиге ноды-канала
 
-**Конфиг ноды-канала** (шестерёнка на ноде, пример `Push`): `Name` / `Description`; `Settings availability` (скоуп настройки); стратегия выбора варианта **First / Weights**; строки вариантов (аудитория `All` + **`Select distribution`** + вес) + `+ Add another variant` + `Compact`/`Control`; **`Visual settings`** (`State color` / `Collapsed by default` / `Archive state` — только оформление ноды). **Тело сообщения в ноде не задаётся** — нода выбирает дистрибуцию или шаблон, контент живёт отдельно.
+**Конфиг ноды-канала** (пример `Push`): `Name` / `Description`; `Settings availability` (скоуп настройки); стратегия выбора варианта **First / Weights**; строки вариантов (аудитория `All` + **`Select distribution`** + вес) + `+ Add another variant` + `Compact`/`Control`; **`Visual settings`** (`State color` / `Collapsed by default` / `Archive state` — только оформление ноды). **Тело сообщения в ноде не задаётся** — нода выбирает дистрибуцию или шаблон, контент живёт отдельно.
+
+Открывается конфиг **модалкой** по клику на ноду — по шестерёнке или любой другой точке ноды (не открывают её только клики по портам переходов и по drag-хендлу). Кнопка `Apply settings` внизу модалки ничего не применяет — форма пишет в узел живьём, кнопка только закрывает окно, а флоу всё равно надо сохранить своей кнопкой сохранения. Тумблер `Collapsed by default` на вид карточки шага в `Edit Campaign` не влияет: свёрнутость там определяется только ручным кликом. Общая механика редактора — [models/flow-model.md](../models/flow-model.md).
 
 У узла `Drip schedule` этой формы нет: он рисуется своей — расписание шагов, `Stop conversion`, `Required conversions`.
 
@@ -319,7 +321,7 @@ JS-макрос, выводящий браузерный prompt подписки
 
 ### Что такое Messages (лог отправки) и где смотреть аналитику
 
-`Marketing → Messages` — **read-only** список фактически отправленных и запланированных сообщений (кнопки create нет — сообщения порождаются флоу). Фильтр **`Status`**: **Requested → Processing → Done / Failed**. Для рассылок, не привязанных к remarketing-кампании, это вся доступная аналитика; готовой колонки-процента CTR продукт не отдаёт нигде — процент собирают своей метрикой `Computable metric` ([models/metric.md](../models/metric.md)).
+`Marketing → Messages` — **read-only** список фактически отправленных и запланированных сообщений (кнопки create нет — сообщения порождаются флоу). Фильтр **`Status`**: `Requested`, `Processing`, `Done`, `Failed`. Новые сообщения создаются сразу в `Processing` — все пути посева (прогон по расписанию, конверсионный триггер, привязка в `Conversion Types`, узел флоу рассылки) ставят этот статус при создании, поэтому `Status = Requested` встречается только у старых строк и очередь на отправку по нему не смотрят. Для рассылок, не привязанных к remarketing-кампании, это вся доступная аналитика; готовой колонки-процента CTR продукт не отдаёт нигде — процент собирают своей метрикой `Computable metric` ([models/metric.md](../models/metric.md)).
 
 ## Смежные темы
 
