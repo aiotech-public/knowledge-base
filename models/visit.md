@@ -6,7 +6,7 @@ doc_type: model
 builds: [erp, mtk]
 related: [visit-lifecycle, visit-field, conversion-model, server, domain-model, ui-common, remarketing-campaigns, marketing-flow, debug-with-logs, flow-model, landings, campaign, source]
 language: ru
-updated: 2026-09-11
+updated: 2026-09-23
 ---
 
 # Visit — концепт (модель)

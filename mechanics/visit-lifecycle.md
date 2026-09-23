@@ -6,7 +6,7 @@ doc_type: mechanic
 builds: [erp, mtk]
 related: [conversion-model, source, source-trackers, placeholders, visit-timeline, visit, session-analytics, server, distributions-model, live-pulse, domains, glossary, flow-model, domain, sdk, destination, destinations, remarketing-campaigns, visit-field, user-fields, mechanics-pwa, analytics, ui-common, limits, marketing-flow, debug-with-logs, metric, architecture]
 language: ru
-updated: 2026-09-11
+updated: 2026-09-23
 ---
 
 # Жизнь визита в AIO
@@ -271,7 +271,7 @@ Destination возвращает исход (`Pushed` / `Rejected`) и, при �
 
 ### Создание custom fields (Settings → Fields)
 
-Custom fields (типа `buyer_utm`, `Push Subscribe Toggle`) добавляются через `Settings → Fields`. У поля есть `Type` — сущность-владелец, шесть значений: `Visit` / `Campaign` / `Source` / `Landing` / `Destination` / `Conversion`; от него зависит, в карточке какой сущности задаётся дефолтное значение ([models/visit-field.md](../models/visit-field.md)).
+Custom fields добавляются через `Settings → Fields`; часть таких полей уже засеяна шаблоном тенанта — например `buyer_utm` (`Buyer UTM`, группа `Tracking`, во всех семи шаблонах) и `push_subscribe_toggle` (`Push Subscribe Toggle`, в шаблонах Finance / Nutra / Sweeps, в iGaming его нет). У поля есть `Type` — сущность-владелец, шесть значений: `Visit` / `Campaign` / `Source` / `Landing` / `Destination` / `Conversion`; от него зависит, в карточке какой сущности задаётся дефолтное значение ([models/visit-field.md](../models/visit-field.md)).
 
 В MTK поля заводятся через шаблон или саппорт; управление в `Settings → Fields` недоступно.
 
@@ -342,7 +342,7 @@ AIO записывает **любой дошедший клик** — визит
 
 ### Visits-таблица (`Tracker → Visits`) — колонки и экшены
 
-`Tracker → Visits` — список визитов. Колонки: **State** (на каком шаге Campaign визит сейчас стоит или где закончилось его взаимодействие — Preland / White Page / Offer и т.п., напр. `LP1`), **Status** (On landing — **`Wait`** / **`Live`** / **`Left`**), `Geo`, `Owner` (Campaign creator = байер), `Source`, `Campaign`, `Flow`, `Destinations`, `Pushed`, `Created`, а также **`Bot?`** (визит опознан как бот) и **`Trash?`** (визиту проставлен `is_trash` — визит вне основной аналитики, причина в поле `Trash Reason`). **Скролл вправо** раскрывает **поля визита** колонками (Lead: Email/Phone; LP Content Variables; Showcase; интеграционные — Bridge buyer UTM, DV360 Click ID; Screen resize и т.д.) — состав настраивается кнопкой `Settings` над таблицей → `Table settings` ([reference/ui-common.md](../reference/ui-common.md)). Набор колонок не ограничен дефолтными: любое поле из `Settings → Fields` автоматически доступно как колонка (см. [models/visit.md](../models/visit.md)).
+`Tracker → Visits` — список визитов. Колонки: **State** (на каком шаге Campaign визит сейчас стоит или где закончилось его взаимодействие — имя ноды флоу; в засеянных флоу это `Preland` / `Offer` / `White` / `Thank You` / `Destination` и т.п.), **Status** (On landing — **`Wait`** / **`Live`** / **`Left`**), `Geo`, `Owner` (Campaign creator = байер), `Source`, `Campaign`, `Flow`, `Destinations`, `Pushed`, `Created`, а также **`Bot?`** (визит опознан как бот) и **`Trash?`** (визиту проставлен `is_trash` — визит вне основной аналитики, причина в поле `Trash Reason`). **Скролл вправо** раскрывает **поля визита** колонками (Lead: Email/Phone; LP Content Variables; Showcase; интеграционные — Bridge buyer UTM, DV360 Click ID; Screen resize и т.д.) — состав настраивается кнопкой `Settings` над таблицей → `Table settings` ([reference/ui-common.md](../reference/ui-common.md)). Набор колонок не ограничен дефолтными: любое поле из `Settings → Fields` автоматически доступно как колонка (см. [models/visit.md](../models/visit.md)).
 
 Свежий хвост таблицы визитов читается напрямую, поэтому самый недавний трафик виден в ней сразу — без задержки фоновой пересборки аналитики. Это хвост **только этой таблицы**: у метрик и виджетов дашборда свой механизм и своя длина свежего отрезка, и цифры между экранами из-за этого могут расходиться.
 
@@ -421,7 +421,7 @@ Q.V. — это «чистая» база воронки (JS точно сраб
 
 ### Conversion Type — single vs multiple
 
-У каждого `Conversion Type` есть атрибут **`Uniqueness Strategy`** (полные определения трёх вариантов — [models/conversion-model.md](../models/conversion-model.md)): `Single Conversion` (один раз: `Lead`, `Registration`, `Invalid`, `Rejected Lead` и др.), `Multiple Infinity` (серия апдейтов, напр. `Sale Status Update`), `Multiple By Unique` (несколько с правилом уникальности).
+У каждого `Conversion Type` есть атрибут **`Uniqueness Strategy`** (полные определения трёх вариантов — [models/conversion-model.md](../models/conversion-model.md)): `Single Conversion` (один раз: `Lead`, `Registration`, `Install`, `Push Subscribe`), `Multiple Infinity` (серия событий: `Sale Status Update`, а также `Lead Rejected` и `Fraud Lead` из шаблонов — реджект пуша может повториться на том же визите), `Multiple By Unique` (несколько с правилом уникальности).
 
 ### Sale Status Update + поле визита `current_sale_status`
 

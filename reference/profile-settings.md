@@ -6,7 +6,7 @@ doc_type: reference
 builds: [erp, mtk]
 related: [ui-map, architecture, debug-with-logs, notification-center]
 language: ru
-updated: 2026-09-11
+updated: 2026-09-23
 ---
 
 # Profile Settings (настройки профиля пользователя)

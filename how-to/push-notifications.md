@@ -1,12 +1,12 @@
 ---
 id: push-notifications
 title: Тексты рассылки — дистрибуция Message Templates и наборы AIO
-description: Как собираются сами сообщения рассылки — дистрибуция типа Message Templates (Marketing → Template distributions), дерево Folder / Strategy / четыре типа шаблонов, отправляются только push-ноды, вариант на отправку выбирается равновероятно, спинтакс {вариант 1|вариант 2} и {Random=(100,1500)}, плейсхолдеры в тексте и иконка PWA, готовые глобальные наборы пушей от AIO (тумблер Show global only) — read-only и не копируются; отдельно Telegram-нотификации баеру. Только ERP.
+description: Как собираются сами сообщения рассылки — дистрибуция типа Message Templates (Marketing → Template distributions), дерево Folder / Strategy / четыре типа шаблонов, отправляются только push-ноды, вариант на отправку выбирается равновероятно, спинтакс {вариант 1|вариант 2} и {Random=(100,1500)}, плейсхолдеры в тексте и иконка PWA, готовые глобальные наборы пушей от AIO (тумблер Show global only) — read-only и не копируются; отдельно Telegram-нотификации баеру. В MTK — только с платным модулем PWA + Push (страница Message templates во вкладке PWA).
 doc_type: how-to
-builds: [erp]
+builds: [erp, mtk]
 related: [remarketing-campaigns, distributions-model, permissions, notifications-flow, placeholders, mechanics-pwa, postback-generator, conversion-model, destinations, custom-fields, distributions, metric]
 language: ru
-updated: 2026-08-26
+updated: 2026-09-23
 ---
 
 # Тексты рассылки — дистрибуция Message Templates и наборы AIO
@@ -17,7 +17,7 @@ updated: 2026-08-26
 
 ## TL;DR
 
-- Тексты живут в дистрибуции типа `Message Templates` — страница `Marketing → Template distributions` (`/app/remarketing/message-template-distributions`). Раздел только в ERP.
+- Тексты живут в дистрибуции типа `Message Templates` — страница `Marketing → Template distributions` (`/app/remarketing/message-template-distributions`). В ERP раздел входит в базовый набор; в MTK — только с платным модулем `PWA + Push` (страница `Message templates` во вкладке `PWA`).
 - В дереве — `Folder`, `Strategy` и четыре типа шаблонов (`Push Template`, `Email Template`, `Sms Template`, `Telegram Template`). Реально отправляются **только push-ноды**.
 - Вариант на отправку выбирается **равновероятно** среди нод, прошедших свои условия. Весов у шаблонов сообщений нет.
 - Спинтакс `{вариант 1|вариант 2}` и `{Random=(100,1500)}` разворачивается заново на каждую отправку — после подстановки плейсхолдеров `{{aio.*}}`.
@@ -31,7 +31,18 @@ updated: 2026-08-26
 
 Тип создаётся карточкой `Message templates` («Шаблоны сообщений» — «Письма, push, SMS и Telegram — шаблонами в одном дереве») в диалоге создания дистрибуции; на самой странице раздела диалог выбора типа пропускается — сразу открывается форма нужного типа. Права раздела — `marketing.template-distributions.view` / `.edit` / `.share` / `.share.ownership`.
 
-Раздел есть только в ERP: модуля ремаркетинга в MTK нет. Чем этот тип дистрибуции отличается от остальных деревьев — [models/distributions-model.md](../models/distributions-model.md).
+В ERP раздел входит в базовый набор; в MTK дистрибуции `Message templates` доступны только с платным модулем `PWA + Push` — страница `Message templates` во вкладке `PWA` (`/app/mtk/pwa/message-template-distributions`, дерево — `…/tree`), с теми же правами `marketing.template-distributions.*` ([how-to/remarketing-campaigns.md](remarketing-campaigns.md)). Чем этот тип дистрибуции отличается от остальных деревьев — [models/distributions-model.md](../models/distributions-model.md).
+
+### Какие дистрибуции `Message Templates` есть в тенанте из коробки — примеры по вертикали
+
+В шаблонах ERP-тенантов лежат готовые дистрибуции-примеры типа `Message Templates` с именами вида `Example - <стадия> - N pushes`: плоские наборы из 2–4 нод `Push Template` под одну стадию воронки, по описанию — образцы под свои тексты («Custom sample set - swap the texts for your brand…» в Finance / Nutra / Sweeps, «Example only … a sample of what a custom library looks like» в iGaming). Набор зависит от вертикали:
+
+- **iGaming**: `Example - After Install - 4 pushes (AIO Global: ~5.2k)`, `Example - After Registration - 4 pushes (AIO Global: ~9k)`, `Example - After Deposit - 4 pushes (AIO Global: ~6.2k)`, `Example - All Stages - 3 pushes (AIO Global: ~4.5k)`; хвост в скобках отсылает к глобальному набору AIO той же стадии, из которого шлют готовые кампании (см. «Готовые наборы пушей от AIO»).
+- **Nutra**: `Example - Confirm Your Order - 4 pushes`, `Example - Finish Your Order - 3 pushes`, `Example - Promo Ending - 2 pushes`, `Example - Reorder Promo - 3 pushes`.
+- **Sweeps**: `Example - After Registration - 4 pushes`, `Example - Prize Reminder - 3 pushes`, `Example - New Round - 3 pushes`.
+- **Finance**: `Example - After Lead - 4 pushes`, `Example - Daily Market - 3 pushes` и третий набор под целевое действие вертикали.
+
+В MTK iGaming те же четыре дистрибуции есть, но пустые — нод `Push Template` в них нет, свой набор там собирается с нуля; в MTK Finance / Sweeps дистрибуций `Message Templates` из коробки нет. Это тенантные дистрибуции, а не глобальные наборы AIO: тексты в них правятся под свой бренд прямо в дереве — что в ноде и как выбирается вариант, ниже.
 
 ## Как устроено дерево шаблонов — `Folder`, `Strategy` и четыре типа шаблонов
 
@@ -146,7 +157,7 @@ AIO поставляет готовые наборы push-текстов: это
 
 ### Почему готовый набор нельзя отредактировать или скопировать себе
 
-Готовые наборы read-only: тексты в них из тенанта не меняются, и сделать себе копию «чтобы доработать под себя» тоже нельзя — копирование глобальной дистрибуции ломается на первой же ноде и оставляет пустой обрубок без сообщений.
+Готовые наборы read-only: тексты в них из тенанта не меняются, и сделать себе копию «чтобы доработать под себя» тоже нельзя — в таблицах дистрибуций готовых наборов нет, а вместе с ними нет и пункта копирования.
 
 Ноды набора помечены заблокированными, экшенов редактирования у них нет, а сервер отказывает в записи независимо от интерфейса. В UI про это ничего не написано: тултип на бейдже говорит только «общая для всех», про read-only — ни слова.
 
@@ -160,11 +171,11 @@ AIO поставляет готовые наборы push-текстов: это
 
 ## Telegram-нотификации баеру — это не рассылка визитёрам
 
-Telegram-нотификация баеру — отдельная история от push-рассылки: её шлёт Marketing Flow, привязанный к типу конверсии, а не remarketing-кампания. Типичный сценарий — при конверсии `Invalid Lead` / `Reject Lead` / `Sale` дать знать владельцу кампании в его Telegram-чат.
+Telegram-нотификация баеру — отдельная история от push-рассылки: её шлёт Marketing Flow, привязанный к типу конверсии, а не remarketing-кампания. Типичный сценарий — при конверсии отказа или подтверждения (в шаблонах тенанта это `Lead Rejected` / `Fraud Lead` у Finance и Sweeps, `Rejected` / `Approved` у Nutra) дать знать владельцу кампании в его Telegram-чат.
 
 **Путь:** `Settings → Conversion types → <type> → Notification Flow → выбрать` (в ERP типы конверсий открываются и со страницы конверсий — шеврон у `Postback generator` → `Manage types`, см. [how-to/postback-generator.md](postback-generator.md)).
 
-1. Открыть Conversion Type (например, `Invalid Lead`, `Reject Lead`).
+1. Открыть Conversion Type (например, `Lead Rejected` или `Fraud Lead`).
 2. В поле `Notification Flow` выбрать заранее созданный Marketing Flow с нодой-каналом `Telegram`.
 3. `Save`.
 
@@ -235,11 +246,11 @@ Telegram-нотификация баеру — отдельная история
 
 ### «Хочу видеть CTR и open-rate пушей»
 
-Готовой колонки-процента в продукте нет — процент собирается своей метрикой `Computable metric` поверх `Remarketing count` (типы метрик — [models/metric.md](../models/metric.md), сборка формулы — [how-to/remarketing-campaigns.md](remarketing-campaigns.md)). Считать при этом есть что только у пушей remarketing-кампании: у них трекаются `Delivered` и `Opened`, а у пушей Notifications Flow без кампании таких событий нет — там остаётся только лог `Marketing → Messages` ([mechanics/notifications-flow.md](../mechanics/notifications-flow.md)).
+Встроенной колонки-процента в продукте нет — процент собирается метрикой `Computable metric` поверх `Remarketing count`; в шаблонах ERP-тенантов она уже заведена как `Push Open Rate %` = `Opened Pushes / Delivered Pushes` поверх счётчиков `Sent Pushes` / `Delivered Pushes` / `Opened Pushes` / `Failed Pushes` (типы метрик — [models/metric.md](../models/metric.md), сборка формулы — [how-to/remarketing-campaigns.md](remarketing-campaigns.md)). Считать при этом есть что только у пушей remarketing-кампании: у них трекаются `Delivered` и `Opened`, а у пушей Notifications Flow без кампании таких событий нет — там остаётся только лог `Marketing → Messages` ([mechanics/notifications-flow.md](../mechanics/notifications-flow.md)).
 
 ## Смежные темы
 
-- [how-to/remarketing-campaigns.md](remarketing-campaigns.md) — канон процедуры рассылки: аудитория, триггеры, серия отправок, метрики.
+- [how-to/remarketing-campaigns.md](remarketing-campaigns.md) — процедура рассылки: аудитория, триггеры, серия отправок, метрики.
 - [models/distributions-model.md](../models/distributions-model.md) — `Message Templates` как тип дистрибуции, дерево и его ноды среди остальных типов.
 - [mechanics/notifications-flow.md](../mechanics/notifications-flow.md) — ноды Marketing Flow, каналы (работают Push и Telegram; email/SMS — заглушка), Sender Providers, лог `Marketing → Messages`.
 - [reference/placeholders.md](../reference/placeholders.md) — все плейсхолдеры и их группы.

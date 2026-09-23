@@ -4,9 +4,9 @@ title: Flow Model AIO
 description: Как устроены Flows — States, Transitions, типы Flow, State Rules и Settings. Фундамент для понимания пути визита по кампании.
 doc_type: model
 builds: [erp, mtk]
-related: [flow-editor, campaign, domain, distributions-model, forms, form, conversion-model, remarketing-campaigns, notifications-flow, marketing-flow, user-fields, placeholders, campaigns, destinations, visit-lifecycle, visit-timeline, limits, glossary, destination, landing, visit, visit-field]
+related: [flow-editor, campaign, source, domain, distributions-model, forms, form, conversion-model, remarketing-campaigns, notifications-flow, marketing-flow, user-fields, placeholders, architecture, campaigns, destinations, visit-lifecycle, visit-timeline, limits, glossary, destination, landing, visit, visit-field]
 language: ru
-updated: 2026-09-11
+updated: 2026-09-23
 ---
 
 # Flow Model AIO
@@ -29,7 +29,7 @@ Transitions — стрелки между States. Палитра Flow Editor («
 
 ### Source — точка входа визита
 
-Точка входа визита в Flow. **Обязателен для Campaign Flow.** Один `Source` на Flow.
+Точка входа визита в Flow: на входе в неё визит получает переход `Arrived`. Нода **необязательна** — источник визита определяет `suuid` в ссылке ([models/source.md](source.md)), а не эта нода: засеянные флоу Finance, Nutra и Sweeps начинаются с неё (`Start → Source`), а рабочие кампанийные флоу iGaming-шаблона (все, кроме `Preview Flow`) идут из `Start` сразу в первый шаг (`Filter`, `Fill Buyer UTM` или `Offer`) без `Source`. Если нода есть — одна на Flow.
 
 ### Content — показ контента визиту
 
@@ -81,7 +81,7 @@ Transitions — стрелки между States. Палитра Flow Editor («
 
 Вставка ранее созданного `SubFlow` в Campaign Flow. SubFlow **не работает самостоятельно** — только как вставка.
 
-Типичный use case: централизованное `Fill Fields` для нескольких Campaign Flow (например, `buyer_utm` назначается через один SubFlow, переиспользуемый везде через `Buyer UTM Distribution`).
+Типичный use case: централизованное `Fill Fields` для нескольких Campaign Flow (например, `buyer_utm` назначается через один SubFlow, переиспользуемый везде через `Buyer UTM Distribution`). В засеянных флоу это сделано иначе — нода `Fill Buyer UTM` (`Fields by distribution`) стоит прямо в рабочих кампанийных флоу ERP-шаблонов (её нет в превью-флоу, в `Deeplink Android` и во флоу MTK-шаблонов), а SubFlow из коробки не приезжает ни в одной вертикали.
 
 ### Finish — конец SubFlow
 
@@ -192,9 +192,9 @@ Transition шага `Destination` (машинный слаг — `destination-fu
 
 ### Campaign Flow — полный путь визита
 
-Полный путь визита. **Содержит** `Source` и `Destination`. Привязывается к Campaign при создании. Один Flow → несколько Campaign.
+Полный путь визита от входа до `Destination` (нода `Source` в нём обычна, но не обязательна — см. «Source — точка входа визита»). Привязывается к Campaign при создании. Один Flow → несколько Campaign.
 
-При создании кампании Flow выбирается из дропдауна `Select Flow` — там лежат и преднастроенные шаблоны Tenant'а, например `One Step` и `Instant Destination`.
+При создании кампании Flow выбирается из дропдауна `Select Flow` — там лежат и флоу, засеянные из шаблона тенанта; их набор зависит от вертикали: в Finance, например, `1Step | Form Landing` (и `1/2Step | Manual Offer Name` в ERP / `1/2Step | Preland to Offer` в MTK), в Nutra — `1Step | Order Page` и `1/2Step | Preland -> Order Page`, в Sweeps — `Default 1Step Flow` и `1/2Step | Preland -> Offer w/ Form`, в iGaming — `Web - Preland / Offer` и `PWA / OneLink`. К каждому приложена хотя бы одна кампания-пример с меткой `AIO EXAMPLE` (что клонируется из шаблона — [context/architecture.md](../context/architecture.md)).
 
 Менять существующий `Flow`, на котором уже работают кампании, **не следует** — лучше создать новый и с какого-то момента создавать кампании на нём. Старые кампании можно перепривязать вручную, но новые шаги/лэнды для уже созданных не подтянутся.
 
@@ -214,9 +214,9 @@ SubFlow **не работает самостоятельно** — только 
 
 ### Advanced Flow и APK-шаблоны
 
-`Advanced Flow` — готовый шаблон для PWA с разделением по платформам: после фильтра → Domain-Change → проверка Android → iOS → Desktop (отдельная ветка). Во флоу с PWA можно ставить лэнды **до** пвашки (разогреть, потом сбросить) и/или **после** (открыл пвашку → лэнд с колесом фортуны → оффер).
+`Advanced - PWA / OneLink` — готовый флоу iGaming-шаблона (ERP и MTK) с разделением по платформам: (в ERP — `Fill Buyer UTM` →) `Filter` → `Condition` `Android` (прошёл → `Android PWA / Onelink`) → иначе `Condition` `iOS` (прошёл → `iOS PWA / Onelink`) → всё остальное, включая десктоп, — `Fallback Offer`; оба PWA-шага ведут в `Offer`, а переполнение капы (`destination-full`) уводит в тот же `Fallback Offer`. Шага `Domain Change` в нём нет. Кампания-пример `Advanced Flow - Campaign Example` описана в тенанте так: «OS-split funnel example: Android and iOS each get the PWA, rejected and desktop traffic falls back to a geo-routed offer via Offer Distribution.» Во флоу с PWA можно ставить лэнды **до** пвашки (разогреть, потом сбросить) и/или **после** (открыл пвашку → лэнд с колесом фортуны → оффер). Вариант «после» так и собран в соседнем `PWA / OneLink w/ Landing` того же шаблона: `AIO Filter` → `PWA / AIO PWA / Onelink` → `Spawn Install` → `Landing` → `Offer`.
 
-Для APK-запусков (Android-приложения, не PWA) — **отдельный** flow-шаблон: простой, фиксирует «открыл APK → ушёл в оффер». Внутренние `AIO Push Notifications` работают **только** для AIO-PWA, не для 3rd-party.
+Для APK-запусков (Android-приложения, не PWA) в том же шаблоне лежит **отдельный** флоу `Deeplink Android` — из двух нод (`Start` → `Offer`): визит сразу уходит в оффер, кампания-пример — `Android Deeplink - Campaign Example`. Внутренние `AIO Push Notifications` работают **только** для AIO-PWA, не для 3rd-party.
 
 ## State Settings (на уровне Flow vs Campaign)
 
@@ -448,7 +448,7 @@ UUID стейта флоу напрямую в UI не виден. Получи�
 
 Что делают три «неочевидных» атрибута:
 
-- **`Linked field`** — линкует поле формата `Variant`: в это поле визита при выборе пишется content-object выбранного в этой Content-ноде варианта (source записи — `Variant`, только на запись). Пример: на шагах PWA и Offer выбранный вариант пишется в `PWA State` / `Offer State`.
+- **`Linked field`** — линкует поле формата `Variant`: в это поле визита при выборе пишется content-object выбранного в этой Content-ноде варианта (source записи — `Variant`, только на запись). Из конечного контента пишутся только лэнды и дестинейшены — `{type: landing | destination, value: <uuid>}`; варианты `HTML`, `Redirect`, `Reflect`, `404` и прочие поле не заполняют, оно остаётся пустым. Если контент шагу отдаёт `Campaign Content Distribution`, в поле пишется конечный лэнд или дестинейшен, который она выбрала (выбранный ею `Redirect` / `Reflect` поле тоже не заполняет). Исключение — вариант `Remarketing Content Distribution`: в поле пишется сама дистрибуция, а не выбранный ею контент. Пример: на шагах PWA и Offer выбранный вариант пишется в `PWA State` / `Offer State`.
 - **`Advertiser type`** — фильтр, схлопывающий варианты payload (ограничивает выбор Destination на шаге, так же как на шаге `Destination`).
 - **`Form fallback`** — очень старый способ выбрать форму: если шага `Choose form` нет, но на шаге Flow нужна конкретная форма из `Settings → Forms`. Если нет ни `Choose form`, ни `Form fallback` — грузится дефолтная форма из SDK.
 
@@ -464,6 +464,19 @@ Content-нода (и любая нода-выборщик) работает в �
 #### Sticky-повтор варианта: `visit.variants` и повторный заход на шаг
 
 При первом выборе варианта нода-выборщик записывает выбор в реестр `visit.variants` — ключ на шаг (по кампании и стейту) → выбранный вариант. При повторном заходе визита на тот же шаг стратегия НЕ выбирает заново: возвращается ТОТ ЖЕ вариант из реестра (sticky). Повторный заход поэтому не перезаписывает цвет Split Group, не перезаписывает `Linked field` и не двоит статистику выбора — весь блок записи выполняется только при первом (не-sticky) выборе. Практический вывод: визит, вернувшийся на шаг, увидит тот же вариант, что и в первый раз.
+
+#### Показанный лэнд или дестинейшен закрепляется за визитом — удаление варианта старых визитов не переключает
+
+**Если на шаге визиту показали лэнд или дестинейшен, AIO запоминает саму сущность и при повторном заходе на этот шаг отдаёт её напрямую — минуя стратегию выбора и дистрибуцию, пока сущность жива (не удалена и не в архиве).** Хранится одна запись — сущность, показанная визиту последней: показ лэнда или дестинейшена на следующем шаге заменяет её.
+
+Отсюда следствия:
+
+- **Удаление варианта из шага или ноды из дерева дистрибуции старых визитов больше не переключает** — они продолжают получать закреплённый лэнд или дестинейшен.
+- **Закрепление снимает архив:** если закреплённый Destination или лэнд заархивировать (или удалить), при следующем заходе визит пойдёт обычным путём — стратегией шага с реестром `visit.variants` (секция выше) или деревом дистрибуции. Архивный вариант обычный путь не пропускает: пока он остаётся в шаге, реестр вернёт визиту его же, а дерево может выбрать его снова. Чтобы увести старые визиты на новый оффер, заархивируйте сущность и уберите её из шага или дерева.
+- **Реджект по капе или дублю закрепление не снимает** — такой отказ и так уводит визит в другой шаг.
+- Изменения внутри самой сущности (например, HTML лэнда или URL дестинейшена) до старых визитов доходят: отдаётся актуальная версия.
+
+Варианты других типов (`HTML`, `Redirect` и т.п.) так не закрепляются — для них действует только реестр `visit.variants` (секция выше). Визиты, созданные до появления закрепления, идут обычным путём.
 
 ### Destination (External target) — настройки
 

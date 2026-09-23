@@ -4,9 +4,9 @@ title: Destinations / Advertisers / Caps (How-to)
 description: Создание Advertiser-ов, Destination через By Advertiser / By Integration / Simple Redirect / Telegram, капы, PWA-destinations (AIO и сторонние сервисы); что уезжает рекламодателю — реферер (Referrer-Policy no-referrer на любом ответе AIO, как отдать реферер параметром), `#` и списковые плейсхолдеры в URL Parameters; позиция пуша `#1` в списке Destinations.
 doc_type: how-to
 builds: [erp, mtk]
-related: [conversion-model, placeholders, flow-model, visit-lifecycle, how-to-pwa, push-notifications, glossary, ui-common, destination, user-fields, flow-editor, notification-center, landings, user, mechanics-pwa, source-trackers, advertiser]
+related: [conversion-model, placeholders, flow-model, visit-lifecycle, how-to-pwa, push-notifications, glossary, architecture, ui-common, destination, permissions-model, user-fields, flow-editor, notification-center, landings, user, mechanics-pwa, source-trackers, advertiser]
 language: ru
-updated: 2026-09-11
+updated: 2026-09-23
 ---
 
 # Destinations / Advertisers / Caps (How-to)
@@ -40,10 +40,14 @@ updated: 2026-09-11
 
 1. **Name** — имя (обязательно).
 2. **Advertiser type** — тип Advertiser (опционально, для группировки в UI; см. «Как сгруппировать Advertiser-ов по типу» ниже). Для адвертайзеров под обычные редирект-URL обычно `Offer`.
-3. **Integration type** (обяз.) — конкретная партнёрка/сеть из **большого каталога интеграций** (`AdCombo`, `Adbrt`, `Adpulse`, `Adw`, `Aff1`, `AffBay`, `AffGenius`, `AffScale`, … — десятки CPA/affiliate-сетей, каждая = свой постбэк/API-шаблон). Предвыбирается плиткой `Destination Type` (см. выше), в форме остаётся доступным. Помимо каталога есть значение **`Simple Redirect`** — для адвертайзеров под обычные редирект-URL без API. *(В UI 2026-06-06 поле называется `Integration type`; для raw-шаблонов вроде `Bridge`/`IREV` см. Destination → `By Integration`.)*
+3. **Integration type** (обяз.) — конкретная партнёрка/сеть из **большого каталога интеграций** (`AdCombo`, `Adbrt`, `Adpulse`, `Adw`, `Aff1`, `AffBay`, `AffGenius`, `AffScale`, … — десятки CPA/affiliate-сетей, каждая = свой постбэк/API-шаблон). Предвыбирается плиткой `Destination Type` (см. выше), в форме остаётся доступным. Помимо каталога есть значение **`Simple Redirect`** — для адвертайзеров под обычные редирект-URL без API. *(В UI 2026-06-06 поле называется `Integration type`; для raw-шаблонов вроде `Bridge`/`IREV Lite` см. Destination → `By Integration`.)*
 4. **URL Parameters** — параметры адвертайзера. Поле лежит в блоке `Settings` и есть только у `Integration type` = `Simple Redirect`; заданные в нём параметры **автоматически дописываются** к URL каждого Destination, созданного `By Advertiser` для этого адвертайзера (список AIO-плейсхолдеров — по иконке-шестиграннику).
 5. **Image** / **Logo** — опционально (для UI). Картинку можно загрузить **с компьютера** или выбрать из **Content Library**.
 6. `Save` / `Confirm`.
+
+### Как выглядит готовый Advertiser под редирект-офферы — `Example Advertiser` из шаблона Sweeps
+
+В шаблонах Sweeps (ERP и MTK) адвертайзер под редирект-офферы уже заведён: `Example Advertiser` с `Advertiser type` = `Offer`, `Integration type` = `Simple Redirect` и `URL Parameters` = `click_id={{aio.visit.uuid}}`. Его три дестинейшена созданы `By Advertiser` (`SweepNet #10442 | iPhone 17 | US | $2.20 SOI`, `SweepNet #10517 | $1000 Gift Card | DE | $1.80 SOI`, `DirectBrand #sample-box | Sample Box | GB | $3.40 DOI`) — у каждого свой `Redirect URL`, а `click_id` к нему дописывает адвертайзер. В iGaming два адвертайзера типа `Offer` — `Partners Platform Example` и `Example Direct Brand` — собраны иначе: `URL Parameters` у них пустые, а `clickid={{aio.visit.uuid}}` стоит прямо в `Redirect URL` каждого из шести офферов-примеров (`Example Partners | Alpha Casino | BR | slots | CPA 25$` и подобные); девять PWA-сервисов там же — см. «PWA-Destination через сторонний сервис» ниже. В Nutra под партнёрки заведены адвертайзеры с интеграциями API (`AdCombo Example`, `AlterCpa Example`, `LeadBit Example`, `LemonAd Example`), в Finance примеров адвертайзеров нет.
 
 ### Параметр из `URL Parameters` не подставился в ссылку оффера
 
@@ -87,7 +91,7 @@ updated: 2026-09-11
 
 ### Как сгруппировать Advertiser-ов по типу (Advertiser Types)
 
-Advertiser Types — группировка Advertiser-ов под одной категорией (по вертикали или направлению — например `Finance`, `Nutra`, `Gambling`).
+Advertiser Types — группировка Advertiser-ов под одной категорией. Из коробки в каждом шаблоне тенанта два типа: `Offer` (партнёрки и прямые рекламодатели, `Metrics Event Group` = `Offer`) и `PWA` (сторонние PWA-сервисы, `Metrics Event Group` = `PWA`); свои типы добавляются рядом (`Manage Types`, см. «Завести свой PWA-сервис как Advertiser» ниже).
 
 **Путь:** `Advertisers → создать Type → внутри Type добавлять Advertiser-ов`.
 
@@ -135,7 +139,7 @@ Safari/WebKit не учитывает `Referrer-Policy` на 30x-ответах 
 
 - `{{aio.visit.fields.referer}}` — реферер захода (площадка). Отдельного `{{aio.visit.referer}}` нет — только через поле.
 
-- `{{aio.visit.domain}}` — домен визита; в примерах дестинейшенов из шаблона тенанта поле интеграции `referrer` (у интеграций, где оно есть) заполнено именно им.
+- `{{aio.visit.domain}}` — домен визита; в примерах дестинейшенов шаблона Nutra (`AdCombo Example | Diabetes Support | RO | 9 EUR CPA`, `LeadBit Example | Prostatitis Care | PL | 11 EUR CPA`) поле интеграции `referrer` заполнено именно им, у `LemonAd Example | Slim Detox | ES | 12 EUR CPA` тем же плейсхолдером заполнено поле `domain`.
 
 ## Destination типа Telegram (Telegram Destination)
 
@@ -176,13 +180,17 @@ https://t.me/<bot_username>?start={{aio.visit.uuid}}
 
 Если нужной интеграции в списке нет — можно **запросить новую**: открывается поп-ап с контактами интеграционного партнёра (процесс заведения новой интеграции — [reference/glossary.md](../reference/glossary.md) → «Запрос новой интеграции»).
 
+### Какие примеры `By Integration` уже есть в шаблоне тенанта
+
+Из коробки дестинейшены без адвертайзера (`By Integration`) лежат в шаблонах Finance (ERP и MTK) и Nutra: `Example Bridge Integration` (`Bridge`), `Example IREV Integration` (`IREV Lite`) и тестовый дестинейшн на интеграции `DummyApi` (в Finance — `Dummy API [ DEBUG ]`, в Nutra — `Dummy API - Flow Testing`, в Sweeps — `Dummy API`; это тот самый `Dummy Destination` для прогона формы без отправки лидов в партнёрку — [reference/glossary.md](../reference/glossary.md)). Примеры под партнёрские API `AdCombo`, `AlterCpa`, `LeadBit`, `LemonAd` в Nutra (`AdCombo Example | Diabetes Support | RO | 9 EUR CPA` и подобные, с заполненным маппингом полей) привязаны к своим адвертайзерам — см. «Как выглядит готовый Advertiser под редирект-офферы». В iGaming все примеры дестинейшенов — редиректы (`Simple Redirect`), примеров API-интеграций там нет. Что клонируется из шаблона — [context/architecture.md](../context/architecture.md).
+
 ### Обязательные поля популярных интеграций
 
 Базовый паттерн любой интеграции — `API URL` + `API Key` + специфичные для платформы поля. Конкретные наборы для частых получателей:
 
 | Платформа | Обязательные поля |
 |---|---|
-| **IREV** | `API URL`, `API Key`, `IREV Affiliate ID`, `IREV Offer ID` |
+| **IREV** (тип интеграции подписан `IREV Lite`) | `API URL`, `API Key`, `IREV Affiliate ID`, `IREV Offer ID` |
 | **Getlinked** | `API URL`, `API Key`, `Offer Name`, `Comment` |
 | **Trackbox** | `API URL`, `API Key`, `API Username`, `API Password`, `Ai`, `Ci`, `Gi` |
 | **Voralis** | `API Token`, `Affiliate`, `First Name`, `Phone`, `Country`, `Quantity` — плюс `Product ID` **или** `Product Name` (заполнить нужно хотя бы одно; при обоих заполненных приоритет у `Product ID`) |
@@ -206,10 +214,10 @@ https://t.me/<bot_username>?start={{aio.visit.uuid}}
 
 - Name, Description, Tags, Countries, Languages.
 - **Cap monitoring user** — кому летят алерты по капам.
-- **Integration type** — шаблон интеграции получателя (`Bridge`, `IREV`, `API integration` и др. пребилты). От него зависят поля payload ниже.
+- **Integration type** — шаблон интеграции получателя (`Bridge`, `IREV Lite`, `API integration` и др. пребилты). От него зависят поля payload ниже.
 - **Поля payload** (зависят от Integration type) — маппинг данных визита в запрос к получателю через плейсхолдеры: `Token`, `Buyer UTM` = `{{aio.visit.fields.buyer_utm}}`, `Country Code` = `{{aio.visit.country_code}}`, `Language Code` = `{{aio.visit.language_code}}` и т.д.
 
-**Экшены (правый клик):** `Edit destination`, `Copy destination`, `Destination logs`, `Switch archive`, `Change domains`, `Assign to folder`, `Edit conversion cap`, `Reset cap`, `Show visits`, `Show conversions`, `Build Roll Up report`, `Share`, `Change ownership`.
+**Экшены (правый клик):** `Edit destination`, `Copy destination`, `Destination logs`, `Switch archive`, `Change domains`, `Edit conversion cap`, `Reset cap`, `Show visits`, `Show conversions`, `Build Roll Up report`; в группе `Folders` (только ERP — в MTK у этой таблицы папок нет) — `Assign to folder` / `Unassign from folder`; в группе `Teams & permissions` — `Share` и `Change ownership` (при выделении нескольких строк — ещё `Share also`, `Force share`, `Unshare`, `Mass change ownership`). Набор пунктов зависит от уровня доступа к строке: `Share` виден при уровне `Own` или шаре с `Can share further`, `Change ownership` — при `Own`; свой уровень — строка `Your access: <уровень>` внизу меню ([models/permissions-model.md](../models/permissions-model.md)).
 
 ### Где в карточке дестинейшена задаются поля визита
 
@@ -317,7 +325,7 @@ Fallback при переполнении — через `Destination Full` trans
 
 **Шаги:**
 
-1. **Получить ссылку из AIO:** `Sources → +Source → 3rd Party PWA Link Generator → выбрать домен → выбрать сервис → скопировать ссылку`.
+1. **Получить ссылку из AIO:** `Sources → +Source → 3rd Party PWA Link Generator → выбрать домен → выбрать сервис → скопировать ссылку`. В шаблонах iGaming source `3rd Party PWA Link Generator` уже заведён (по ссылке на каждый из девяти сервисов); в шаблонах других вертикалей его нет — источник добавляется отдельно через `Sources → +Source`.
 2. **В сервисе:** создать пвашку → вставить ссылку из AIO → получить домен пвашки от сервиса.
 3. **Создать Destination в AIO:** `Tracker → Destinations → +Destination → By Advertiser → выбрать PWA-сервис → вставить домен пвашки`.
 
@@ -329,9 +337,9 @@ Fallback при переполнении — через `Destination Full` trans
 
 ### Завести свой PWA-сервис как Advertiser
 
-Если нужного PWA-сервиса нет среди дефолтных advertiser-ов, его можно добавить вручную.
+Если нужного PWA-сервиса нет среди заведённых в шаблоне advertiser-ов (или вертикаль не iGaming), его можно добавить вручную.
 
-1. **Создать Advertiser Type** (если такого типа ещё нет): `Settings → Advertisers → стрелка у +Advertiser → Manage Types → +Advertiser Type`. Поля: `Name` (можно `PWA`), `Color`, `Icon`, `Description` и обязательно **`Metrics Event Group = PWA`** — без него метрики по PWA-полям не работают.
+1. **Проверить Advertiser Type `PWA`.** Тип `PWA` с `Metrics Event Group` = `PWA` заведён в каждом шаблоне тенанта; заново его создают, только если тип удалили: `Settings → Advertisers → стрелка у +Advertiser → Manage Types → +Advertiser Type`. Поля: `Name` (можно `PWA`), `Color`, `Icon`, `Description` и обязательно **`Metrics Event Group = PWA`** — без него метрики по PWA-полям не работают.
 2. **Создать Advertiser:** `+Advertiser` с `Advertiser type` = `PWA`, `Integration type` = `Simple Redirect`. Заполнить `URL Parameters` (параметры, что допишутся к Destination URL; список плейсхолдеров — по иконке-шестиграннику), `Logo`/`Description`/`Tags`.
 3. **Создать Destination:** через `By Advertiser`, выбрав этот Advertiser (поля — как в списке выше).
 
@@ -339,30 +347,32 @@ Fallback при переполнении — через `Destination Full` trans
 
 Чтобы конверсии PWA-сервиса доходили в AIO, ставится постбэк-трекер. Цепочка постбэков: **рекламодатель → AIO → PWA-сервис**.
 
-**Путь:** `Tracker → Trackers → +Tracker` типа `HTTP GET`. Поля:
+**Путь:** `Tracker → Trackers → +Tracker` типа `HTTP Get`. Поля:
 
-- **`Sources`** — `3rd Party PWA Link Generator` (рекомендуется по умолчанию — этот source покрывает все сторонние PWA-сервисы).
+- **`Sources`** — source, по ссылке которого визит **пришёл** в AIO (для FB — `FB w/ CAPI`), а не `3rd Party PWA Link Generator`: ссылка из генератора возвращает по `hess` тот же визит, source у него остаётся исходный, а трекер срабатывает только на конверсиях визитов, чей source указан в этом поле.
 - **`Conversion Type`** — тип конверсии, по которому срабатывает постбэк.
 - **`URL`** — постбэк-URL сервиса; макросы сервиса заменяются на AIO-плейсхолдеры.
 
-Click ID PWA-сервиса доступен плейсхолдером `{{aio.visit.fields.pwa_click_id}}`. Постбэки AIO для рекламодателя берутся в [how-to/source-trackers.md](source-trackers.md).
+В шаблонах iGaming такой трекер уже есть как заготовка — `Example - 3rd Party PWA Postback` (`HTTP Get`, тип `Registration`, привязан к `FB w/ CAPI`), выключенный: подставьте постбэк-URL своего сервиса и включите. Click ID PWA-сервиса доступен плейсхолдером `{{aio.visit.fields.pwa_click_id}}`. Постбэки AIO для рекламодателя берутся в [how-to/source-trackers.md](source-trackers.md).
 
 ### Как собрать кампанию и ссылки под сторонний PWA-сервис
 
-После того как Destination-ы (PWA + Offer) и постбэк-трекер готовы — собирается кампания.
+После того как Destination-ы (PWA + Offer) и постбэк-трекер готовы — собирается кампания. В шаблонах iGaming (ERP и MTK) под PWA уже есть три флоу, выбираются в `Select Flow` при создании кампании, у каждого — кампания-пример с меткой `AIO EXAMPLE`: `PWA / OneLink` (`AIO Filter` → шаг `PWA / AIO PWA / Onelink` → `Offer`; пример `Default Flow - PWA Campaign Example`), `PWA / OneLink w/ Landing` (после PWA-шага — `Spawn Install` и прелэнд `Landing`, потом `Offer`; пример `PWA w/ Landing Flow - Campaign Example`) и `Advanced - PWA / OneLink` (разводка Android / iOS, всё остальное — на `Fallback Offer`; пример `Advanced Flow - Campaign Example`). Состав флоу и кампаний-примеров — [mechanics/pwa.md](../mechanics/pwa.md); в шаблонах Finance, Nutra и Sweeps PWA-флоу нет.
 
-- **Flow.** В тенанте под PWA-шаблон уже есть два дефолтных флоу, выбираются в `Select Flow` при создании кампании:
-  - **`PWA / OneLink Flow Default`** — дефолт `AIO → PWA → оффер`.
-  - **`PWA / OneLink w/ Landing`** — добавляет лэндинг перед редиректом на оффер.
-- **Campaign steps:** `Destination` = ранее созданный PWA-Destination, `Offer` = ранее созданный Offer-Destination.
-- **Install-конверсия** для стороннего PWA-сервиса настраивается на шаге `Spawn Conversion` флоу (`Tracker → Flows`), **не** постбэком: AIO спавнит `Install` при редиректе визита с PWA-сервиса на Offer-Destination. (Сравнение со спавном у внутренней PWA — [how-to/pwa.md](pwa.md).)
+**Campaign steps:** на PWA-шаге в примерах стоит сплит из лэнда `AIO PWA Example w/ Splits` и партнёрских PWA-дестинейшенов (`Example ZMApps PWA`, `Example AppsHeroes PWA`) — сюда ставится ваш PWA-Destination; на `Offer` — Offer-Destination либо `Offer Distribution`.
+
+**Install-конверсия** для стороннего PWA-сервиса приходит **не** постбэком, а из флоу — AIO спавнит `Install`, когда визит уходит с PWA-сервиса дальше по флоу. В шаблонах iGaming это сделано двумя способами: в `PWA / OneLink` и `Advanced - PWA / OneLink` у ноды `Offer` стоит `Pushed conversion spawn` = `Install` — конверсия создаётся при редиректе визита на Offer-Destination; в `PWA / OneLink w/ Landing` за это отвечает отдельный шаг `Spawn Install` (`Spawn Conversion`) сразу после PWA-шага. Настройки ноды — [models/flow-model.md](../models/flow-model.md); сравнение со спавном у внутренней PWA — [how-to/pwa.md](pwa.md).
+
+Переставить спавн или сменить его тип конверсии можно в редакторе флоу (`Tracker → Flows`): либо `Pushed conversion spawn` на ноде `Offer`, либо отдельный шаг `Spawn Conversion` в нужном месте.
+
+В MTK флоу приходят из шаблона готовыми и не редактируются — спавн `Install` уже стоит во всех трёх PWA-флоу; изменить место или тип спавна может команда AIO.
 
 ### Какие две ссылки генерятся под сторонний PWA-сервис
 
 Под сторонний PWA-сервис генерируются **две разные ссылки** (обе через `Link Generator`):
 
 1. **PWA-ссылка** — Source = `3rd Party PWA Link Generator`; вставляется в сам PWA-сервис как offer link.
-2. **Трекинговая ссылка** под твой реальный Source (например, FB) — вставляется в рекламный источник. Если FB — выбирается преднастроенный source **`FB w/ CAPI – DEFAULT`** (уже в тенанте).
+2. **Трекинговая ссылка** под твой реальный Source (например, FB) — вставляется в рекламный источник. Если FB — выбирается source **`FB w/ CAPI`** (заведён в каждом шаблоне тенанта; в iGaming его replace-поля включают и событие установки — `fb_action_i` → `fb_install_action`).
 
 ## AIO PWA (PWA Builder) — Destination как лэнд
 

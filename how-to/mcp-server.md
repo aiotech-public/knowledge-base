@@ -6,7 +6,7 @@ doc_type: how-to
 builds: [erp, mtk]
 related: [ai-chat, api, permissions, notification-center, auto-rules, limits]
 language: ru
-updated: 2026-09-11
+updated: 2026-09-23
 ---
 
 # MCP-сервер AIO — подключить внешнего AI-агента

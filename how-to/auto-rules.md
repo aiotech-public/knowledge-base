@@ -1,12 +1,12 @@
 ---
 id: auto-rules
 title: Автоправила Meta (раздел Automations) — шаблон, ассайн и запуск
-description: Как настроить автоправила над Meta-сущностями в разделе Automations — шаблон правил (ось фаз, условия, переменные $NAME, шесть вердиктов), ассайн со скоупом и режимами Observe/Approve/Auto, кто видит ассайн (владение, Access type, Change ownership), проверка через Live check и Backtest Rules, права automation.*, бейдж Rolling out. Только ERP.
+description: Как настроить автоправила над Meta-сущностями в разделе Automations — шаблон правил (ось фаз, условия, переменные $NAME, шесть вердиктов), ассайн со скоупом и режимами Observe/Approve/Auto, кто видит ассайн (владение, уровень в команде, Access type Private/Use/View, Scopes и Editor Scopes на ассайны, Change ownership с Keep Editor access), проверка через Live check и Backtest Rules, права automation.*, бейдж Rolling out. Только ERP.
 doc_type: how-to
 builds: [erp]
-related: [meta-ads, auto-rules-engine, ui-map, distributions-model, meta-spend-allocation, limits, permissions-model, permissions, notification-center]
+related: [meta-ads, auto-rules-engine, ui-map, distributions-model, meta-spend-allocation, limits, permissions-model, permissions, architecture, notification-center]
 language: ru
-updated: 2026-09-11
+updated: 2026-09-23
 ---
 
 # Автоправила Meta (раздел Automations) — шаблон, ассайн и запуск
@@ -21,11 +21,11 @@ updated: 2026-09-11
 
 **`Status`** (заголовок страницы — `Tenant Automation Status`) — обзор движка: KPI-полоса (виджет `Savings` и пять карточек — `Actions created`, `Executed`, `Stops`, `Budget changes`, `Failed`), счётчик `Pending approvals` с отметкой, сколько подтверждений протухнет в ближайший час, и список ассайнов с временем прогонов и кнопкой `Live check`. `Declined` и `Observed changes` в полосу не попадают — это серии графика `Actions by day`. В карточках главное число — за последние 30 суток, рядом мельче вчера, текущий и прошлый месяц. `Savings` — оценка по темпу расхода остановленных сущностей (`Estimate by the running spend rate of stopped entities`), а не факт из рекламного кабинета. Подтверждают действия не здесь, а на `History` или из уведомления; в `Live check` у ждущей сущности только бейдж `Needs approval`.
 
-**`Assignments`** — ассайны: какой шаблон на каком скоупе работает. Список ограничен владением: чужой ассайн виден руководителю команды владельца, роли полного доступа и всем — если у него `Access type = Everyone` (разбор — секция «Кто видит чужой ассайн»).
+**`Assignments`** — ассайны: какой шаблон на каком скоупе работает. Список ограничен уровнем доступа к ассайну: чужой ассайн виден участникам с более высоким уровнем в команде владельца, позициям со `Scopes` на ассайны, Owner / Admin и всем — если у него `Access type` `Use` или `View` (разбор — секция «Кто видит чужой ассайн»).
 
 **`Rule Templates`** — таблица шаблонов; дерево фаз и правил правится на отдельной странице `Rule Template Tree`.
 
-**`History`** — журнал вердиктов, вкладки `All` и `Pending`; на pending-строках доступны `Approve` и `Decline`. Поиск идёт по имени сущности, её facebook id и по UUID — сущности или самой записи. Быстрые фильтры — `Status`, `Action`, `Assignment`, `Level`. Видны записи только тех ассайнов, что доступны на просмотр по владению и `Access type` (секция «Кто видит чужой ассайн»). Маршруты страниц и поведение пункта меню — [reference/ui-map.md](../reference/ui-map.md).
+**`History`** — журнал вердиктов, вкладки `All` и `Pending`; на pending-строках доступны `Approve` и `Decline`. Поиск идёт по имени сущности, её facebook id и по UUID — сущности или самой записи. Быстрые фильтры — `Status`, `Action`, `Assignment`, `Level`. Видны записи только тех ассайнов, что видны в списке `Assignments` (секция «Кто видит чужой ассайн»). Маршруты страниц и поведение пункта меню — [reference/ui-map.md](../reference/ui-map.md).
 
 ### Бейдж `Rolling out` на страницах `Automations` — плашка, а не ограничение
 
@@ -166,35 +166,66 @@ updated: 2026-09-11
 
 ## Кто видит ассайн и как передать его другому — владение, `Access type`, `Change ownership`
 
-### Кто видит чужой ассайн — владелец, руководитель команды, `Access type = Everyone`
+### Кто видит чужой ассайн — владелец, вышестоящие по команде, `Access type`, `Scopes`
 
-Видимость ассайна определяется владением, а не правами ветки `automation.*`: право `automation.assignments.view` открывает страницу `Assignments`, но список в ней ограничен. Ассайн видят его владелец, руководитель команды владельца (`Team Head` / `Team Leader`), роль полного доступа тенанта (Owner / Admin) и — если у ассайна `Access type = Everyone` — все пользователи тенанта. Новый ассайн создаётся с `Access type = By Share`, то есть по умолчанию его видит только владелец. Как устроено владение и команды — [models/permissions-model.md](../models/permissions-model.md).
+**Видимость ассайна определяется уровнем доступа к нему, а не правами ветки `automation.*`**: право `automation.assignments.view` открывает страницу `Assignments`, но в списке — только ассайны, к которым у вас есть хотя бы уровень `Use`. Ассайн видят:
+
+- его владелец;
+- участники с более высоким уровнем в команде владельца, а равные по уровню — если в настройке команды для их уровня задан `Peers`;
+- позиции со `Scopes` или `Editor Scopes` на ассайны (секция ниже);
+- Owner и Admin тенанта;
+- все пользователи тенанта — если у ассайна `Access type` = `Use` (виден в списках) или `View` (открывается ещё и на чтение).
+
+Новый ассайн создаётся с `Access type` = `Private`: без других источников доступа его видят только владелец, вышестоящие по команде (и равные по уровню при настройке `Peers`), позиции со `Scopes` или `Editor Scopes` на ассайны и Owner / Admin. Как считается уровень доступа — [models/permissions-model.md](../models/permissions-model.md).
 
 Та же граница действует везде, где ассайны перечисляются: в списке на странице `Status`, в журнале `History` и его фильтре `Assignment`, в селекте `Copy values from…` формы ассайна и в колонке `Auto Rules` таблиц Meta, где недоступные ассайны свёрнуты в счётчик `+N others`.
 
-Колонка `Access type` в таблице `Assignments` подписана `Using for visibility only, everyone shared cannot edit anyway.`, но действующее поведение шире: ассайн с `Everyone` попадает и в выборку на редактирование — править его может любой пользователь тенанта с правом `automation.assignments.edit`. Нужно «все видят, правит только владелец» — через `Access type` это не собрать; разбор в [how-to/permissions.md](permissions.md). У колонки `Owner` подсказка `Owner — metrics are read and actions are executed on their behalf`: под владельцем ассайна движок и считает метрики, и исполняет действия в Meta ([mechanics/auto-rules-engine.md](../mechanics/auto-rules-engine.md)).
+### Кто может править чужой ассайн — `Access type` правку не даёт
 
-### Сотрудник с полными правами `automation.*` не видит ассайны коллег — права-обхода нет
+**`Access type` открывает ассайн всем максимум на чтение: `Use` — только в списках, `View` — ещё и карточка на чтение; править чужой ассайн через него нельзя.** Так и написано в подсказке колонки `Access type` в таблице `Assignments`: `Using for visibility only, everyone shared cannot edit anyway.`
 
-Симптом: роли выданы все шестнадцать императивов `automation.*`, а в `Assignments`, `History` и `Status` человек видит только свои ассайны. Причина — видимость ассайна задаётся владением и `Access type`, а права ветки `automation.*` её не расширяют: ни одно из них не означает «видеть все ассайны тенанта».
+Править ассайн могут владелец, участники с более высоким уровнем в команде владельца, равные по уровню при настройке `Peers` не ниже `Edit`, прежний владелец с сохранённой при передаче ролью `Editor`, позиции с `Editor Scopes` на ассайны и Owner / Admin. Помимо уровня, всем, кроме Owner / Admin, нужен ключ позиции `automation.assignments.edit` (его покрывает и `edit-scopes.automation.assignments`). Схема «все видят, но правят только перечисленные выше» собирается так: `Access type` = `View`.
 
-Обхода через ветку `Scopes` у ассайнов тоже нет: в ней есть кейс для флоу (`scopes.tracker.flows`) и для шаблонов автоправил, которые как дистрибуции открываются правом `Scopes: settings distributions` (`scopes.settings.distributions`), но не для ассайнов. Рычага два: выставить ассайну `Access type = Everyone` или передать его через `Change ownership`; третий — руководство командой владельца.
+У колонки `Owner` подсказка `Owner — metrics are read and actions are executed on their behalf`: под владельцем ассайна движок и считает метрики, и исполняет действия в Meta ([mechanics/auto-rules-engine.md](../mechanics/auto-rules-engine.md)).
+
+### Сотрудник с полными правами `automation.*` не видит ассайны коллег — нужен `Scopes` на ассайны
+
+**Шестнадцать императивов `automation.*` открывают страницы и действия, но видимость не расширяют: ни один из них не означает «видеть все ассайны тенанта».** Симптом: роли выдана вся ветка, а в `Assignments`, `History` и `Status` человек видит только свои ассайны.
+
+Для этого есть позиционные ключи вне ветки `automation.*`, только в ERP:
+
+- `scopes.automation.assignments` — видеть все ассайны тенанта и открывать их на чтение, вместе с их вердиктами в `History`;
+- `edit-scopes.automation.assignments` — полный доступ ко всем ассайнам: правка, `Change ownership`, архив.
+
+В редакторе позиции (`Settings → Positions`) у этих двух рядов нет подписи — они показываются самим ключом, искать их надо по ключу. Шаблоны автоправил как дистрибуции открываются ключом `Scopes: settings distributions` (`scopes.settings.distributions`).
+
+Другие рычаги: выставить ассайну `Access type` `Use` или `View`, передать его через `Change ownership`, поставить сотрудника в команде владельца на уровень выше владельца.
 
 ### `Change ownership` — как передать ассайн другому человеку
 
-Смена владельца и `Access type` — одно действие `Change ownership` в контекстном меню строки ассайна, группа `Teams & Permissions`; форма (`Transfer ownership and update the access level.`) из двух обязательных селектов — `Access type` (`Everyone` / `By Share`) и `Tenant users`. Массового варианта у ассайнов нет: `Mass change ownership` есть у шаблонов, но не здесь.
+**Смена владельца и `Access type` — одно действие `Change ownership` в контекстном меню строки ассайна, группа `Teams & permissions`.** Форма (`Transfer ownership and update the access level.`):
 
-Пункт показывается по праву `automation.assignments.share.ownership` и только на своей строке либо при полном доступе. На сервере решает владение: сменить владельца может владелец записи или роль полного доступа, остальным возвращается `You don't have permission to change ownership`.
+- `Access type` — `Private`, `Use` или `View`, в форме стоит текущее значение;
+- `Tenant users` — новый владелец;
+- `Keep Editor access for the previous owner` — включена по умолчанию: прежний владелец получает на ассайн роль `Editor` — видит и правит его, но не меняет владельца и не архивирует. Сняли галку — прежний владелец видит ассайн только на общих основаниях.
+
+Массового варианта у ассайнов нет: `Mass change ownership` есть у шаблонов, но не здесь.
+
+### Нет пункта `Change ownership` у ассайна или отказ `own level required`
+
+**Пункт `Change ownership` показывается только на ассайнах, где у вас уровень `Own`, и при праве `automation.assignments.share.ownership` (его покрывает и `edit-scopes.automation.assignments`; Owner / Admin ключ позиции не нужен).** Уровень `Own` на ассайн есть у владельца, у участника с более высоким уровнем в команде владельца, у равного по уровню при настройке `Peers: Own`, у позиции с `edit-scopes.automation.assignments` и у Owner / Admin. Какой уровень у вас на строку, видно внизу её контекстного меню — `Your access: <уровень>`.
+
+Отказы сервера дословно: `No access to this object (own level required)` — не хватает уровня на ассайн; `Action access denied (automation.assignments.share.ownership required)` — нет права в позиции.
 
 Передача ассайна меняет не только видимость: метрики и действия в Meta идут под новым владельцем — с его скоупом сущностей и его правами на ручные экшены Meta ([mechanics/auto-rules-engine.md](../mechanics/auto-rules-engine.md)). Перед передачей стоит проверить, что новый владелец видит нужные рекламные кабинеты и имеет права вида `meta.campaigns.edit.stop`.
 
 ### Пошарить ассайн конкретному человеку или команде из интерфейса нельзя
 
-Адресного шаринга ассайна в продукте нет: в контекстном меню `Assignments` нет ни `Share`, ни `Share also`, ни `Unshare`, а право `automation.assignments.share` объявлено в ветке, но рычага в интерфейсе не имеет. Колонку `Shares` в таблице ассайнов из интерфейса поэтому не заполнить.
+**Адресного шаринга ассайна в продукте нет:** в контекстном меню `Assignments` нет ни `Share`, ни `Share also`, ни `Unshare`, а право `automation.assignments.share` объявлено в ветке, но рычага в интерфейсе не имеет. Запись в колонке `Shares` у ассайна появляется одним путём — при передаче через `Change ownership` с галкой `Keep Editor access for the previous owner`: прежний владелец получает роль `Editor`.
 
-Шаблоны автоправил, наоборот, шарятся полностью: страница `Rule Templates` — таблица дистрибуций с зашитым типом `Auto Rules`, и от неё шаблонам достаётся весь набор действий владения — `Share`, `Share also`, `Force share`, `Unshare` под правом `automation.templates.share` плюс `Change ownership` и массовый `Mass change ownership` под `automation.templates.share.ownership`. Как работает шаринг сущностей — [how-to/permissions.md](permissions.md).
+Шаблоны автоправил, наоборот, шарятся полностью: страница `Rule Templates` — таблица дистрибуций с зашитым типом `Auto Rules`, и шаблонам достаётся весь набор действий дистрибуций — `Share`, `Share also`, `Force share`, `Unshare`, `Change ownership` и массовый `Mass change ownership`. Сервер проверяет их по ключам раздела дистрибуций: шаринг — `settings.distributions.share`, смену владельца — `settings.distributions.share.ownership`; ключи `automation.templates.share` и `automation.templates.share.ownership` на эти действия не влияют. Как работает шаринг сущностей — [how-to/permissions.md](permissions.md).
 
-Чтобы коллега увидел ваш ассайн, рычага два: `Access type = Everyone` или передача через `Change ownership`; чтобы видел все ассайны команды — роль руководителя команды.
+Чтобы коллега увидел ваш ассайн: `Access type` `Use` или `View` либо передача через `Change ownership`; чтобы видел все ассайны — `scopes.automation.assignments` в его позиции или более высокий уровень в вашей команде.
 
 ## Пять готовых шаблонов, которые AIO поставляет сам
 
@@ -210,7 +241,7 @@ updated: 2026-09-11
 
 Во всех пяти заготовках у правил проставлена отметка `Require approval`, но на исполнение она не влияет: ассайн с заготовкой в режиме `Auto` останавливает сущности без подтверждения. Нужен человеческий шаг — ставьте ассайн в `Approve`.
 
-В таблице `Rule Templates` заготовок нет — она показывает только шаблоны тенанта. Выбрать заготовку можно в селекте шаблона в форме ассайна и в `Backtest Rules`: там она стоит рядом с собственными шаблонами и помечена значком AIO с подсказкой «Shared across all — the same distribution is used everywhere». Чтобы поменять под себя границы фаз или условия, шаблон форкают в свой тенант через `Duplicate` — копия создаётся уже в тенанте.
+В таблице `Rule Templates` заготовок нет — она показывает только шаблоны тенанта, а в тенанте, только что созданном из шаблона, она пуста: дистрибуций типа `Auto Rules` ни один шаблон тенанта не засевает ([context/architecture.md](../context/architecture.md)), и пять глобальных заготовок — единственные готовые правила из коробки. Выбрать заготовку можно в селекте шаблона в форме ассайна и в `Backtest Rules`: там она стоит рядом с собственными шаблонами и помечена значком AIO с подсказкой «Shared across all — the same distribution is used everywhere». Чтобы поменять под себя границы фаз или условия, шаблон форкают в свой тенант через `Duplicate` — копия создаётся уже в тенанте.
 
 ## Как проверить правило, ничего не запуская — `Live check` и `Backtest Rules`
 
@@ -240,7 +271,7 @@ updated: 2026-09-11
 
 Раздел закрыт собственной веткой прав `automation.*`, независимой и от `settings.distributions.*`, и от трафиковых `tracker.*`, и от `meta.*`. Императивов шестнадцать, четырьмя группами — шаблоны, ассайны, журнал вердиктов и страница статуса; объявлены они только в ERP, а в матрице `Settings → Positions` собраны в секцию `Automation section` с подписями вида `Automation: view templates` и `Automation: approve verdicts`. Полный список слагов и какая страница каким из них открывается — [models/permissions-model.md](../models/permissions-model.md), выдача прав под типовые роли — [how-to/permissions.md](permissions.md).
 
-Пункта `Automations` не будет в меню, если из ветки выдан только `automation.status.view`: меню поднимают view-права на шаблоны, ассайны или журнал — разбор в [models/permissions-model.md](../models/permissions-model.md). Права ветки открывают страницы и действия, но не расширяют видимость: чужие ассайны показываются по владению и `Access type` (секция «Кто видит чужой ассайн»), а `automation.assignments.share` рычага в интерфейсе не имеет.
+Пункта `Automations` не будет в меню, если из ветки выдан только `automation.status.view`: меню поднимают view-права на шаблоны, ассайны или журнал — разбор в [models/permissions-model.md](../models/permissions-model.md). Права ветки открывают страницы и действия, но не расширяют видимость: чужие ассайны показываются по уровню доступа — владение, уровень в команде, `Access type`, позиционные `scopes.automation.assignments` / `edit-scopes.automation.assignments` (секция «Кто видит чужой ассайн»), а `automation.assignments.share` рычага в интерфейсе не имеет.
 
 Само действие в Meta исполняется правами владельца ассайна на такой же ручной экшен — [mechanics/auto-rules-engine.md](../mechanics/auto-rules-engine.md).
 

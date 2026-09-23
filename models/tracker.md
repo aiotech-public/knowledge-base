@@ -4,9 +4,9 @@ title: Tracker (Tracker → Trackers — исходящая отбивка со�
 description: Что такое Tracker в AIO — конфиг отправки события/конверсии ИЗ AIO наружу (FB CAPI / TikTok / HTTP Get…); ребёнок Source, один трекер = один Conversion Type, 11 Tracker type, Tracker logs vs Retrigger trackers. Концепт; процедуры — how-to/source-trackers.md.
 doc_type: model
 builds: [erp, mtk]
-related: [source-trackers, source, conversion-model, ui-map, destination, ui-common, placeholders, distributions-model, sdk, glossary]
+related: [source-trackers, source, conversion-model, ui-map, destination, campaigns, architecture, ui-common, placeholders, distributions-model, sdk, glossary]
 language: ru
-updated: 2026-09-11
+updated: 2026-09-23
 ---
 
 # Tracker (Tracker → Trackers — исходящая отбивка событий/конверсий) — концепт (модель)
@@ -38,7 +38,7 @@ updated: 2026-09-11
 Редактор (`Edit tracker`) содержит:
 - **Name** — имя трекера;
 - **Sources** — мульти-селект, для каких Source срабатывает (обязательно);
-- **Conversion type** — тип конверсии, на который реагирует (Lead / Purchase / Push Subscribe / кастомные из `Settings → Conversion types`);
+- **Conversion type** — тип конверсии, на который реагирует (из `Settings → Conversion types`; засеянный набор зависит от вертикали шаблона — `Lead`, `Registration`, `Approved`, `Install`, `Push Subscribe` …);
 - **Tracker type** — механизм отправки (карточки в `Create tracker`);
 - **Delay in seconds** — задержка перед отправкой (`No delay` / N секунд);
 - **поля payload** — зависят от выбранного Tracker type;
@@ -54,9 +54,20 @@ Conversion Types и их семантика — [models/conversion-model.md](con
 
 Типы `ChatGPT Conversion API` и `Bing Conversion API` шлют платформе **серверное событие собственным запросом AIO** — постбэк-ссылку никуда вставлять не нужно. В форме трекера настраиваются идентификатор пикселя площадки, ключ доступа и сам состав события: у `ChatGPT Conversion API` это `Pixel ID` + `API Key` + `Event Type` (закрытый список событий), у `Bing Conversion API` — `UET Tag ID` + `CAPI Token` + `Event Name` (произвольная строка). Полный состав полей payload обоих типов — [how-to/source-trackers.md](../how-to/source-trackers.md).
 
-### 4a. Какие трекеры заведены по дефолту в шаблоне тенанта
+### 4a. Какие трекеры заведены из коробки — FB CAPI под основные конверсии вертикали
 
-По дефолту в шаблоне тенанта заведены ТОЛЬКО CAPI-постбэки (CAPI работает из коробки): преднастроенные CAPI-трекеры привязаны к Source **`FB w/ CAPI`**, и по дефолту их триггерят конверсии типов **Lead** и **Purchase**. Под дополнительные Conversion Types или другие FB-Source существующие трекеры редактируют (добавить Source в поле `Sources`) или создают новые.
+Из коробки в тенанте заведены трекеры типа **`Facebook Conversion API`**: все привязаны к источнику **`FB w/ CAPI`**, включены, по одному трекеру на тип конверсии (один трекер = один Conversion Type); покрыты только основные шаги воронки вертикали, а не все её типы конверсий (например, `Push Subscribe` трекера не имеет). Единственное исключение по типу — выключенный `HTTP Get`-пример в iGaming. Набор зависит от вертикали шаблона (в ERP и MTK одной вертикали он одинаков):
+
+- **Finance** — `FB Lead` (`Lead`) и трекер под целевое действие вертикали.
+- **Nutra** — `FB Lead` (`Lead`) и `FB Approved` (`Approved`).
+- **Sweeps** — `FB Registration` (`Registration`) и `FB Lead` (`Lead`).
+- **iGaming** — `FB AIO Install` (`Install`), `FB AIO Registration` (`Registration`) и трекер под целевое действие; плюс выключенный пример постбэка `Example - 3rd Party PWA Postback` (`HTTP Get`, `Registration`, URL-заготовка с `{{aio.visit.fields.pwa_click_id}}` — подставить эндпоинт сервиса и включить).
+
+Событие FB каждый трекер берёт плейсхолдером из ссылки: `{{aio.visit.fields.fb_lead_action}}` у трекера первого события (`Lead` / `Registration`), `{{aio.visit.fields.fb_ftd_action}}` у трекера целевого действия (`Approved` в Nutra, `Lead` в Sweeps), `{{aio.visit.fields.fb_install_action}}` у `FB AIO Install`. Что выбрано в этих селектах Link Generator по умолчанию — [how-to/campaigns.md](../how-to/campaigns.md) («Lead Action и событие покупки»). Под другие Conversion Types или другой FB-Source существующие трекеры редактируют (добавить Source в поле `Sources`) или создают новые. Что ещё клонируется из шаблона — [context/architecture.md](../context/architecture.md).
+
+### 4b. Что стоит в payload засеянных FB CAPI-трекеров
+
+Поля payload у засеянных трекеров уже заполнены плейсхолдерами: `Event` — селект события из ссылки (см. 4a), `Action Source` = `website`, `Token` = `{{aio.visit.fields.fb_capi_token}}`, `Pixel` = `{{aio.visit.fields.fb_pixel}}`, `FBP Field` / `FBC Field` / `FBClic Field` = `{{aio.visit.fields.fbp}}` / `{{aio.visit.fields.fbc}}` / `{{aio.visit.fields.fbclid}}`, `City` = `{{aio.visit.location_city}}`, `Zip Code` = `{{aio.visit.location_postal_code}}`, `Revenue` = `{{aio.conversion.revenue}}`. `Email Field` / `Phone Field` в Finance, Nutra и Sweeps = `{{aio.visit.fields.email}}` / `{{aio.visit.fields.phone}}` (в Finance заполнены ещё `First Name` / `Last Name`); у iGaming-трекеров они пустые, а у `FB AIO Install` пуст и `Revenue`. `Placement`, `Exclude Placement`, `Event Source Domain` и пары `Custom Key N` / `Custom Value N` из коробки не заданы.
 
 ### Что в таблице Tracker → Trackers
 
@@ -78,7 +89,7 @@ Conversion Types и их семантика — [models/conversion-model.md](con
 
 ### Откуда берутся city / postal code в FB CAPI-payload
 
-Гео-поля `City` и `Zip Code` — это поля payload трекера, которые заполняются **плейсхолдерами** полей визита/конверсии (ручной маппинг в редакторе трекера, как и `Placement`/`Revenue`), а не подставляются автоматически из IP визита. Чтобы `City`/`Zip Code` уходили в CAPI-payload, в эти поля надо прописать соответствующий плейсхолдер (синтаксис — [reference/placeholders.md](../reference/placeholders.md), пошагово — [how-to/source-trackers.md](../how-to/source-trackers.md)). Смысл — отдать в Conversion API больше сигналов: чем полнее payload, тем выше match-quality и атрибуция на стороне FB.
+Гео-поля `City` и `Zip Code` — это поля payload трекера, которые заполняются **плейсхолдерами** полей визита/конверсии (ручной маппинг в редакторе трекера, как и `Placement`/`Revenue`), а не подставляются автоматически из IP визита. Чтобы `City`/`Zip Code` уходили в CAPI-payload, в эти поля надо прописать соответствующий плейсхолдер (синтаксис — [reference/placeholders.md](../reference/placeholders.md), пошагово — [how-to/source-trackers.md](../how-to/source-trackers.md)). У трекеров, засеянных из шаблона, это уже сделано: `City` = `{{aio.visit.location_city}}`, `Zip Code` = `{{aio.visit.location_postal_code}}` (секция 4b); дописывать их нужно только в трекере, созданном с нуля. Смысл — отдать в Conversion API больше сигналов: чем полнее payload, тем выше match-quality и атрибуция на стороне FB.
 
 ### Почему один трекер = один Conversion Type
 
@@ -113,7 +124,7 @@ Conversion Types и их семантика — [models/conversion-model.md](con
 
 - **COUNTERPART — Destination.** Destination = **вход** конверсий (ваши постбэки, их ставит у себя получатель; визит уходит туда). Tracker = **выход** (постбэки/API стороны Source, их вам выдают, вы ставите у себя). Зеркальные направления постбэков. → [models/destination.md](destination.md)
 - **READS поля визита/конверсии.** Payload трекера берёт значения через плейсхолдеры полей визита/конверсии (`{{aio.visit.fields.*}}`; точный синтаксис — [reference/placeholders.md](../reference/placeholders.md)); FB-поля заполняет Source rewrites на **входе**. → [models/source.md](source.md), [reference/placeholders.md](../reference/placeholders.md)
-- **FEEDS — FB Meta optimization.** FB CAPI трекер шлёт event-сигнал (Lead/Purchase/…) обратно в FB pixel для оптимизации; какое именно FB-событие — задают Dynamic Actions / Lead Action / Purchase Action ([models/conversion-model.md](conversion-model.md)).
+- **FEEDS — FB Meta optimization.** FB CAPI трекер шлёт event-сигнал (`Lead` / `Purchase` / …) обратно в FB pixel для оптимизации; какое именно FB-событие — задают Dynamic Actions ([models/conversion-model.md](conversion-model.md)) и селекты событий в Link Generator (`Lead Action` и парное событие целевого действия, [how-to/campaigns.md](../how-to/campaigns.md)).
 - **NOT-related-to-Flow.** Конверсии (а значит и отбивка трекеров) с Flow не связаны — конверсия происходит на стороне Destination после финала флоу.
 
 ### Соседи Tracker в топ-меню (ERP)
@@ -128,7 +139,7 @@ Sibling в группе `Tracker` верхнего меню — Campaigns, Sourc
 
 ### Conversion type vs Tracker type — два поля «type» в редакторе трекера
 
-В редакторе трекера два поля «type». **Conversion type** = *ЧТО* за конверсия (Lead / Purchase / Push Subscribe). **Tracker type** = *МЕХАНИЗМ* отправки (FB CAPI / TikTok / AppsFlyer / HTTP Get…).
+В редакторе трекера два поля «type». **Conversion type** = *ЧТО* за конверсия (`Lead` / `Registration` / `Push Subscribe` …). **Tracker type** = *МЕХАНИЗМ* отправки (FB CAPI / TikTok / AppsFlyer / HTTP Get…).
 
 ## Подводные камни Tracker — частые ошибки настройки
 

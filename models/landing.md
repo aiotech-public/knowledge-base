@@ -6,7 +6,7 @@ doc_type: model
 builds: [erp, mtk]
 related: [landings, sdk, ui-map, how-to-pwa, mechanics-pwa, analytics, limits, placeholders, user-fields, content-library, forms]
 language: ru
-updated: 2026-09-11
+updated: 2026-09-23
 ---
 
 # Landing — концепт
@@ -25,7 +25,7 @@ updated: 2026-09-11
 - **`Auto place AIO macros`** — авто-вставлять SDK-макросы (`{{aio:head}}`/`{{aio}}`) при обработке;
 - **`Generate events`** — генерировать ли трекинг-события;
 - **`Full CDN used`** и **`Temp CDN used`** — флаги режима раздачи файлов лэнда с CDN (разобраны отдельной секцией ниже);
-- **`Is PWA?`** (`is_pwa`, тултип `Manual PWA`) — булев флаг типа: если включён, любой лэнд этого типа система считает PWA-лэндом и помечает визит как PWA-визит **независимо от режима отдельного лэнда**. Способ пометить лэнд как PWA на уровне типа, а не режимом каждого лэнда. Сама пометка PWA не собирает — manifest и Service Worker всё равно приходят от PWA-контента лэнда (PWA Builder или PWA-макрос, см. [how-to/pwa.md](../how-to/pwa.md)); что такое PWA — [mechanics/pwa.md](../mechanics/pwa.md);
+- **`Is PWA?`** (`is_pwa`, тултип `Manual PWA`) — булев флаг типа: если включён, любой лэнд этого типа система считает PWA-лэндом и помечает визит как PWA-визит **независимо от режима отдельного лэнда**. Способ пометить лэнд как PWA на уровне типа, а не режимом каждого лэнда. Сама пометка PWA не собирает — manifest и Service Worker всё равно приходят от PWA-контента лэнда (PWA Builder, `Custom PWA` или PWA-макрос, см. [how-to/pwa.md](../how-to/pwa.md)); что такое PWA — [mechanics/pwa.md](../mechanics/pwa.md). У типа с включённым флагом в форме появляются три поля конверсий PWA — `Conversion type on install` / `on open` / `on subscribe`: только отсюда PWA из Builder-а и `Custom PWA` берут конверсии установки, открытия и подписки ([how-to/pwa.md](../how-to/pwa.md));
 - + Color/Icon (бейдж на карточке) и схема полей типа (= «Content settings» лэнда).
 
 Ключевой пример: у типа **`White` все три основных флага = No** (`AIO Macros` / `Generate events` / `Full CDN used`) — на White-странице SDK не грузится и события не пишутся. Это **намеренно**: White — нейтральная страница без трекинга, она должна быть лёгкой и «пустой» (роль White во флоу). А `Offer`/`Preland` — наоборот, с полным SDK. То есть выбор типа лэнда меняет рантайм, не оформление. См. [how-to/landings.md](../how-to/landings.md) → «Типы лэндов».
@@ -100,7 +100,7 @@ updated: 2026-09-11
 
 ## Что часто ломается с лэндами (подводные камни)
 
-- **`index.html` в корне ZIP** — иначе стили «поедут» (папка-в-папке типично на Mac; детали — [how-to/landings.md](../how-to/landings.md)).
+- **Ассеты — в папке `index.html` ZIP-архива или её подпапках.** Корнем лэнда AIO считает папку самого неглубокого `index.html`; файлы выше или рядом с ней не загружаются, и стили «поедут». Обёртывающая папка сама по себе не мешает (детали — [how-to/landings.md](../how-to/landings.md)).
 - **PHP/серверного кода нет** — только HTML+JS (+Vue). Логику, которая на классических трекерах жила в PHP на лэнде, переписывать на JS.
 - **На White SDK не грузится** (Lander Type = все флаги No) — там плейсхолдеры/формы не работают by design.
 - **Категории `Countries/Languages/Tags` на лэнде — метаданные, не фильтр** (не фильтруют трафик).

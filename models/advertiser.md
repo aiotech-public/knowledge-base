@@ -6,7 +6,7 @@ doc_type: model
 builds: [erp, mtk]
 related: [destination, destinations, distributions-model, landing, placeholders, user-fields, conversion-model, business-model, source, ui-map]
 language: ru
-updated: 2026-08-26
+updated: 2026-09-23
 ---
 
 # Advertiser — концепт (модель)
@@ -23,7 +23,7 @@ updated: 2026-08-26
 
 - **Advertiser** — *кому* (компания). **Destination** — *конкретный канал пуша* под ним (URL/интеграция + маппинг полей визита в параметры получателя). У одного Advertiser — **много** Destination.
 - Рекомендуемый способ создать дестинейшн — **By Advertiser**: выбираете сервис-адвертайзера, AIO подтягивает преднастройки (эндпоинты, формат). Поэтому Advertiser — это «папка» с готовой интеграцией, а не просто метка.
-- Advertiser-ы заводятся в `Settings → Advertisers`; сами Destination — в `Tracker → Destinations`. У Advertiser есть **Advertiser Type** (классификация).
+- Advertiser-ы заводятся в `Settings → Advertisers`; сами Destination — в `Tracker → Destinations`. У Advertiser есть **Advertiser Type** (классификация): из коробки в каждом шаблоне тенанта два типа — `Offer` и `PWA`, свои добавляются в `Manage Types` ([how-to/destinations.md](../how-to/destinations.md)).
 
 ### 2. Сторона денег: Advertiser платит вам Revenue
 
@@ -32,6 +32,8 @@ updated: 2026-08-26
 ### 3. Offer Name «для рекламодателя»
 
 Один и тот же оффер имеет два имени: **`offer_name.for_visitor`** (что видит визит на лэнде) и **`offer_name.for_advertiser`** (что уходит адвертайзеру в пуше). Это позволяет показывать визиту привлекательное название, а получателю — то, что он ожидает. См. [models/landing.md](landing.md), [reference/placeholders.md](../reference/placeholders.md).
+
+В шаблоне ERP Finance эта пара заведена из коробки: поле визита `offer_name` и группа Content Library `Offer Names` с ключами `for_visitor` (`For Visitor` — «what we show to visit») и `for_advertiser` (`For Advertiser` — «what we send to advertiser»); флоу `1/2Step | Offer Name Distribution` заполняет поле дистрибуцией `Offer Names Distribution` ([models/distributions-model.md](distributions-model.md)), флоу `1/2Step | Manual Offer Name` (и его варианты `+ TY` / `+ TY + Domain Change`) — шагом `Fill Offer Name`, значение которого выбирается в настройках кампании.
 
 ### 4. Поля визита прямо в карточке Advertiser — секция `User fields`
 

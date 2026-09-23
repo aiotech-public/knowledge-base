@@ -4,9 +4,9 @@ title: Placeholders в AIO
 description: "Все плейсхолдеры AIO (lander, SDK, поля визита, Vue.js) с примерами и местами использования; модификаторы `{{ключ:modifier}}` — `raw`, `urlencode`, `json_array_first…ninth`, `timestamp`, `encrypt`; массивные плейсхолдеры (`landing_human_ids` → `%5B309889%5D`), реферер `{{aio.visit.fields.referer}}`; плюс спинтакс `{вариант 1|вариант 2}` в текстах рассылок."
 doc_type: reference
 builds: [erp, mtk]
-related: [server, landing, glossary, sdk, visit-field, how-to-pwa, forms, destinations, visit, notifications-flow, flow-model, auto-rules, source, source-trackers, landings, content-library, visit-lifecycle]
+related: [server, landing, glossary, sdk, visit-field, how-to-pwa, forms, destinations, visit, notifications-flow, flow-model, auto-rules, landings, source-trackers, source, content-library, visit-lifecycle]
 language: ru
-updated: 2026-09-11
+updated: 2026-09-23
 ---
 
 # Placeholders в AIO
@@ -228,7 +228,7 @@ const img = '{{cdn}}/assets/hero.png';
 | `{{aio.visit.fields.last_name}}` | поле фамилии |
 | `{{aio.visit.fields.<любое_поле>}}` | любое поле визита, заведённое в Settings → Fields |
 
-`phone` / `email` / `first_name` / `last_name` — это **поля** (через `fields.`), а не системные плейсхолдеры: они приходят из дефолтной формы, но технически это те же кастомные поля визита.
+`phone` / `email` / `first_name` / `last_name` — это **поля** (через `fields.`), а не системные плейсхолдеры: технически это те же кастомные поля визита. В шаблонах Finance, Nutra и Sweeps все четыре заведены из коробки (группа `Leads`, заполняет форма); в iGaming таких полей нет — под свою форму их заводят в `Settings → Fields`.
 
 Через `fields.` читаются поля **пяти** типов — `Visit`, `Campaign`, `Source`, `Landing`, `Destination`: все они живут в неймспейсе визита, поэтому у поля типа `Landing` плейсхолдер такой же, `{{aio.visit.fields.<slug>}}`, и в пикере-гексагоне оно лежит в группе `Visit Fields` (глобальные — `Visit Global Fields`). Отдельный неймспейс только у типа `Conversion` — `{{aio.conversion.fields.<slug>}}`. Что означает `Type` поля и откуда берётся его значение — [models/visit-field.md](../models/visit-field.md).
 
@@ -262,7 +262,16 @@ https://broker.example.com/api/leads?
 
 - **Кампания:** `{{aio.campaign.uuid}}`, `{{aio.campaign.name}}`, `{{aio.campaign.country_code}}`, `{{aio.campaign.language_code}}`.
 - **Конверсия:** `{{aio.conversion.uuid}}`, `{{aio.conversion.conversion_type_uuid}}`, `{{aio.conversion.revenue}}`, `{{aio.conversion.payout}}`, `{{aio.conversion.created_at}}`.
-- **Source / время:** `{{aio.source.uuid}}`, `{{aio.source.name}}`, `{{aio.common.current_timestamp}}`, `{{aio.common.current_date}}`, `{{aio.common.current_day_hour}}`, `{{aio.common.current_week_day}}`.
+- **Source / время:** `{{aio.source.uuid}}`, `{{aio.source.name}}`, `{{aio.common.current_timestamp}}`, `{{aio.common.current_date}}`, `{{aio.common.current_day_hour}}`, `{{aio.common.current_week_day}}`, `{{aio.common.current_date_text}}`, `{{aio.common.current_date_iso}}` (две последние — дата «ступенькой» в 3 суток, секция ниже).
+
+### Как вывести на лэнде текущую дату с шагом в 3 суток — `{{aio.common.current_date_text}}` и `{{aio.common.current_date_iso}}`
+
+**Два плейсхолдера группы `Common` подставляют в HTML лэнда текущую дату, которая меняется не на каждый заход, а раз в 3 суток:** `{{aio.common.current_date_text}}` (в пикере — `Current Date Text (localized, 3d step)`) и `{{aio.common.current_date_iso}}` (`Current Date ISO 8601 (3d step)`).
+
+- **`current_date_text`** — дата словами на языке лэнда, в правильном падеже: «27 марта 2026 г.», «27 de marzo de 2026». Язык и страна берутся из настроек лэнда: если язык (страна) визита есть в списке лэнда — он, иначе первый из списка лэнда; у лэнда без языков (стран) — язык (страна) визита. Язык не в виде ISO-кода даёт английский.
+- **`current_date_iso`** — та же дата в формате ISO 8601 для мета-тегов: «2026-03-27T12:00:00+02:00» (полдень по часовому поясу выбранной так же страны).
+
+Шаг в 3 суток считается от единой точки отсчёта, поэтому в любой момент у всех визитов и во всех гео одна и та же календарная дата. В превью лэнда плейсхолдеры тоже раскрываются (записанные без модификаторов) — по первому языку и первой стране из настроек лэнда. Относительные даты в отзывах PWA — отдельный механизм ([how-to/pwa.md](../how-to/pwa.md)).
 
 ### В URL уехало `%5B309889%5D` вместо ID лэнда — массивные плейсхолдеры `landing_human_ids`, `landing_uuids`, `landing_type_uuids`, `flow_uuids`
 
@@ -353,7 +362,7 @@ UUID внутри массива без модификатора теряют к
 
 Когда поле визита привязано к Content Type из Content Library, у него есть **ключи** (slug'и), определённые в `Edit Structure`. Через них можно подставлять разные значения одного объекта.
 
-**Типичный пример — оффер-нейм:**
+**Типичный пример — оффер-нейм** (в шаблоне ERP Finance так и заведено: группа Content Library `Offer Names` с ключами `for_visitor` / `for_advertiser` и поле визита `offer_name`):
 - На лэнде показываем визиту: `{{aio.visit.fields.offer_name.for_visitor}}`
 - В пуш в интеграцию шлём: `{{aio.visit.fields.offer_name.for_advertiser}}`
 
@@ -364,11 +373,11 @@ UUID внутри массива без модификатора теряют к
 <img src="{{aio.visit.fields.content_storage.image}}" alt="">
 ```
 
-### LP Variants Field — специальные поля типа `variant` (`LP_HEADER`, `LP_SUBHEADER`)
+### LP Variants Field — специальные поля формата `Variant` (`lp_header`, `lp_subheader`)
 
-Поля визита с префиксом `LP_*` и типом `variant` — `LP_HEADER`, `LP_SUBHEADER`, `LP_HEADER_IMAGE`. Если `slug` content split'а совпадает с именем такого поля — выбранный сплитом вариант записывается в это поле, и можно сводить аналитику разбивкой по нему.
+Поля визита группы `LP Split Content` формата `Variant` приходят из шаблона тенанта: `lp_header`, `lp_subheader`, `lp_header_image` (Finance, Nutra, Sweeps; в Sweeps ещё `lp_split_price` — форматом `String`) или `lp_header`, `lp_image`, `lp_description` (iGaming). Если `Split key` content split'а на лэнде совпадает со slug такого поля буквально — выбранный сплитом вариант записывается в это поле, и можно сводить аналитику разбивкой по нему (в шаблоне Finance так собран `Preland Example #1 w/ AI Splits & Dynamic Offer Name`: сплит с ключом `lp_header`). Процедура и поле под новый элемент — [how-to/landings.md](../how-to/landings.md).
 
-Подставляются на лэнде так же: `{{aio.visit.fields.LP_HEADER}}`.
+Подставляются на лэнде так же: `{{aio.visit.fields.lp_header}}`.
 
 ### Динамика на лэнде в MTK — своими JS-макросами
 
@@ -433,7 +442,7 @@ window.aioBus.push({ type: "trigger", key: "<slug>", value: "..." });
 
 `{{aio.replace}}` — это не конкретное значение, а маркер «сюда подставить то, что введёт лаунчер в одноимённое replace-поле». Само поле определяется в массиве `replace` Source-кода (ключ `key`), а в `links[].parameters` оно ссылается типом `"type": "replace"`.
 
-Типичные replace-поля Source в рекламных заливах — `fb_account_id`, `creative`, `fb_pixel`, `fb_capi_token` (FB CAPI): их значения лаунчер вводит в форме при генерации ссылки.
+В засеянном source `FB w/ CAPI` replace-поля — `token` (`FB CAPI Token`) и `pixel` (`FB Pixel`) плюс селекты событий CAPI (`fb_action`, `fb_action_f`; в iGaming ещё `fb_action_i` под событие установки). Их значения лаунчер вводит в форме при генерации ссылки, а в поля визита (`fb_capi_token`, `fb_pixel`, `fb_lead_action` …) они попадают через `rewrites` источника — полный разбор засеянного `FB w/ CAPI` в [how-to/source-trackers.md](../how-to/source-trackers.md).
 
 **Source Mapping** — это не отдельный UI-блок, а настройка **rewrites на уровне Source**: маппинг входящего URL-параметра в поле визита, заданный ключом `rewrites` в JSON-коде Source. Полная механика — [models/source.md](../models/source.md) и [how-to/source-trackers.md](../how-to/source-trackers.md).
 

@@ -4,16 +4,16 @@ title: User fields — поля визита прямо в карточках So
 description: Секция User fields в формах настроечных сущностей — кнопка Add field, какой пул полей доступен в какой карточке, три режима родительских полей у Flow / Lander Type / Advertiser, подстановка шаблона при создании, почему новый Source стартует с пустым полем (дефолта нет, Copy source), архивные и удалённые поля.
 doc_type: how-to
 builds: [erp, mtk]
-related: [custom-fields, source, visit-field, permissions, sdk, ui-common, flow-model, landing, advertiser, destination, placeholders, remarketing-campaigns]
+related: [custom-fields, architecture, source, visit-field, permissions-model, sdk, ui-common, flow-model, landing, advertiser, destination, placeholders, remarketing-campaigns]
 language: ru
-updated: 2026-09-11
+updated: 2026-09-23
 ---
 
 # User fields — поля визита прямо в карточках Source, Campaign, лендинга и Destination
 
 Значение поля визита задаётся не только ссылкой и не только скриптом на лэнде — его можно вписать прямо в карточку настроечной сущности: `Source`, `Campaign`, лендинга, `Destination`, а также их «родителей» — `Flow`, `Lander Type`, `Advertiser`. За это отвечает секция `User fields` (`Пользовательские поля`) в форме.
 
-Само поле сначала заводится в `Settings → Fields` — имя, slug, `Type`, `Format`, `Available Values`: [how-to/custom-fields.md](custom-fields.md). Часть полей приезжает готовой из шаблона источника: если в коде источника есть блок `fields`, недостающие поля AIO заводит при сохранении Source сам ([models/source.md](../models/source.md)). Концепт поля визита, кто в него пишет и в каком порядке значения перебивают друг друга — [models/visit-field.md](../models/visit-field.md).
+Само поле сначала заводится в `Settings → Fields` — имя, slug, `Type`, `Format`, `Available Values`: [how-to/custom-fields.md](custom-fields.md). Базовый набор полей приходит с шаблоном тенанта при его создании ([context/architecture.md](../context/architecture.md)); ещё часть приезжает из шаблона источника: если в коде источника есть блок `fields`, недостающие поля AIO заводит при сохранении Source сам ([models/source.md](../models/source.md)). Концепт поля визита, кто в него пишет и в каком порядке значения перебивают друг друга — [models/visit-field.md](../models/visit-field.md).
 
 ## Что такое секция `User fields` в карточке сущности
 
@@ -39,6 +39,8 @@ updated: 2026-09-11
 
 `Destination` — шестое значение `Type`, появившееся вместе с этой секцией. Полный список значений и что каждое означает — [models/visit-field.md](../models/visit-field.md).
 
+В Finance- и iGaming-шаблонах тенанта под каждую карточку уже заведены по три свободных поля нужного `Type` в группе `Custom`: `source_field_1…3`, `campaign_field_1…3`, `landing_field_1…3`, `destination_field_1…3` (описание у каждого — `Free <source|campaign|landing|destination>-level field - name it and use it for anything`): переименуйте и используйте под любое значение уровня этой сущности. В Nutra- и Sweeps-шаблонах таких заготовок нет — поле под карточку заводится в `Settings → Fields` с нужным `Type`.
+
 ## Как добавить поле в карточку — кнопка `Add field`
 
 Поле попадает в форму только вручную. Кнопка `Add field` (`Добавить поле`) под списком открывает поповер с доступными полями и строкой поиска — поиск идёт и по имени поля, и по слагу. Клик по строке добавляет поле в конец списка.
@@ -58,7 +60,7 @@ updated: 2026-09-11
 - **`Type` поля не совпадает с пулом карточки.** У `Source` в форме видны только поля `Type = Source`, у `Campaign` и `Flow` — `Campaign`, у лендинга и `Lander Type` — `Landing`, у `Destination` и `Advertiser` — `Destination`.
 - **Поле уже добавлено** в эту карточку — оно среди строк, а не в поповере.
 - **Поле заархивировано** — архивные в поповер не попадают.
-- **Нет доступа к полю.** Пул уважает доступ: предлагаются поля, которыми вы владеете, которые вам расшарили или у которых `Access Type = Everyone` ([how-to/permissions.md](permissions.md)).
+- **Нет доступа к полю.** Пул уважает доступ: предлагаются поля, до которых у вас есть хотя бы уровень `Use` — свои, расшаренные вам или вашей команде, поля участников ниже вас по уровню в команде и поля с `Access type` `Use` или `View`, а при `Scopes` / `Editor Scopes` на поля в позиции (`scopes.settings.fields`, только ERP) — все поля тенанта. Чтобы выбрать поле, открывать его карточку не нужно — уровня `Use` хватает. Все источники доступа — [models/permissions-model.md](../models/permissions-model.md).
 
 Отдельный случай — поле, которое родитель забрал себе режимом «только родитель»: в дочерней форме его нет ни строкой, ни пунктом в поповере.
 

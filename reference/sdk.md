@@ -4,9 +4,9 @@ title: AIO SDK — устройство, встроенные макросы и 
 description: Единый справочник по AIO SDK — как грузится на лэнд, AIO SDK Macros Collection и его features, window.aioBus, SDK-форма, плейсхолдеры, сопутствующие макросы. Часть II — точный разбор по коду SDK (эндпоинты, слаги полей визита, протокол aioBus, lifecycle формы, фичи pwa/fingerprint/tiktok).
 doc_type: reference
 builds: [erp, mtk]
-related: [forms, placeholders, landings, user-fields, push-notifications, glossary, mechanics-pwa, campaigns, custom-fields, server, conversion-model, how-to-pwa, notifications-flow]
+related: [forms, placeholders, architecture, landings, user-fields, push-notifications, glossary, mechanics-pwa, how-to-pwa, campaigns, custom-fields, server, conversion-model, notifications-flow]
 language: ru
-updated: 2026-09-11
+updated: 2026-09-23
 ---
 
 # AIO SDK — устройство, встроенные макросы и работа с ним
@@ -54,19 +54,33 @@ updated: 2026-09-11
 
 ## Как найти все макросы тенанта: Content → Macros
 
-Путь: `Content → Macros`. В тенанте по дефолту лежит шаблонный набор макросов (состав зависит от билда/шаблона; типичный набор):
+Путь: `Content → Macros`. Набор макросов приезжает из шаблона тенанта и зависит от вертикали: у Finance, Nutra и Sweeps (в ERP и MTK) — набор из таблиц ниже, у iGaming — только `AIO SDK Macros Collection` и `AIO Custom PWA`. Slug из таблиц ниже — то, что подставляется в `{{aio:macros:<slug>}}`; перед вставкой сверьте его в своём `Content → Macros`. Что вообще клонируется из шаблона — [context/architecture.md](../context/architecture.md).
 
-| Макрос | Slug | Placement | Global |
+### Макросы, засеянные в Finance, Nutra и Sweeps
+
+| Макрос | Slug | Placement | Global | Active |
+|---|---|---|---|---|
+| **AIO SDK Macros Collection** (главный, см. ниже; есть и в iGaming) | `aio_sdk_macros_collection` | Footer | да | да |
+| **AIO Non-SDK Form Handler** (фолбэк для HTML-форм) | `aio_nonsdk_form_handler` | Footer | нет | да |
+| **AIO Form Loader** (оверлей с локализованным сообщением на время сабмита формы) | `aio_form_loader` | Footer | нет | да |
+| **AIO Static Language Country for Form** | Finance — `aio_static_language__country_for_form` (два подчёркивания); Nutra и Sweeps — `aio_static_language_country_for_form` | Footer | нет | да |
+| **AIO GTAG** (Google Tag) | `aio_gtag` | **Head** | да | да |
+| **AIO Push Subscription** (web-push подписка; только в ERP — в MTK Finance и MTK Sweeps не засеян) | `aio_push_subscription` | Footer | да | **нет** |
+
+> `AIO GTAG` — единственный с `Preferred Placement: Head` (грузится в `<head>`); остальные — `Footer`. `AIO Push Subscription` приезжает выключенным — по описанию макроса: «Shipped switched off: turn it on when you run pushes».
+
+### Макросы, засеянные только в одной вертикали
+
+| Макрос | Slug | Global | Где |
 |---|---|---|---|
-| **AIO SDK Macros Collection** (главный, см. ниже) | `aio_sdk_macros_collection` | Footer | да |
-| **AIO Non-SDK Form Handler** (фолбэк для HTML-форм) | `aio_nonsdk_form_handler` | Footer | нет |
-| **AIO Static Language Country for Form** | `aio_static_language__country_for_form` | Footer | нет |
-| **AIO Push Subscription** (web-push подписка) | `aio_push_subscription` | Footer | нет |
-| **AIO GTAG** (Google Tag) | `aio_gtag` | **Head** | нет |
-| **AIO Form Loader** | `aio_form_loader` | Footer | нет |
-| **AIO Save Landing Params to Visit** | `aio_save_landing_params_to_visit` | Footer | да |
+| **AIO Save Landing Params to Visit** — пишет язык, страну и имя лэнда в визит, когда визит на лэнде с формой | `aio_save_landing_params_to_visit` | да | Finance (ERP и MTK) |
+| **AIO Autologin Redirect** — через три секунды после открытия уводит на autologin-URL дестинейшена; для своей thank-you page | `aio_autologin_redirect` | нет | Finance (ERP и MTK) |
+| **AIO Pre-Fill Form Handler** — сабмит слишком нестандартной для SDK формы (квиз, колесо, выбор подарка): имена инпутов маппятся на слаги полей визита и уходят в ссылке перехода | `aio_prefill_form_handler` | нет | Sweeps (ERP и MTK) |
+| **AIO Custom PWA** — install-flow для PWA-лэнда ручной сборки; лэндам из `PWA Builder` не нужен | `aio_custom_pwa` | нет | iGaming (ERP и MTK) |
 
-> `AIO GTAG` — единственный с `Preferred Placement: Head` (грузится в `<head>`); остальные — `Footer`.
+Все четыре — `Footer`, активны.
+
+### Редактор макроса — поля и где лежит код
 
 **Редактор макроса:** правый клик по макросу → `Edit macros` (рядом `Macros logs` — история, и `Archive`). Поля редактора: Name, Description, Tags, Prefer placement (Footer/Head), Active?, Global?, и **Html** — само содержимое (код в Monaco-редакторе). Для `AIO SDK Macros Collection` в Html лежит загрузка бандла `/aio-static/sdk/main.js` + `window.aioBus.push({type:"config", …})`.
 
@@ -287,15 +301,15 @@ form: {
 
 ## Когда нужен AIO Non-SDK Form Handler — макрос-фолбэк для HTML-форм
 
-Когда нужно оставить родную HTML-форму вместо `{{form}}`. Полная механика, 3 шага подключения и ограничения — [how-to/forms.md](../how-to/forms.md). Грузит intl-tel-input со своими CSS → форма может «съезжаться». Slug макроса (`aio_nonsdk_form_handler`) может отличаться по тенантам — проверять в `Content → Macros`.
+Когда нужно оставить родную HTML-форму вместо `{{form}}`. Полная механика, 3 шага подключения и ограничения — [how-to/forms.md](../how-to/forms.md). Грузит intl-tel-input со своими CSS → форма может «съезжаться». Засеян в шаблонах Finance, Nutra и Sweeps (ERP и MTK) со slug `aio_nonsdk_form_handler` — вызов `{{aio:macros:aio_nonsdk_form_handler}}`; в iGaming-шаблоне макроса нет. Если тенант создан не из текущего шаблона, slug сверить в `Content → Macros`.
 
-Ключевые ограничения: цепляется только к тегу `<form>` (если форма свёрстана как `<div>` — сабмит не перехватывается); если одновременно есть `{{form}}` и Non-SDK Handler — возможны конфликты; Pushing modal / autologin / хуки не работают (активно не развивается).
+Ключевые ограничения: цепляется только к тегу `<form>` (если форма свёрстана как `<div>` — сабмит не перехватывается); если одновременно есть `{{form}}` и Non-SDK Handler — возможны конфликты; модалки пуша и хуков SDK-формы нет, после успешного пуша — простой редирект на автологин-ссылку из ответа (активно не развивается).
 
 ## Что делает Static Language Country — макрос фиксации языка и страны формы
 
-Шаблонный макрос (часто включён по дефолту).
+Шаблонный макрос: засеян в Finance, Nutra и Sweeps (ERP и MTK) активным, но **не Global** — вставлен локально только в лэнды-примеры с формой (в Finance — `Example Preland w/ Form — Starter Plan Quiz` и оффер-лэнд: `Offer Example #1 w/ Dynamic Offer Name` в ERP, `Example Offer Page — Immediate Connect` в MTK); в iGaming-шаблоне его нет. Slug различается по вертикали: Finance — `aio_static_language__country_for_form`, Nutra и Sweeps — `aio_static_language_country_for_form` (таблица макросов выше).
 
-**Что делает:** фиксирует язык SDK-формы и страну телефона **по странам/языку лэнда**, а не по визиту.
+**Что делает:** фиксирует язык SDK-формы и страну телефона **по странам/языку лэнда**, а не по визиту. Nutra-вариант по своему описанию мягче: «Uses the landing's single country/language when set, otherwise the visit's country/language» — под кампанию-пример `Multigeo IT-ES-PL - Campaign Example`.
 
 **Зачем:** без него форма берёт `language` из `navigator.language` визита (может быть не тот язык, на котором написан лэнд), а страну телефона — из гео визита (может быть VPN). С макросом — оба значения берутся из метаданных лэнда (Country/Language заданы при загрузке лэнда).
 
@@ -472,17 +486,19 @@ config: {
 3. Сохранить.
 4. На лэнде — `{{aio:macros:<slug>}}` после `{{aio}}`.
 
-См. [mechanics/pwa.md](../mechanics/pwa.md) → PWA-макрос.
+В iGaming-шаблоне (ERP и MTK) такой макрос уже засеян — `AIO Custom PWA` (`aio_custom_pwa`, `Global: нет`), по его описанию: «Install flow for hand-made PWA landings. Insert {{aio:macros:aio_custom_pwa}} into such a landing; landings built by the AIO PWA generator already have their own and must not get this one». В остальных шаблонах макроса нет — создаётся по шагам выше.
+
+См. [mechanics/pwa.md](../mechanics/pwa.md) → PWA-макрос; пошаговая процедура и конфиг — [how-to/pwa.md](../how-to/pwa.md) (Путь B).
 
 ### Как настроить глобальный GTAG-макрос
 
 Когда: один GTAG (Google Tag) на кампанию / тенант — хочется не дублировать в каждом лэнде.
 
-**Путь:** `Content → Macros → AIO GTAG` — **отдельный** глобальный макрос, задаётся из шаблона тенанта (в MTK редактор макросов — `Settings → Macros`). Это НЕ блок внутри `AIO SDK Macros Collection` — у gtag свой макрос (`aio_gtag`, см. таблицу макросов выше).
+**Путь:** `Content → Macros → AIO GTAG` — **отдельный** глобальный макрос, приезжает из шаблона тенанта в Finance, Nutra и Sweeps (ERP и MTK; в iGaming-шаблоне его нет) с `Global: да` и `Preferred Placement: Head` (в MTK редактор макросов — `Settings → Macros`). Это НЕ блок внутри `AIO SDK Macros Collection` — у gtag свой макрос (`aio_gtag`, см. таблицу макросов выше).
 
 В конфиг макроса добавить ID GTAG и события.
 
-Включать глобально безопасно: макрос срабатывает только для трафика с Google, FB-трафик не затрагивает. Шлёт pageview при попадании визита на страницу и событие конверсии при сабмите формы. `gtag` — отправляется при submit формы, **до** проверки лида (раньше, чем известно, валиден лид или нет).
+Включать глобально безопасно: макрос срабатывает только для трафика с Google, FB-трафик не затрагивает — по описанию макроса в тенанте: «Google Ads gtag with AIO fields: fires the conversion label on form submit. Silent when the visit has no GTAG Conversion ID». Шлёт pageview при попадании визита на страницу и событие конверсии при сабмите формы. `gtag` — отправляется при submit формы, **до** проверки лида (раньше, чем известно, валиден лид или нет).
 
 См. [how-to/campaigns.md](../how-to/campaigns.md) → Ссылка под Google.
 
@@ -955,7 +971,7 @@ SDK ищет модалки по id (`intentModalId`, дефолт `intent-modal
 
 При открытии уже установленной PWA макрос шлёт **обе** конверсии — `open` и `install`, поэтому в сетевых логах лэнда install-запрос виден каждый раз. Появится ли при этом второй `Install` в конверсиях визита, решает `Uniqueness Strategy` у типа конверсии `Install` в тенанте (см. [models/conversion-model.md](../models/conversion-model.md)):
 
-- `Single Conversion` — штатная настройка PWA-шаблона: повторную конверсию того же типа на визите AIO отсекает, в визите остаётся один `Install`.
+- `Single Conversion` — так засеян тип `Install` в iGaming-шаблоне (ERP и MTK; в других вертикалях типа `Install` нет): повторную конверсию того же типа на визите AIO отсекает, в визите остаётся один `Install`.
 - `Multiple Infinity` — каждое открытие установленной PWA создаёт новую конверсию `Install`; отсюда симптом «у одного визита несколько инсталлов».
 
 При разборе трафика: расхождение между числом install-запросов в логах лэнда и числом конверсий визита ожидаемо и определяется этой настройкой, а не поломкой лэнда.

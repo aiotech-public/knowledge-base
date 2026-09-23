@@ -4,9 +4,9 @@ title: Distributions Model AIO
 description: Как устроены Distributions в AIO — 9 типов (включая Message Templates — дерево текстов ремаркетинг-рассылки и Auto Rules — шаблон автоправил Meta с деревом из фаз и правил), структура дерева (Folder + Strategy + Rule + Payload), Business Models, типичные use case'ы (Buyer UTM Distribution, Direct Traffic, Payout rules).
 doc_type: model
 builds: [erp, mtk]
-related: [auto-rules, distributions, remarketing-campaigns, notifications-flow, push-notifications, permissions, glossary, flow-model, business-model, visit-lifecycle, conversion-model]
+related: [auto-rules, distributions, business-model, remarketing-campaigns, notifications-flow, push-notifications, permissions, glossary, flow-model, visit-lifecycle, conversion-model]
 language: ru
-updated: 2026-09-11
+updated: 2026-09-23
 ---
 
 # Distributions Model AIO
@@ -29,11 +29,11 @@ updated: 2026-09-11
 
 ### Revenue — автоматический revenue по правилам
 
-Автоматически применяет revenue по правилам. По дефолту тенант имеет preconfigured (`Arrived Revenue$`) для приёма revenue из постбэков. Используется для кастомных правил revenue.
+Автоматически применяет revenue по правилам. В тенанте из шаблона уже есть `Revenue Distribution`, единственный включённый лист которой — Business Model `Arrived Revenue` (`AR`): revenue берётся из постбэка ([models/business-model.md](business-model.md)). Используется для кастомных правил revenue.
 
 ### Campaign Content — значения для одного шага кампании
 
-Назначает значения для **одного шага** кампании (лэнд по гео, дестинейшн по owner-у). Используется для тонкой настройки одной кампании.
+Назначает значения для **одного шага** кампании (лэнд по гео, дестинейшн по owner-у). Используется для тонкой настройки одной кампании. Засеянный пример есть в iGaming-шаблонах (ERP и MTK) — `Offer Distribution`: папки по гео `IN - single offer`, `MX - A/B two partners` (под `Strategy` в режиме `Conversions AI`), `BR - split by weight` (под `Strategy` в режиме `Weights`, 70/30) и фолбэк `Everything else`, в листах — дестинейшены-примеры вертикали. Все листы `Destination` в ней **выключены**: пока их не включить (`Enable node`) и не заменить на свои дестинейшены, дерево не отдаёт ни одного оффера. Кампании-примеры iGaming (кроме `Default Flow - PWA Campaign Example`) ставят её на шаг `Offer` вместо конкретного дестинейшна («geo-routed offers via Offer Distribution»). В остальных вертикалях дистрибуций этого типа с шаблоном не приходит.
 
 ### Flow Content — значения для нескольких шагов одного Flow
 
@@ -43,11 +43,11 @@ updated: 2026-09-11
 
 Заполняет поля визита (используется в шаге `Fields by Distribution` во Flow). Под разные цели: Buyer UTM, FB Pixel, CAPI Token, поля-плейсхолдеры Content Library (`Offer Name`, `Price` и т.п.), а также подстановка лэндов и дестинейшнов. Пять типов fill-узлов, каждый под свой тип контента поля: `Add Fill Field Text` / `Image` / `Landing` / `Library` / `Destination`. Используется для UTM-меток баеров (`buyer_utm`), AffID, API-токенов, ID-маркеров.
 
-Один шаг `Fields by Distribution` заполняет **несколько полей за один проход**: `Fill Field`-дистрибуция работает в режиме `Multiple Nodes` (см. «Две оси выбора» ниже) — дерево обходится до конца, каждый прошедший fill-узел пишет своё значение в своё целевое поле. Если **два узла целятся в одно и то же поле**, выигрывает **первый по порядку дерева** (узлы читаются сверху вниз), поздний узел на то же поле игнорируется. Значит порядок узлов в дереве — это приоритет: более общий fallback держи ниже конкретных правил.
+Один шаг `Fields by Distribution` заполняет **несколько полей за один проход**: `Fill Field`-дистрибуция по умолчанию создаётся в режиме `Multiple Nodes` (поле `Select strategy` в форме дистрибуции, менять можно; см. «Две оси выбора» ниже) — дерево обходится до конца, каждый прошедший fill-узел пишет своё значение в своё целевое поле. Если **два узла целятся в одно и то же поле**, выигрывает **первый по порядку дерева** (узлы читаются сверху вниз), поздний узел на то же поле игнорируется. Значит порядок узлов в дереве — это приоритет: более общий fallback держи ниже конкретных правил.
 
 ### Direct Traffic — маршрутизация голых ссылок (домен без UTM)
 
-Для голых ссылок (только домен, без UTM). Альтернатива `Default Query Code` на домене. Поддерживает `initial_path` для разделения трафика внутри одного домена. Используется при прямом заходе на голый домен. Если на домене не настроено ни `Default Query Code`, ни `Direct Traffic Distribution`, заход на голый домен отдаёт `502`.
+Для голых ссылок (только домен, без UTM). Альтернатива `Default Query Code` на домене. Поддерживает `initial_path` для разделения трафика внутри одного домена. Используется при прямом заходе на голый домен. Если на домене не настроено ни `Default Query Code`, ни `Direct Traffic Distribution`, заход на голый домен отдаёт `502`. В iGaming-шаблонах (ERP и MTK) такая дистрибуция уже заведена, но пустая — `Direct Traffic Distribution` («Routes visits that arrive with no campaign - set up a fallback here»): дерево из `Add Query`-нод заполняется под свои домены; в остальных вертикалях её создают с нуля.
 
 ### Remarketing Content — сообщения для нод пуш-сценария, собранного во флоу
 
@@ -66,6 +66,8 @@ updated: 2026-09-11
 - **Привязки к флоу нет** — флоу при создании не выбирается: запрашиваются только `Name` (обязателен), `Description` (до 255 символов) и `Tags`.
 - **Режим выбора зашит кодом:** дистрибуция всегда работает как `Multiple Nodes` (см. «Две оси выбора» ниже), поля в форме нет, и после создания режим не меняется — дерево отдаёт все прошедшие ноды, одну из них выбирает отправка.
 
+В каждом ERP-шаблоне тенанта (из MTK-шаблонов — только в iGaming) уже лежат несколько дистрибуций этого типа с именами вида `Example - … - N pushes` — образцы наборов под стадии воронки вертикали (например `Example - After Registration - 4 pushes` в Sweeps, `Example - Confirm Your Order - 4 pushes` в Nutra, `Example - After Lead - 4 pushes` в Finance); тексты в них — заготовка под замену на свои. Как такой набор подключается к рассылке — [how-to/remarketing-campaigns.md](../how-to/remarketing-campaigns.md).
+
 ### Почему из дерева `Message Templates` уходят только push — email, SMS и Telegram не отправляются
 
 Рассылка отбирает из дерева только push-ноды — в дереве этого типа это `Push Template`. Ноды `Email Template`, `Sms Template` и `Telegram Template` создаются, валидируются и хранятся, но отправлять их из этого дерева нечем.
@@ -79,7 +81,7 @@ updated: 2026-09-11
 Два входа в один и тот же тип:
 
 - **`Settings → Distributions → + Distribution` → плитка `Message templates`** — право то же, что у `Remarketing content` (`settings.distributions.edit.marketing-content`).
-- **`Marketing → Template distributions`** (`/app/remarketing/message-template-distributions`) — отдельная страница со своей веткой прав (`marketing.template-distributions.*`). На выделенной странице пикер типов не показывается: создание открывается сразу.
+- **`Marketing → Template distributions`** (`/app/remarketing/message-template-distributions`) — отдельная страница: открывается правом `marketing.template-distributions.view`; кнопку создания и переход в дерево набора интерфейс показывает по `marketing.template-distributions.edit`. Сами действия с наборами шаблонов (создание, правка) сервер проверяет теми же ключами, что и в `Settings → Distributions`, — `settings.distributions.*` (создание — `settings.distributions.edit.marketing-content`), поэтому для правки с этой страницы нужны ключи обеих веток. На выделенной странице пикер типов не показывается: создание открывается сразу.
 
 **«Право на дистрибуции шаблонов выдал, а раздела у юзера нет».** Пункт `Marketing` в главном меню открывается по другим правам раздела (`marketing.messages.view`, `marketing.message-templates.view`, `marketing.sender-providers.view`, `marketing.flows.view`) — `marketing.template-distributions.view` в этот список не входит. Роли, у которой есть только оно, до страницы не дойти: выдавай его вместе с одним из прав, открывающих сам раздел `Marketing` ([how-to/permissions.md](../how-to/permissions.md)).
 
@@ -102,7 +104,7 @@ Distribution = **дерево**. Чтение сверху вниз. Кажды�
 **Ось 1 — сколько нод дерево отдаёт (уровень всей дистрибуции), поле `Single Node` / `Multiple Nodes`.**
 
 - **`Single Node`** — как только первый лист прошёл все свои проверки, обход дерева **останавливается**, и этот лист выигрывает. Так работают money- и маршрутные дистрибуции: `Payout`, `Revenue`, `Direct Traffic` (первый проходящий лист сверху вниз — результат).
-- **`Multiple Nodes`** — дерево обходится до конца и собираются **все** прошедшие листья. Так работают `Fill Field` (за один проход можно заполнить несколько полей), `Remarketing Content` и `Message Templates`.
+- **`Multiple Nodes`** — дерево обходится до конца и собираются **все** прошедшие листья. Так работают `Remarketing Content`, `Message Templates` и — по умолчанию — `Fill Field` (за один проход можно заполнить несколько полей; у `Fill Field` режим выбирается в форме, и засеянная `Buyer UTM Distribution` в Finance / Nutra / Sweeps стоит в `Single Node`).
 
 **Ось 2 — как Strategy-узел выбирает один вариант среди своих детей** (First / Weights / Conversions AI / Metrics AI, ниже). Эта ось живёт **внутри** `Strategy`-узла и решает тай-брейк между его дочерними payload-нодами; ось 1 решает, сколько таких выборов дерево в итоге вернёт визиту.
 
@@ -252,7 +254,7 @@ Distribution = **дерево**. Чтение сверху вниз. Кажды�
 
 ## Что такое Business Models и как они связаны с Payout и Revenue Distribution
 
-Преднастроенный набор бизнес-правил, на котором строятся `Payout` и `Revenue` distribution. По дефолту тенант имеет `Arrived Revenue$` (`AR`) — для приёма revenue из постбэков. Создаются в `Settings → Business models`, нужны при настройке Payout/Revenue distribution-ов. Детали определения, дефолтов (`Arrived Revenue$`, `Zero Payout`) и полей (`Type`/`Format`/`Formula`) — [models/business-model.md](business-model.md). Именно эту модель выбираешь в листе `Finance → Revenue/Payout Distribution` (`Edit revenue` / `Edit payout` → поле `Business model`, см. раздел «Как настроить Revenue и Payout Distribution в разделе Finance» ниже).
+Преднастроенный набор бизнес-правил, на котором строятся `Payout` и `Revenue` distribution. Шаблон тенанта засевает восемь моделей — по четыре на каждую сторону: `Arrived` / `Zero` / `Static` / `Cancel` Revenue и такие же четыре Payout; в засеянных деревьях включены `Arrived Revenue` (`AR`, revenue из постбэка) и `Zero Payout` (`ZP`). Создаются в `Settings → Business models`, нужны при настройке Payout/Revenue distribution-ов. Полный засеянный набор, формулы и поля (`Type`/`Format`/`Formula`) — [models/business-model.md](business-model.md). Именно эту модель выбираешь в листе `Finance → Revenue/Payout Distribution` (`Edit revenue` / `Edit payout` → поле `Business model`, см. раздел «Как настроить Revenue и Payout Distribution в разделе Finance» ниже).
 
 ## Типичные сценарии применения Distributions
 
@@ -263,17 +265,17 @@ Distribution = **дерево**. Чтение сверху вниз. Кажды�
 Без Distribution: каждый баер вручную вписывает свою UTM-метку в URL ссылки кампании. Ошибки, расхождения, потери в аналитике.
 
 С Distribution:
-1. В шаблоне тенанта обычно уже есть преднастроенная **`Buyer UTMs`** Distribution как пример — её не создают с нуля, а открывают через ПКМ → `Manage Tree` и переконфигурируют под себя. Тип — `Fill Field`, поле визита — `buyer_utm` (должно быть заведено в `Settings → Fields`, обычно есть в шаблоне).
+1. В ERP-шаблоне тенанта (Finance, iGaming, Nutra, Sweeps) уже есть **`Buyer UTM Distribution`** (описание «Distribute Buyer UTMs for Traffic»; в iGaming — без описания) — её не создают с нуля, а открывают через ПКМ → `Manage Tree` и переконфигурируют под себя. Тип — `Fill Field`, поле визита — `buyer_utm` (группа `Tracking`, засеяно во всех шаблонах). Засеянное дерево — заготовка: три папки-примера (`Buyer Max` / `Buyer Alex` / `Buyer John`; в iGaming — `Buyer A` / `B` / `C`) с листом `Fill Field Text` в каждой и **без `Rule to pass`** — правила по `Campaign Owner` дописываются под своих юзеров, потому что в шаблоне их ещё нет. В Finance, Nutra и Sweeps дистрибуция засеяна в режиме `Single Node`: пока правил нет, побеждает первая папка (`Buyer Max`), и все визиты получают её метку; в iGaming — `Multiple Nodes`. В MTK-шаблонах этой дистрибуции нет.
 2. Дерево правил по `Campaign Owner`:
    - Если `Campaign Owner = Иван` → `Fill Text: buyer_ivan`
    - Если `Campaign Owner = Маша` → `Fill Text: buyer_masha`
    - и т.д.
 
    Значение метки внутри ветки задаётся элементом **`Fill Field Text`** (поле `Text`). Новые ветки под других юзеров добавляются через `Add Folder → Add Fill Field Text` либо копированием существующей через `Duplicate recursively`. Отдельного режима-селектора «по владельцу vs по лаунчеру» нет — это просто разные `Rule to pass`: ветка проверяет `Campaign Owner UUID` (дефолт — владелец кампании, из которой пришёл визит) либо `Launcher` (лаунчер ссылки; для одной кампании, запускаемой несколькими юзерами) — какое поле поставить слева в правиле, по тому и делится (см. ниже «`Campaign Owner` vs `Launcher`»).
-3. Во Flow ставится шаг **`Fill Field`** (в начале флоу, до фильтра). Он применяет правила автоматически — каждый визит получает правильную метку без участия баера. В шаблонном Flow обычно уже есть преднастроенный шаг **`Fill Buyer UTM`**; если его нет — добавляется нодой **`Fields by Distribution`**, в которой через cogwheel выбирается нужная Buyer UTM Distribution.
+3. Во Flow ставится шаг **`Fill Field`** (в начале флоу, до фильтра) — он применяет правила автоматически, каждый визит получает метку без участия баера. В засеянных ERP-флоу это шаг **`Fill Buyer UTM`** (`Fields by Distribution` в `Flow Only`, выбрана `Buyer UTM Distribution`) — стоит в начале флоу, до `AIO Filter` (в `Default 1Step`-флоу Sweeps и в iGaming — ещё до `Source`), во всех флоу типа `Campaigns`, кроме превью и `Deeplink Android`; в MTK-шаблонах его нет. Нет шага — добавляется нодой **`Fields by Distribution`**, где через cogwheel выбирается нужная дистрибуция.
 4. После того как `buyer_utm` заполнен, он передаётся не только в `Tracker → Destinations`, но и в Advertisers (`Settings → Advertisers → Edit`) — плейсхолдером `{{aio.visit.fields.buyer_utm}}` в нужном поле.
 
-В шаблоне тенанта из `Fill Field`-дистрибуций есть **только** `Buyer UTM Distribution` — она и мапит `Campaign Owner UUID` на метку в поле `buyer_utm`. Заполнение других полей — `aff_id` / Offer ID, API-токены, fileId-ы под каждого баера — **не часть шаблона**: эти поля заводятся вручную в `Settings → Fields` и создаёт под них отдельные `Fill Field Distribution`.
+Какие `Fill Field`-дистрибуции засеяны, зависит от вертикали. В iGaming, Nutra и Sweeps — только `Buyer UTM Distribution`. В Finance рядом с ней лежит **`Offer Names Distribution`** («Distribute Offer Names for Traffic»): папки по стране (`DE Offer Names` / `FR Offer Names`, правило по стране визита или кампании) с листами `Fill Field Library`, которые кладут в поле `offer_name` элемент группы плейсхолдеров `Offer Names`; её использует флоу `1/2Step | Offer Name Distribution` (шаг `Offer Name Distribution`) и кампания-пример `Offer Name Distribution - Campaign Example`. Заполнение других полей — `aff_id`, API-токены, fileId-ы под каждого баера — **не часть шаблона**: эти поля заводятся вручную в `Settings → Fields`, а под них — отдельные `Fill Field Distribution`.
 
 #### По какому полю делить Buyer UTM — `Campaign Owner` vs `Launcher`
 
@@ -292,6 +294,8 @@ Use case: $3 за лида из IT, $5 за лида из DE на FB, $2 за в
   - (без правил, fallback) → `Add Payout: 2`
 
 Применяется автоматически ко всем конверсиям. Меняется payout — правим только Distribution, кампании трогать не надо.
+
+Заготовка такого дерева уже лежит в засеянном `Payout Distribution` — папка `Example Buyer Payouts` с ветками по источнику (`Buyers FB` — правило `Source = FB w/ CAPI`, `Buyers Google` — `Source = Google`) и листами `Static Payout`; листы выключены, поэтому пример не считает, пока его не включить и не проставить свои ставки (см. «Как настроить Revenue и Payout Distribution в разделе Finance» ниже). В iGaming вместо неё — `Example: fixed payout for Offer #1` с правилом по дестинейшну.
 
 ### Direct Traffic Distribution — как направить визит на голый домен без UTM
 
@@ -381,10 +385,15 @@ Revenue- и Payout-дистрибуции редактируются в разд
 
 **Структура (обе вкладки одинаковы).** Rule-routed дерево. Колонки: `Node` · **`Rule to pass`** (условие, напр. `( Accept everything )`) · `Touched by` · `Touched at` · `Node UUID` · `Created`. Тулбар: **`Folder`** (добавить корневую папку) + **`Revenue`** / **`Payout`** (добавить корневой лист).
 
-**Дефолт в шаблоне тенанта.** Revenue-дерево = папка `Revenue by Postback for All Conversions` → лист `Arrived Revenue $` (Business Model `AR – Arrived Revenue`, сумма 0,00). Payout-дерево = папка `Example Buyer Payouts`. Оба правила — `Accept everything`.
+**Что засеяно в шаблоне тенанта (все семь шаблонов, ERP и MTK).** В обоих деревьях по три корневые папки с правилом `Accept everything` или правилом-примером, но **включён только один лист в каждом** — остальные листья деактивированы и лежат как образцы:
+
+- **Revenue** — папка `Revenue by Postback for All Conversions` (в iGaming — `Revenue by Postback`) → включённый лист с Business Model `Arrived Revenue`, сумма `0` (revenue приходит из постбэка). Рядом папки-примеры с выключенными листами: `Example: fixed revenue per lead` (`Static Revenue`, правило по типу конверсии `Lead`) и `Example: zero out revenue - lead rejected by CRM` (`Cancel Revenue`); в iGaming — `Example: fixed revenue for Offer #1` и `Example: zero out revenue (corrections, rejects)`.
+- **Payout** — папка `Default 0$ Payout` → включённый лист `Zero Payout`, сумма `0`. Примеры с выключенными листами: `Example Buyer Payouts` (вложенные `Buyers FB` / `Buyers Google` с правилом по `Source` и листами `Static Payout`) и `Example: pay the buyer what the CRM sent back` (`Arrived Payout`); в iGaming — `Example: fixed payout for Offer #1` и `Example: pay the buyer what the partner sent`.
+
+Пока листы-примеры выключены, revenue каждой конверсии — то, что принёс постбэк в поле `arrived_revenue`, а payout — `0`; чтобы пример заработал, его лист включают (`Enable node`) и правят сумму. Сами модели и формулы — [models/business-model.md](business-model.md).
 
 **Лист (Revenue/Payout node) — модалка `Edit revenue` / `Edit payout`:**
-- **`Business model`** (обяз.) — выбор из бизнес-моделей тенанта (в шаблоне одна — `AR – Arrived Revenue`; модели per-tenant, заводятся в Settings → Business Models).
+- **`Business model`** (обяз.) — выбор из бизнес-моделей тенанта (шаблон засевает восемь — [models/business-model.md](business-model.md); модели per-tenant, заводятся в Settings → Business Models).
 - **`Revenue`** / **`Payout`** (обяз.) — сумма (число).
 
 **Экшены ноды (правый клик):** `Edit settings` · `Edit rule` (правило прохода) · **`Add Folder Inside`** · **`Add Revenue Inside`** / **`Add Payout Inside`** (строят дерево вглубь) · `Open node` (раскрыть) · `Disable` / `Enable node` · `Lock node` · **`Clear recursively`** (удалить ветку; единственная операция удаления) · `Duplicate recursively` · `Move up` / `Move down` · `Show logs`. *(Клик по имени папки = быстрый `Edit folder` — только имя.)*

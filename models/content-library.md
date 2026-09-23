@@ -4,9 +4,9 @@ title: Content Library — концепт (модель)
 description: Что такое Content Library в AIO — хранилище типизированных объектов (Content Type → Content Item), значения которых динамически подставляются на лэнды/в кампании через {{aio.visit.fields.<field>.<key>}}; связь с полем визита типа Placeholder, Fill Fields и Distribution. Концепт; процедуры — how-to/landings.md.
 doc_type: model
 builds: [erp]
-related: [landings, custom-fields, placeholders, visit-field, flow-model, distributions-model, limits, landing, ui-map, destination, advertiser, campaign-defaults, glossary]
+related: [landings, custom-fields, placeholders, visit-field, flow-model, distributions-model, limits, landing, permissions, ui-map, destination, advertiser, campaign-defaults, glossary]
 language: ru
-updated: 2026-08-26
+updated: 2026-09-23
 ---
 
 # Content Library — концепт (модель)
@@ -67,13 +67,19 @@ Content Library — это хранилище; **выбор конкретног
 
 Самые ходовые лэнды AIO кэширует агрессивнее (атрибут `cache_priority` проставляется автоматически по трафику) — руками это включать не нужно (когда и по какому расписанию — *Что AIO проставляет и делает сам — фоновые задачи и их расписание*).
 
-### 7. Модель доступа
+### 7. Кто видит Content Type и Content Item — `Access type`, шаринг, `Change ownership`
 
-У каждого Content Item есть **Access Type**:
-- **`Everyone`** — доступен всем байерам всегда;
-- **`By Share`** — нужно расшарить (ПКМ → `Share`).
+**У каждого Content Type и каждого Content Item есть `Access type` — кому он доступен без шаринга; новый объект создаётся `Private`** (в форме нового Content Item это поле `Access type`, по умолчанию `Private`). Значения:
 
-Сменить — ПКМ → `Change Ownership`. По умолчанию байеры **не** имеют доступа к вкладке Content Library и не заводят Items сами; им либо шарят объект, либо ставят `Access Type = Everyone`.
+- **`Private`** — владельцу, тем, кому объект пошарили (ПКМ → `Share`), вышестоящим по команде владельца, Owner / Admin и позициям со `Scopes` на Content Library (ниже);
+- **`Use`** — все пользователи тенанта видят объект в списках и селектах (например, Content Type — в выборе на шаге `Fill Fields` флоу), но карточку не открывают;
+- **`View`** — все ещё и открывают карточку на чтение.
+
+Править чужой объект `Access type` не даёт ни при каком значении: для этого нужна шара с ролью `Editor`, владение, более высокий уровень в команде владельца или позиция с `Editor Scopes` на Content Library (`edit-scopes.content.content-library`). Видеть все объекты раздела без шаринга позволяет `scopes.content.content-library`.
+
+Сменить `Access type` и владельца — ПКМ → `Change ownership` (для выделенных строк — `Mass change ownership`), пункт показывается только при уровне `Own` на объект. Уровни доступа и роли шары — [how-to/permissions.md](../how-to/permissions.md).
+
+По умолчанию байеры **не** имеют доступа к вкладке Content Library и не заводят Items сами: вкладку открывают права позиции, а конкретный объект — шаринг или `Access type` `Use` / `View`.
 
 ### 8. Встроенных Content Type-ов нет — структура целиком кастомная
 
@@ -121,7 +127,7 @@ Showcase — частный паттерн поверх Content Library (мас�
 - **White-лэнд не подставляет `aio.*`** — SDK там не грузится, динамический контент из Content Library не работает by design.
 - **Абсолютные CDN-ссылки на картинки из Content Library не переписываются.** При процессинге лэнда AIO переписывает на CDN только **относительные** пути внутри HTML-ZIP; абсолютная ссылка из Content Library остаётся в исходниках лэнда и продолжает вести на исходный хост, а не на ваш CDN-домен. Переписывайте на relative вручную (актуально для Showcase Item).
 - **`Placeholder Group`, не «Payload Group».** Корректное имя поля — `Placeholder Group`.
-- **Байеры по дефолту не видят вкладку и не заводят Items.** Нужно либо `Share`, либо `Access Type = Everyone`, иначе Item байеру не виден.
+- **Байеры по дефолту не видят вкладку и не заводят Items.** Вкладку открывают права позиции; сам Item байеру виден, если его пошарили или у Item `Access type` `Use` (виден в списках) либо `View` (открывается на чтение); остальные источники доступа — в разделе «Кто видит Content Type и Content Item». Новый Item создаётся `Private`.
 - **Чтобы лэнд показал контент под конкретный Destination — предзаполните Destination через `Fill Fields` ДО шага Landing.** На лэнде нельзя «заранее» знать Destination без записи в поле визита.
 
 ## Куда углубиться: связанные материалы по Content Library

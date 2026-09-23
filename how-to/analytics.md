@@ -4,9 +4,9 @@ title: Analytics / Reports (How-to)
 description: "Highlight Row, тоггл Attribute by events time (атрибуция по времени события), Colorize Static, древовидный отчёт через Groupers (полный каталог, поиск и избранное в каталоге, позиционные серии Landing 1..3 и что значит позиция #N, роль-групперы LP: <Тип> — ленд в роли типа на любой позиции воронки, пометка высокой кардинальности, футер funnel-разрезов), кнопка уровня атрибуции Meta Engine (Campaign / Adset / Ad) в тулбаре, Cohorts / Comparative, Tracker data-секции, экспорт таблицы в CSV (в файл идут видимые колонки, пары Group #N UUID/Name, где есть кнопка, право на выгрузку, Meta-метрики в файле всегда на уровне Campaign), Roll Up по полям антифрода; группировки рассылок — позиционные RMK-категории трекера vs агрегированные группировки раздела Marketing (категория Remarketing, включая разбивку Templates), на каких страницах раздела есть колонки метрик, почему даты отправок выходят за период и почему аналитики до текста пуша нет."
 doc_type: how-to
 builds: [erp, mtk]
-related: [glossary, meta-ads, ui-common, meta-spend-allocation, user-fields, visit-lifecycle, landings, metric, visit, marketing-flow, remarketing-campaigns, custom-fields, limits, events-exporter, permissions-model, visit-field, campaigns, debug-with-logs, conversion-model, conversion-ai-testing, live-pulse, session-analytics]
+related: [glossary, meta-ads, ui-common, meta-spend-allocation, user-fields, visit-lifecycle, landings, metric, visit, marketing-flow, remarketing-campaigns, custom-fields, architecture, limits, events-exporter, permissions-model, visit-field, campaigns, debug-with-logs, conversion-model, conversion-ai-testing, live-pulse, session-analytics]
 language: ru
-updated: 2026-09-11
+updated: 2026-09-23
 ---
 
 # Analytics / Reports (How-to)
@@ -118,7 +118,7 @@ updated: 2026-09-11
 | **Device** | Brand Name, Device Name, Model (`Device Name` бьёт метрики по device-type: `smartphone` / `tablet` / `desktop` и др.) |
 | **OS** | OS Combined, OS Name, OS Platform, OS Version |
 | **Time** | Day, Hour, Month, Week, Year, Day Part, Week Part |
-| **Browser** | Browser Language, Initial Domain, Initial Path |
+| **Browser** | Browser Language, Initial Domain, Initial Path, Browser Window Height, Browser Window Width |
 | **Other** | Screen Dimensions, Agent Version, Trash Reason, ASN Organization, Visit UUID, Ip Address, User Agent |
 
 Ниже категорий трекера идут категории полей тенанта, за ними — категории `RMK ...` по рассылкам, а при подключённых рекламных интеграциях `Facebook`, `Google` и **вторая секция с подписью `Time`**: в ней время рекламного инсайта Meta и Google (`Day` / `Hour` / `Month` / `Year`), а не время визита. Время визита — в верхней `Time`. Замыкает список категория `Other`.
@@ -163,7 +163,7 @@ updated: 2026-09-11
 
 ### Роль-групперы `LP: <Тип>` — ленд в роли типа на любой позиции воронки
 
-Роль-группер отвечает на вопрос «какой ленд играл роль типа T (`Offer`, `Preland`, …) в визите, на какой бы позиции воронки он ни стоял». Строка группы — **ленд**, а не тип: тип здесь только отбор. Частые формулировки: «перформанс ленда в любой позиции», «где ленд участвовал», «ленд в роли оффера», «группировка по типу ленда», «разбивка по офферам без позиции». Групперов по одному на каждый тип лендов тенанта с включённым тоглом `Generate events` (у дефолтного `White` он выключен — строки `LP: White` в каталоге нет); подпись — `LP: <имя типа>`, категория `Funnel`. Если визит прошёл несколько лендов одного типа, в строку попадает **первый** из них — один визит даёт максимум одну строку на роль, строки не пересекаются. Визиты, в которых ленда этой роли не было, в разбивку не входят — ни строкой, ни в футер. Разбивка по типу как по значению остаётся позиционной — `LP Type #1…#3`; роль-групперов по типам рекламодателей (`Advertiser`) нет. Как тип задаёт роль ленда — [how-to/landings.md](landings.md).
+Роль-группер отвечает на вопрос «какой ленд играл роль типа T (`Offer`, `Preland`, …) в визите, на какой бы позиции воронки он ни стоял». Строка группы — **ленд**, а не тип: тип здесь только отбор. Частые формулировки: «перформанс ленда в любой позиции», «где ленд участвовал», «ленд в роли оффера», «группировка по типу ленда», «разбивка по офферам без позиции». Групперов по одному на каждый тип лендов тенанта с включённым тоглом `Generate events` (у типа `White` из шаблона тенанта он выключен во всех семи шаблонах — строки `LP: White` в каталоге нет; у остальных засеянных типов — `Offer`, `Preland` везде, `Preland w/ Form` в Finance / Nutra, `Thank-You Page` в Finance / Nutra / Sweeps, `PWA` в iGaming — включён); подпись — `LP: <имя типа>`, категория `Funnel`. Если визит прошёл несколько лендов одного типа, в строку попадает **первый** из них — один визит даёт максимум одну строку на роль, строки не пересекаются. Визиты, в которых ленда этой роли не было, в разбивку не входят — ни строкой, ни в футер. Разбивка по типу как по значению остаётся позиционной — `LP Type #1…#3`; роль-групперов по типам рекламодателей (`Advertiser`) нет. Как тип задаёт роль ленда — [how-to/landings.md](landings.md).
 
 ### Где роль-группер в каталоге — пикер серии `Landing`, чип `Landing: <тип>`
 
@@ -179,7 +179,9 @@ updated: 2026-09-11
 
 ### Футер на разбивке по лендам / `Destination` меньше, чем на `Campaigns` — считает только дошедших
 
-На funnel-разрезах — позиционные `Landing` / `LP Type` / `Destination` / `Advertiser`, роль-групперы `LP: <Тип>`, позиционные `RMK ...` — в разбивку и в футер входят только визиты, дошедшие до этой точки воронки; визиты без ленда или Destination на этой позиции (корзина `Empty`) не показываются ни строкой, ни в итоге. Поэтому футер `Visits` и конверсий на `Destination #1` меньше, чем на `Campaigns` за тот же период: разница — визиты, до Destination не дошедшие. Сумма строк при этом сходится с футером. Частые формулировки: «футер не сходится с суммой колонки», «итог меньше, чем на кампаниях», «в разбивке по дестинейшнам визитов меньше». На обычных разрезах (кампания, источник, страна) пустое значение остаётся строкой `Empty` и входит в итог. Сходимость сумм между разрезами и внутри раскрытых уровней — [mechanics/meta-spend-allocation.md](../mechanics/meta-spend-allocation.md).
+На funnel-разрезах — позиционные `Landing` / `LP Type` / `Destination` / `Advertiser`, роль-групперы `LP: <Тип>`, позиционные `RMK ...` — в разбивку и в футер входят только визиты, дошедшие до этой точки воронки; визиты без ленда или Destination на этой позиции (корзина `Empty`) не показываются ни строкой, ни в итоге. Поэтому футер `Visits` и конверсий на `Destination #1` меньше, чем на `Campaigns` за тот же период: разница — визиты, до Destination не дошедшие. Сумма строк при этом сходится с футером. Так же по умолчанию ведут себя групперы по полям тенанта (например `Offer State`, `PWA State`): визиты без значения поля строкой `Empty` не показываются.
+
+Вернуть строку `Empty` можно тумблером **`Show empty fields`** в аналитическом фильтре таблицы (тултип «Show the Empty row and count visits without the field in totals and Meta spend share»). По умолчанию он выключен. Частые формулировки: «футер не сходится с суммой колонки», «итог меньше, чем на кампаниях», «в разбивке по дестинейшнам визитов меньше». На обычных разрезах (кампания, источник, страна) пустое значение остаётся строкой `Empty` и входит в итог. Сходимость сумм между разрезами и внутри раскрытых уровней — [mechanics/meta-spend-allocation.md](../mechanics/meta-spend-allocation.md).
 
 ### Групперы по рассылкам — категории `RMK ...` в каталоге
 
@@ -227,9 +229,13 @@ updated: 2026-09-11
 
 ### Почему каталог групперов у меня другой (динамический per-tenant)
 
-Каталог групперов **динамический и per-tenant**. Таблица выше — **системные** групперы; плюс туда попадают **кастомные поля визита** из `Settings → Fields`, у которых в `Edit Field → **Availability as grouper**` выбрано **`Analytics`** (группер в Roll Up) и/или **`Tables`** (группер в Tracker-таблицах). Поле встаёт группером под категорией из своего атрибута `Group` (пустой `Group` → категория `Fields`), подписью группера служит имя поля. При подключённых рекламных интеграциях в каталог добавляются категории `Facebook` / `Google`. Поэтому у разных тенантов список разный — напр. кастомные поля под конкретный источник или интеграцию (`Quora Campaign ID`, `AdForm Order ID`). Категории полей тенанта идут в списке следом за `Fields` и с её же иконкой; ничего не сворачивается и не прячется за счётчиком — весь список листается целиком, а быстрее найти поле через поиск по имени.
+Каталог групперов **динамический и per-tenant**. Таблица выше — **системные** групперы; плюс туда попадают **кастомные поля визита** из `Settings → Fields`, у которых в `Edit Field → **Availability as grouper**` выбрано **`Analytics`** (группер в Roll Up) и/или **`Tables`** (группер в Tracker-таблицах). Поле встаёт группером под категорией из своего атрибута `Group` (пустой `Group` → категория `Fields`), подписью группера служит имя поля. При подключённых рекламных интеграциях в каталог добавляются категории `Facebook` / `Google`. Поэтому у разных тенантов список разный: стартовый набор категорий полей приезжает из шаблона тенанта (следующая секция), а дальше добавляются свои поля под конкретный источник или интеграцию. Категории полей тенанта идут в списке следом за `Fields` и с её же иконкой; ничего не сворачивается и не прячется за счётчиком — весь список листается целиком, а быстрее найти поле через поиск по имени.
 
 *(Не путать: экшен `Make analytic` по полю — это **отдельная колонка для скорости** разбивок, а не вкл/выкл группера.)* См. [how-to/custom-fields.md](custom-fields.md).
+
+### Какие категории полей-групперов приходят из шаблона тенанта
+
+Категории полей в каталоге у нового тенанта — из полей шаблона тенанта, и состав зависит от вертикали ([context/architecture.md](../context/architecture.md)). Во всех семи шаблонах с доступностью `Analytics` и `Tables` засеяны `LP Split Content` (`LP Header`…) и `Google` (`Google Keyword`…); `Tracking` (`Buyer UTM`, `Creative`) и почти все поля `Facebook` (`FB Ad Name`…) — только `Tables`, то есть видны группером в Tracker-таблицах, но не в Roll Up; `Filter` (`Fraud Score`, `Triggered Rules`) есть только в шаблонах Finance / Nutra / Sweeps — в iGaming этих полей нет. По вертикалям добавляются свои группы: `Form` (Nutra, Sweeps), `PWA` (iGaming), `Leads`. Категории `Facebook` / `Google` собираются из полей и без подключённой интеграции — интеграция лишь добавляет в них свои разрезы.
 
 ### Поиск в Roll Up — какую сущность ищет строка поиска
 
@@ -292,7 +298,7 @@ updated: 2026-09-11
 
 ### На каких таблицах есть кнопка `Export as CSV`
 
-Выгрузка в CSV поддерживается не каждой таблицей. Кнопка есть в древовидных отчётах — `Roll Up report` (в MTK-билде тот же отчёт открывается табом `Reports`) и Tracker-секция `Other` — а также в `Tracker → Campaigns` (только ERP), в `Marketing → Campaigns` (список remarketing-кампаний, только ERP — [how-to/remarketing-campaigns.md](remarketing-campaigns.md)) и в `Conversions`, причём конверсии выгружаются и в ERP, и в MTK.
+Выгрузка в CSV поддерживается не каждой таблицей. Кнопка есть в древовидных отчётах — `Roll Up report` (в MTK-билде тот же отчёт открывается табом `Reports`) и Tracker-секция `Other` — а также в `Tracker → Campaigns` (только ERP), в `Marketing → Campaigns` (список remarketing-кампаний; в MTK та же таблица — страница `Campaigns` вкладки `PWA` платного модуля `PWA + Push` — [how-to/remarketing-campaigns.md](remarketing-campaigns.md)) и в `Conversions`, причём конверсии выгружаются и в ERP, и в MTK.
 
 На таблице визитов (`Tracker → Visits`) выгрузки в CSV нет вовсе — это частый вопрос. Нет её и на остальных Tracker-секциях (`Countries`, `Days`, `Devices`, `OS`, `Browsers`, `Day Party`), на остальных страницах раздела `Marketing` (`Flows`, `Template distributions`, `Messages`, `Message templates`, `Sender providers`, `Other`) и на таблицах настроек. Запрос на экспорт такой таблицы отбивается кодом `422` и текстом `CSV export is not available for this table`. Массовая выгрузка сырых визитов и конверсий делается другим инструментом — [how-to/events-exporter.md](events-exporter.md).
 
@@ -341,7 +347,7 @@ Meta-метрики (`Meta Spend`, Impressions и т.п.) внутри несу�
 
 ## Roll Up по полям антифрода
 
-Поля антифрода — обычные поля визита: `fraud_score` и `triggered_rules` встают в отчёт групперами `Fraud Score` и `Trigger Rules`, как любое поле с включённым `Availability as grouper` в `Settings → Fields` ([how-to/custom-fields.md](custom-fields.md)). Дерево раскрывается синими стрелками `►` или разворачивается целиком кнопкой `Unwrap tree view`.
+Поля антифрода — обычные поля визита: `fraud_score` и `triggered_rules` встают в отчёт групперами `Fraud Score` и `Triggered Rules` (категория `Filter`), как любое поле с включённым `Availability as grouper` в `Settings → Fields` ([how-to/custom-fields.md](custom-fields.md)). В шаблонах Finance / Nutra / Sweeps (ERP и MTK) оба поля засеяны с доступностью `Analytics` и `Tables`, включать их отдельно не нужно; в шаблонах iGaming этих полей нет, как и записи `AIO Antifraud`. Дерево раскрывается синими стрелками `►` или разворачивается целиком кнопкой `Unwrap tree view`.
 
 ## Смежные темы
 
@@ -372,8 +378,8 @@ Meta-метрики (`Meta Spend`, Impressions и т.п.) внутри несу�
 
 #### Три селектора когорты (слева в тулбаре)
 
-- **`Size`** — размерная метрика когорты (день-0, база строки). Список = любые метрики тенанта; дефолт — `Visits` / `LP Visits`, если есть.
-- **`Target`** — целевая (событийная) метрика, чью динамику по периодам смотрим. Список сужен бэком до событийных метрик; дефолт — первая доступная событийная метрика (`Revenue` / `Leads` / `Registrations` / `Installs` и т.п.).
+- **`Size`** — размерная метрика когорты (день-0, база строки). Список = любые метрики тенанта; дефолт подбирается по точному имени — `Visits`, иначе `LP Visits`, иначе первая в списке (`Visits` есть во всех семи шаблонах тенанта).
+- **`Target`** — целевая (событийная) метрика, чью динамику по периодам смотрим. Список сужен бэком до событийных метрик; дефолт — тоже по точному имени в порядке `Revenue` → счётчик конверсий целевого действия вертикали → `Leads` → `Registrations` → `Installs`, иначе первая в списке. Денежная метрика шаблона называется `Revenue $`, а не `Revenue`, поэтому с засеянным набором дефолт — счётчик целевого действия (Finance, iGaming) или `Leads` (Nutra, Sweeps).
 - **`Unit`** — шаг периода: `day` / `week` / `month`.
 
 Каждый селектор — с встроенным поиском; смена любого перезапрашивает данные.
@@ -414,7 +420,7 @@ Metric-фильтры по доступным полям (та же панель
 
 ### Settings → Metrics — кастомные метрики (что можно считать в отчётах)
 
-Метрики (числовые показатели в колонках Roll Up / Cohorts / Comparative) — **настраиваемые** в `Settings → Metrics → + Metric`. Четыре типа: `Conversions count` (число конверсий), `Remarketing count` (события рассылок — `Sent` / `Failed` / `Delivered` / `Opened` по выбранным каналам), `Computable metric` (формула), `Data feed metric` (фид событий; денежные суммы = источник `Conversions By Type Revenue`/`Payout`) — концепт, поля форм и `Flag`-enum в [models/metric.md](../models/metric.md). Колонки списка метрик: `Metric`, `Definition` (из чего метрика собрана — формула или источник с аргументами), `Access Type`, `Owner`, `Main For`, `Visible`, `Created`; остальные включаются в настройке колонок. Что показывает `Definition` и чем отличаются два вида списка (`Groups` / `Order`) — [models/metric.md](../models/metric.md). Набор доступных метрик в аналитике **per-tenant** — системные + заведённые кастомные.
+Метрики (числовые показатели в колонках Roll Up / Cohorts / Comparative) — **настраиваемые** в `Settings → Metrics → + Metric`. Четыре типа: `Conversions count` (число конверсий), `Remarketing count` (события рассылок — `Sent` / `Failed` / `Delivered` / `Opened` по выбранным каналам), `Computable metric` (формула), `Data feed metric` (фид событий; денежные суммы = источник `Conversions By Type Revenue`/`Payout`) — концепт, поля форм и `Flag`-enum в [models/metric.md](../models/metric.md). Колонки списка метрик: `Metric`, `Definition` (из чего метрика собрана — формула или источник с аргументами), `Access Type`, `Owner`, `Visible`, `Created`; остальные включаются в настройке колонок. Что показывает `Definition` и чем отличаются два вида списка (`Groups` / `Order`) — [models/metric.md](../models/metric.md). Набор доступных метрик в аналитике **per-tenant**: готового системного набора метрик-колонок у AIO нет — стартовые метрики приезжают из шаблона тенанта: общие для всех вертикалей (`Visits`, `Trash Visits`, `Revenue $`, `Costs $`, `Profit $`, `ROI %`, `CPM $`, `RPM $`, `Meta Spend`…) плюс воронка своей вертикали (`Leads` и `CR %` у Finance, Nutra и Sweeps; `Registrations` у Sweeps и iGaming; `Installs` у iGaming), а дальше добавляются заведённые вручную ([models/metric.md](../models/metric.md), [context/architecture.md](../context/architecture.md)).
 
 ## Tracker data-секции (Countries / Day Party / Devices / Days / OS / Browsers / Other)
 

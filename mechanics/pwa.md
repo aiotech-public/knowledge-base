@@ -1,12 +1,12 @@
 ---
 id: mechanics-pwa
 title: PWA в AIO
-description: Что такое PWA в AIO — определение, AIO внутренние vs 3rd party, PWA Builder и раздел Content → PWA (в MTK его нет), PWA Skin как заготовка витрины из библиотеки AIO, Service Worker, конверсии Install / Open PWA / Push Subscribe, почему инсталлом считается только настоящая установка и инсталлов закономерно меньше, чем регистраций, как визит с PWA попадает в аудиторию remarketing-кампании, 3rd Party PWA Link Generator.
+description: Что такое PWA в AIO — определение, AIO внутренние vs 3rd party, PWA Builder и раздел Content → PWA (в MTK — страница PWA платного модуля PWA + Push), PWA Skin как заготовка витрины из библиотеки AIO, Service Worker, конверсии Install / Open PWA / Push Subscribe, почему инсталлом считается только настоящая установка и инсталлов закономерно меньше, чем регистраций, как визит с PWA попадает в аудиторию remarketing-кампании, 3rd Party PWA Link Generator.
 doc_type: mechanic
 builds: [erp, mtk]
-related: [how-to-pwa, metric, conversion-model, remarketing-campaigns, sdk, notifications-flow, visit-lifecycle, destinations, glossary]
+related: [custom-pwa, how-to-pwa, metric, conversion-model, remarketing-campaigns, sdk, notifications-flow, visit-lifecycle, destinations, glossary]
 language: ru
-updated: 2026-09-11
+updated: 2026-09-23
 ---
 
 # PWA в AIO
@@ -30,20 +30,20 @@ PWA технически работает одинаково у всех ком�
 | | AIO внутренние PWA | 3rd party PWA |
 |---|---|---|
 | Где хостится | В тенанте AIO | Внешний сервис |
-| Создаётся через | `Content → PWA` → кнопка `+ PWA` (PWA Builder) | Не создаётся в AIO |
+| Создаётся через | `Content → PWA` → кнопка `+ PWA` (PWA Builder или `Custom PWA`) | Не создаётся в AIO |
 | Роль AIO | Полный контроль | Трекер: трекает Install в момент возврата визита |
 | Можно ли сплитовать | Да | Да |
 | Можно ли смешивать в одном Flow | Да | Да |
 | Content Splits на элементах | Да | Нет |
 | Запись сессий | Да | Нет |
 
-## Как создать PWA — два пути: PWA Builder и макрос
+## Как создать PWA — PWA Builder, Custom PWA или макрос
 
 ### Создание через PWA Builder
 
-PWA живёт в **своём разделе `Content → PWA`** — отдельном пункте меню рядом с `Content → Landings`. Кнопка **`+ PWA`** сразу открывает встроенный **PWA Builder**, правка готовой PWA — экшен `Manage PWA` в её строке. В `Content → Landings` созданная PWA не показывается: та страница показывает только лэнды режима `Editor`. Технически PWA всё равно остаётся лэндом — во флоу она выбирается на шаге `Content` наравне с обычными лэндами. Процедура — [how-to/pwa.md](../how-to/pwa.md).
+PWA живёт в **своём разделе `Content → PWA`** — отдельном пункте меню рядом с `Content → Landings`. Кнопка **`+ PWA`** предлагает выбрать, как собирать: `PWA landing` — встроенный **PWA Builder**, `Custom PWA` — свой лэнд из ZIP внутри готового PWA-шелла ([how-to/custom-pwa.md](../how-to/custom-pwa.md)); правка готовой PWA — экшен `Manage PWA` (у `Custom PWA` — `Manage Custom PWA`) в её строке. В `Content → Landings` созданная PWA не показывается: та страница показывает только лэнды режима `Editor`. Технически PWA всё равно остаётся лэндом — во флоу она выбирается на шаге `Content` наравне с обычными лэндами. Процедура — [how-to/pwa.md](../how-to/pwa.md).
 
-Раздел есть только в ERP-билде: в MTK страницы PWA нет, а таблица лэндов там жёстко ограничена режимом `Editor` — PWA-строки в её выборку не попадают вовсе, поэтому открыть или отредактировать PWA из MTK нельзя.
+В ERP раздел входит в базовый набор. В MTK PWA доступны только с платным модулем `PWA + Push`: страница `PWA` внутри одноимённой вкладки верхнего меню (`/app/mtk/pwa/landers`) — та же кнопка `+ PWA` с выбором PWA Builder или `Custom PWA`, правка по клику на строку. Без модуля в MTK страницы PWA нет, а таблица лэндов там жёстко ограничена режимом `Editor` — PWA-строки в её выборку не попадают вовсе, поэтому открыть или отредактировать PWA из MTK нельзя. Как включить модуль — *Билды, тарифы, триал и статусы тенанта*, что ещё он открывает — *Как устроен MTK-вид AIO: навигация, пресеты из шаблона и методы под типовые задачи*.
 
 ### Создание через PWA-макрос (превращение лэнда в PWA)
 
@@ -56,7 +56,7 @@ PWA живёт в **своём разделе `Content → PWA`** — отдел
 
 ## Какие Conversion Types фиксирует PWA — Install, Open PWA, Push Subscribe
 
-Сама PWA (через SDK) порождает **три** конверсии — `Install`, `Open PWA` и `Push Subscribe`:
+Сама PWA (через SDK) порождает **три** конверсии — `Install`, `Open PWA` и `Push Subscribe`. Какой `Conversion Type` спавнится на каждое событие, для PWA из Builder-а и `Custom PWA` задаётся на типе лэнда (`Lander Type` с `Is PWA?`), для PWA-макроса — в его конфиге ([how-to/pwa.md](../how-to/pwa.md)):
 
 | Conversion Type | Когда фиксируется (AIO внутренний PWA) | Когда фиксируется (3rd party PWA) |
 |---|---|---|
@@ -66,7 +66,7 @@ PWA живёт в **своём разделе `Content → PWA`** — отдел
 
 Клики по кнопке установки и конверсии `Install` — разные числа: сам клик по кнопке конверсию не создаёт, на Android + Chrome её даёт только подтверждение браузерного диалога установки. Настройка push внутри PWA — [how-to/pwa.md](../how-to/pwa.md).
 
-Метрика `Open PWA / Install` — процент реально открывших PWA после установки.
+Процент реально открывших PWA после установки считает метрика тенанта: в iGaming-шаблоне (ERP и MTK) она заведена из коробки как `PWA Open Rate %` = `PWA Opens / Installs` — рядом с `Install Rate %` = `Installs / Visits` и `Push Subscription Rate %` = `Push Subscriptions / PWA Opens` (счётчики `Installs`, `PWA Opens`, `Push Subscriptions` — метрики типа `Conversions By Type Count` по этим трём типам). В шаблонах других вертикалей PWA-метрик нет — их собирают своей `Computable metric` ([models/metric.md](../models/metric.md)).
 
 ### Чем размечен уход визита с PWA-лэнда на оффер
 
@@ -80,11 +80,7 @@ PWA живёт в **своём разделе `Content → PWA`** — отдел
 
 Отсюда нормальная картина «инсталлов 3, регистраций 10»: регистрация приходит постбэком от рекламодателя за визит, который до оффера дошёл любым путём, а `Install` — только за того, кто реально поставил приложение. Потерей данных это не является — счёт установок намеренно строгий.
 
-Готовой системной метрики «install rate» в AIO нет: процент установок собирают собственной метрикой тенанта поверх счётчиков ([models/metric.md](../models/metric.md)).
-
-### Почему `Redep` — не конверсия PWA
-
-**`Redep` PWA не порождает.** Это повторная конверсия (повторное касание того же пользователя после первой оплаченной конверсии), приходит **постбэком от рекламодателя** и существует в воронке независимо от PWA. Заводится как обычный Conversion Type и трекается через постбэк-трекер (см. [models/conversion-model.md](../models/conversion-model.md)). Связанная метрика — `Redep Sum` (см. «Что такое Redep Sum и зачем трекается» ниже).
+Встроенной (системной) метрики «install rate» в AIO нет — это метрика тенанта поверх счётчиков: в iGaming-шаблоне она уже заведена (`Install Rate %` = `Installs / Visits`), в шаблонах других вертикалей её собирают своей `Computable metric` ([models/metric.md](../models/metric.md)).
 
 ### Подписочная модель — Install / Trial / Subscription
 
@@ -92,13 +88,11 @@ PWA живёт в **своём разделе `Content → PWA`** — отдел
 
 ## Как визит с PWA попадает в рассылку ремаркетинга
 
-Через привязку remarketing-кампании к `Landing Type` этой PWA: визит, прошедший PWA, помечается кампанией **на проходе** и дальше получает её рассылку. Это штатный способ добивать установивших пушами.
+Через привязку remarketing-кампании к `Landing Type` этой PWA: визит, прошедший PWA, помечается кампанией **на проходе** и дальше получает её рассылку. Это штатный способ добивать установивших пушами — и в ERP, и в MTK: сбор аудитории серверный.
 
-Гейта «подписан на push» тут нет — в аудиторию попадает любой нетрэшевый визит, прошедший объект с привязкой; дойдёт ли до него сам push, решается уже на отправке. Пометка накопительная: колонка визита `RMK Audience` показывает историю попаданий, а не текущий состав аудитории. Канон рассылки — [how-to/remarketing-campaigns.md](../how-to/remarketing-campaigns.md); где у PWA ставится привязка — [how-to/pwa.md](../how-to/pwa.md).
+Гейта «подписан на push» тут нет — в аудиторию попадает любой нетрэшевый визит, прошедший объект с привязкой; дойдёт ли до него сам push, решается уже на отправке. Пометка накопительная: колонка визита `RMK Audience` показывает историю попаданий, а не текущий состав аудитории. Как устроена рассылка — [how-to/remarketing-campaigns.md](../how-to/remarketing-campaigns.md); где у PWA ставится привязка — [how-to/pwa.md](../how-to/pwa.md).
 
-## Что такое Redep Sum и зачем трекается
-
-`Redep Sum` — метрика-сумма всех повторных конверсий (`Redep`), к механике PWA отношения не имеет. Считается **отдельно от Revenue** — механика исключения источника данных описана в [models/metric.md](../models/metric.md).
+В MTK блок привязки на сущностях трафика не показывается, а визит с PWA попадает в аудиторию привязкой remarketing-кампаний к типу лендинга `PWA`: новому тенанту вертикали iGaming она приходит из шаблона вместе с готовыми кампаниями (в шаблонах MTK Finance / Sweeps набора рассылки и типа `PWA` нет), тенанту без набора или созданному раньше, чем шаблон стал включать рассылку, её ставит команда AIO ([how-to/remarketing-campaigns.md](../how-to/remarketing-campaigns.md)).
 
 ## Как устроен Third Party PWA Link Generator — зачем нужен и что генерирует
 
@@ -107,23 +101,34 @@ PWA живёт в **своём разделе `Content → PWA`** — отдел
 - Ссылки **без идентификаторов кампании/юзера**.
 - Их цель — только вернуть визит в AIO в тот же флоу.
 - Возврат визита в нужный Flow обеспечивает параметр `hess` в PWA-ссылке (включён в ссылку, которую генерирует `3rd Party PWA Link Generator`).
-- Click ID каждого PWA-сервиса хранится в поле визита `{{aio.visit.fields.pwa_click_id}}` — этот плейсхолдер подставляется в постбэк-URL трекера для PWA-конверсий.
+- Click ID каждого PWA-сервиса хранится в поле визита `{{aio.visit.fields.pwa_click_id}}` — этот плейсхолдер подставляется в постбэк-URL трекера для PWA-конверсий. В iGaming-шаблоне так собран трекер-пример `Example - 3rd Party PWA Postback` (тип `HTTP Get`, на конверсию `Registration`, приезжает выключенным): URL вида `https://some-3rd-party?…={{aio.visit.fields.pwa_click_id}}` (адрес-заглушка под подстановку реального постбэка партнёрки).
 
-### Как запустить 3rd party PWA — Flow-пресеты и две ссылки
+### Что уже заведено в источнике `3rd Party PWA Link Generator` — ссылка на каждую партнёрку
 
-В тенанте уже есть два преднастроенных Flow под 3rd party PWA, выбираются на создании кампании в `Select Flow`:
+Источник `3rd Party PWA Link Generator` есть из коробки только в iGaming-шаблоне (ERP и MTK); в шаблонах других вертикалей его нет. Внутри — не одна ссылка, а **по ссылке на партнёрскую PWA-платформу** (`<Партнёрка> Link inside PWA`): PWA.Group, SkakApp, AppsHeroes, WWApps, iRent Market, ZMApps, PWA.Partners, LiteApp, TSL Apps. Каждая ссылка мапит макросы партнёрки на два параметра AIO — `hess` (служебный параметр возврата визита, не поле) и поле `pwa_click_id`; у AppsHeroes дополнительно `app_id`. У ZMApps в ссылке только `pwa_click_id` — параметр `hess` эта партнёрка прокидывает сама. Тултип каждой ссылки: `DO NOT use Encrypted. Insert inside PWA as tracking link` — партнёрке отдаётся обычный URL с видимыми плейсхолдерами, а не короткая ссылка.
 
-- **`PWA / OneLink Flow Default`** — дефолтный флоу `AIO → PWA → рекламодатель`.
-- **`PWA / OneLink w/ Landing`** — то же, но с прилэндом **до** рекламодателя.
+Поля под это — группа `PWA` того же шаблона: `pwa_click_id` («Unique ID from PWA Service»), `app_id` («Unique ID of Application»), `free_param_1…4`. В тенанте другой вертикали источник и поле `pwa_click_id` заводятся вручную.
+
+### Какие флоу под PWA заведены в тенанте — три флоу iGaming-шаблона
+
+Готовые PWA-флоу есть только в iGaming-шаблоне (ERP и MTK) — выбираются на создании кампании в `Select Flow`, у каждого есть кампания-пример с меткой `AIO EXAMPLE`. В шаблонах Finance / Nutra / Sweeps PWA-флоу нет.
+
+- **`PWA / OneLink`** — шаг `PWA / AIO PWA / Onelink` → `Offer`. Кампания-пример `Default Flow - PWA Campaign Example`: на PWA-шаге в одном сплите стоят лэнд `AIO PWA Example w/ Splits` и дестинейшены партнёрских PWA — `Example AppsHeroes PWA`, `Example ZMApps PWA`.
+- **`PWA / OneLink w/ Landing`** — то же, но после PWA-шага стоят `Spawn Install` (шаг `Spawn Conversion`) и прилэнд `Landing` **до** оффера. Кампания-пример `PWA w/ Landing Flow - Campaign Example`.
+- **`Advanced - PWA / OneLink`** — разводка по операционной системе: Android и iOS получают PWA, остальной трафик уходит на `Fallback Offer`. Кампания-пример `Advanced Flow - Campaign Example`; разбор веток — [how-to/pwa.md](../how-to/pwa.md).
+
+### Как запустить 3rd party PWA — две ссылки
 
 Для запуска генерируются **две** ссылки (`Link Generator`):
 
-- **PWA-ссылка** — Source = `3rd Party PWA Link Generator`; вставляется внутрь PWA-сервиса как его offer-ссылка.
-- **Tracking-ссылка** — под реальный Source (для FB — преднастроенный `FB w/ CAPI – DEFAULT`, уже включён в тенант); вставляется в рекламный источник.
+- **PWA-ссылка** — Source = `3rd Party PWA Link Generator` (в iGaming-шаблоне он заведён со ссылкой под каждую партнёрку — см. «Что уже заведено в источнике `3rd Party PWA Link Generator`»); вставляется внутрь PWA-сервиса как его offer-ссылка.
+- **Tracking-ссылка** — под реальный Source (для FB — `FB w/ CAPI`, этот источник есть во всех шаблонах тенанта); вставляется в рекламный источник.
 
 ### Как трекается Install для 3rd party PWA — Spawn Conversion, не постбэк
 
-Install-конверсия для 3rd party PWA **не приходит постбэком**. Она спавнится внутри флоу, когда визит редиректится с PWA-сервиса на offer-Destination. Настраивается шагом **`Spawn Conversion`** во Flow (`Tracker → Flows`).
+Install-конверсия для 3rd party PWA **не приходит постбэком**. Она спавнится внутри флоу, когда визит редиректится с PWA-сервиса на offer-Destination. В iGaming-шаблоне так собран `PWA / OneLink w/ Landing`: шаг `Spawn Install` (тип `Spawn Conversion`, конверсия `Install`) стоит сразу после PWA-шага. В `PWA / OneLink` и `Advanced - PWA / OneLink` шага спавна нет и спавн конверсии на шаге `Offer` не задан — там `Install` создаёт только собственная AIO PWA через SDK, а визит, вернувшийся из партнёрской PWA, инсталлом не засчитывается, пока не добавлен шаг `Spawn Conversion` или спавн `Install` на шаге `Offer` ([how-to/pwa.md](../how-to/pwa.md)).
+
+Настраивается шагом **`Spawn Conversion`** во Flow (`Tracker → Flows`).
 
 ### Какие параметры передаёт AIO в 3rd party PWA — только Sub (Visit Session)
 
@@ -141,7 +146,7 @@ Install-конверсия для 3rd party PWA **не приходит пост
 
 `Push Subscribe` на повторном открытии не порождается: SDK видит, что визит уже подписан, и не повторяет ни подписку, ни конверсию. Если разрешение на уведомления не выдано, подписки и конверсии нет вовсе — она может возникнуть позже, на том открытии, где визит наконец согласился.
 
-Повторный `Install` отсекается настройкой самого типа конверсии: в PWA-шаблоне у `Install` выставлен `Uniqueness Strategy = Single Conversion`, и вторая конверсия того же типа на визите не создаётся (механика — [models/conversion-model.md](../models/conversion-model.md)). Если тип заведён как `Multiple Infinity`, каждое открытие установленной PWA даёт новую конверсию `Install` — отсюда симптом «у одного визита несколько инсталлов». В сетевых логах лэнда install-запрос при открытии виден в любом случае (см. [reference/sdk.md](../reference/sdk.md)).
+Повторный `Install` отсекается настройкой самого типа конверсии: в iGaming-шаблоне (ERP и MTK) у `Install`, как и у `Open PWA` и `Push Subscribe`, выставлен `Uniqueness Strategy = Single Conversion`, и вторая конверсия того же типа на визите не создаётся (механика — [models/conversion-model.md](../models/conversion-model.md)). Если тип заведён как `Multiple Infinity`, каждое открытие установленной PWA даёт новую конверсию `Install` — отсюда симптом «у одного визита несколько инсталлов». В сетевых логах лэнда install-запрос при открытии виден в любом случае (см. [reference/sdk.md](../reference/sdk.md)).
 
 ## FB CAPI vs PWA — что предпочесть для качества лида
 
@@ -155,10 +160,12 @@ FB CAPI через AIO лучше пвашки; FBC/FBP потеря не кри
 
 Поля визита, в которые автоматически пишется выбранный вариант на Split-шаге:
 
-- **`PWA State`** — для шага PWA (записывается, какая PWA-шка показалась).
-- **`Offer State`** — для шага оффера (записывается, какой оффер показался).
+- **`PWA State`** (`pwa_state`) — для шага PWA: «PWA the visit went through - own AIO PWA or a 3rd-party one».
+- **`Offer State`** (`offer_state`) — для шага оффера: «Offer the visit reached, whatever destination position it holds».
 
-Используется для аналитики «какая PWA / какой оффер показались». Формат — `variant`. Включается через **Linked Field / Link to Field** на уровне Flow (любой вариант, выбранный на этом Split, пишется в указанное поле визита).
+Используется для аналитики «какая PWA / какой оффер показались». Формат — `Variant`, группа `Tracking`. Оба поля заведены в iGaming-шаблоне (ERP и MTK), и в его PWA-флоу привязка уже стоит: шаг `PWA / AIO PWA / Onelink` пишет в `PWA State`, шаг `Offer` — в `Offer State`; на них же построены пресеты отчётов `Campaign → PWA`, `Campaign → Offer` и `PWA → Geo → Offer`. В шаблонах других вертикалей этих полей нет.
+
+Включается через **Linked Field / Link to Field** на уровне Flow (любой вариант, выбранный на этом Split, пишется в указанное поле визита).
 
 ## Смежные темы
 

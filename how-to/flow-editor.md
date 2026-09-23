@@ -6,7 +6,7 @@ doc_type: how-to
 builds: [erp]
 related: [flow-model, campaign-defaults, placeholders, glossary, conversion-model, campaigns, distributions]
 language: ru
-updated: 2026-09-11
+updated: 2026-09-23
 ---
 
 # Flow Editor (How-to)

@@ -4,9 +4,9 @@ title: Custom Fields (How-to)
 description: Создание полей визита в Settings → Fields — шесть значений Type, атрибуты и тогглы карточки поля, папки по Type и Group (вид зафиксирован), состав колонок и экшенов, массовые действия по выделению (With selection), пачка полей под интеграцию обогащения, Geo Code как select.
 doc_type: how-to
 builds: [erp]
-related: [visit-lifecycle, glossary, user-fields, forms, source, visit-field, sdk, placeholders, landings, ui-common, flow-model, source-trackers, meta-spend-allocation, campaigns, analytics, permissions]
+related: [visit-lifecycle, glossary, user-fields, forms, architecture, source, visit-field, sdk, placeholders, landings, ui-common, flow-model, source-trackers, meta-spend-allocation, campaigns, analytics, permissions]
 language: ru
-updated: 2026-09-11
+updated: 2026-09-23
 ---
 
 # Custom Fields (How-to)
@@ -30,7 +30,7 @@ updated: 2026-09-11
 
 **Путь:** `Settings → Fields → +Field`.
 
-Часть полей появляется в тенанте без этой формы: если в коде источника есть блок `fields`, AIO при сохранении Source заводит недостающие поля сам, дедуплицируя по slug. Механика и её ограничение — [models/source.md](../models/source.md).
+Бо́льшая часть полей появляется в тенанте без этой формы. Базовый набор приходит с шаблоном тенанта при его создании, и состав зависит от вертикали шаблона ([context/architecture.md](../context/architecture.md)): параметры Facebook и Google (`fb_*`, `fbclid`, `gl_*`, `gclid`), трекинговые поля байера (`buyer_utm`, `creative`, `launcher`), поля LP-сплитов (`lp_header`, …); в Finance, Nutra и Sweeps — ещё поля лида (`first_name`, `last_name`, `email`, `phone`) и антифрода (`fraud_score`, `triggered_rules`), в iGaming вместо них — PWA-поля (`app_id`, `pwa_click_id`, `free_param_1…4`). Ещё часть заводит источник: если в коде источника есть блок `fields`, AIO при сохранении Source заводит недостающие поля сам, дедуплицируя по slug. Механика и её ограничение — [models/source.md](../models/source.md).
 
 ### Два режима создания — `Visit string field` vs `Create manually`
 
@@ -51,7 +51,7 @@ updated: 2026-09-11
 2. **Description** — опционально.
 3. **Group** — опционально. Категория/тег (напр. `Google`, `FB`, `Landings`), задаётся при создании, чтобы группировать поля для удобной навигации в таблицах и аналитике. Эта же категория = категория поля как группера (секция «Поле как группер» этого документа) и папка второго уровня на странице `Settings → Fields`.
 4. **Type** (`fieldTypes`) — **сущность-владелец поля**, она же определяет неймспейс адресации (значение в любом случае хранится на визите). Шесть значений: `Visit`, `Campaign`, `Source`, `Conversion`, `Landing`, `Destination`; для обычного поля визита — `Visit`. Откуда у каждого типа берётся дефолт и каким плейсхолдером поле читается — [models/visit-field.md](../models/visit-field.md); где значение вписывается в карточку сущности — [how-to/user-fields.md](user-fields.md).
-5. **Format** (`fieldFormats`) — отдельный select (не `Type`): хранение значения + дефолт + formatter + тип плейсхолдера. Значений ~20; что выбрать — секция «Форматы поля» этого документа. Задаётся только при создании: в `Edit Field` этого select нет.
+5. **Format** (`fieldFormats`) — отдельный select (не `Type`): хранение значения + дефолт + formatter + тип плейсхолдера. Значений ~20; что выбрать — секция «Форматы поля» этого документа. Задаётся при создании и меняется в `Edit Field`.
 6. **Data source** — select, который **ни на что не влияет**: выбрать значение можно, эффекта у выбора нет, для любого поля можно оставить `Agent Init`. Кто на самом деле штампует источник записи — [models/visit-field.md](../models/visit-field.md).
 
 ### Форматы поля (`Format`) — что выбрать
@@ -93,7 +93,7 @@ updated: 2026-09-11
 
 Значение всё равно живёт **на визите** и **может быть перезаписано для конкретного визита** — как любое поле визита, в том числе выбрав его целью в шаге `Fill Fields` во флоу ([models/flow-model.md](../models/flow-model.md)). Это не одно неизменяемое значение на всю кампанию. Концепт и разница Visit-vs-Campaign — [models/visit-field.md](../models/visit-field.md).
 
-Заводится поле по-прежнему здесь, в `Settings → Fields`, но в карточке кампании оно не появляется само: форма кампании показывает только поля, добавленные кнопкой `Add field` в секции `User fields`, плюс унаследованные от `Flow`. Как добавить поле в карточку и что при этом происходит со старыми кампаниями — [how-to/user-fields.md](user-fields.md).
+Заводится поле по-прежнему здесь, в `Settings → Fields`, но в карточке кампании оно не появляется само: форма кампании показывает только поля, добавленные кнопкой `Add field` в секции `User fields`, плюс унаследованные от `Flow`. В Finance- и iGaming-шаблонах с этим типом уже заведены свободные поля `campaign_field_1…3` (группа `Custom`) — заготовки под любое значение уровня кампании. Как добавить поле в карточку и что при этом происходит со старыми кампаниями — [how-to/user-fields.md](user-fields.md).
 
 ### Slug — буквальное совпадение
 
@@ -132,6 +132,8 @@ Slug используется в плейсхолдерах (`{{aio.visit.fields
 
 По умолчанию видны: `Field` (имя поля), `Slug`, `Description`, `Access type`, `Shares`, `Visible Macros` (= `Is Macro Visible`), `Visible`, `Registry`, `2FA Protected`.
 
+Колонка `Access type` показывает одно из трёх значений — `Private` (поле доступно только владельцу и тем, у кого доступ есть по шаре, по команде, через `Scopes` / `Editor Scopes` на поля или по роли Owner / Admin), `Use` (все видят поле в списках и селектах) или `View` (все ещё и открывают карточку поля на чтение). Править чужое поле `Access type` не даёт ни при каком значении; меняется он через `Change ownership`. Что даёт каждый уровень — [how-to/permissions.md](permissions.md).
+
 Скрыты по умолчанию и включаются в настройках таблицы: `UUID`, `Group`, `Format`, `Availability as grouper`, `Owner`, `Created`, `Updated`, `Archived`.
 
 Колонок `Data source`, `Pre Processor`, `Used For Costs` и `Analytics` в таблице нет — их убрали совсем. Сделано ли поле аналитическим, теперь видно не по колонке, а по составу экшенов правого клика: у такого поля вместо `Make analytic` предлагаются `Relink analytic` и `Remove analytic`.
@@ -148,17 +150,27 @@ Slug используется в плейсхолдерах (`{{aio.visit.fields
 
 Когда выделено **больше одного** поля, в меню появляется группа `With selection (N)`, где `N` — число выделенных. В ней четыре пункта: `Share also`, `Force share`, `Unshare` (все три под правом `settings.fields.share`) и `Mass change ownership` (право `settings.fields.share.ownership`). На одном поле группы нет — там работает обычный правый клик, где передача владения называется `Change ownership`.
 
-Выделение нигде не сохраняется: перезагрузили страницу — выделять придётся заново. Что именно делают `Share also` / `Force share` / `Unshare` — [how-to/permissions.md](permissions.md).
+Выделение нигде не сохраняется: перезагрузили страницу — выделять придётся заново.
+
+### Чем отличаются `Share also`, `Force share` и `Unshare` на выделенных полях
+
+**`Share also` добавляет доступ, `Force share` перезаписывает его, `Unshare` снимает.**
+
+- `Share also` — выдаёт выбранным людям и командам доступ к выделенным полям там, где его нет; существующую шару не понижает: роль может только вырасти, срок не меняется.
+- `Force share` — справа заранее стоят все, у кого есть шара хотя бы на одно из выделенных полей. Всем, кто остался справа, роль, `Can share further` и срок перезаписываются на выбранные сразу на всех выделенных полях — по умолчанию `Viewer`, без права раздавать и без срока, поэтому у кого был `Editor`, тот понизится. Убранные влево теряют доступ.
+- `Unshare` — в списке стоят все, у кого есть шара хотя бы на одно из выделенных полей; убранные из него теряют доступ ко всем выделенным полям.
+
+Все три применяются частично: поля, где действие вам недоступно (нет права раздавать, роль выше вашего уровня, чужая выдача), пропускаются; по итогу всплывает сообщение `Applied: <число>`, а если что-то пропущено — ещё `Skipped: <число>` с причинами. Как устроены роли шары и причины пропуска — [how-to/permissions.md](permissions.md).
 
 ### Что содержит `Edit Field`
 
-`Name`, `Group`, **`Availability as grouper`** (`Analytics` / `Tables`), `Available values`, **`Type`** (`fieldTypes`: сущность-владелец и неймспейс — `Visit` / `Campaign` / `Source` / `Conversion` / `Landing` / `Destination`, значение всегда на визите), тогглы (`Is 2FA protected` / `Is visible` / `Is registry` / `Is macros visible`) и `Description`.
+`Name`, `Group`, **`Availability as grouper`** (`Analytics` / `Tables`), `Available values`, **`Type`** (`fieldTypes`: сущность-владелец и неймспейс — `Visit` / `Campaign` / `Source` / `Conversion` / `Landing` / `Destination`, значение всегда на визите), **`Format`**, тогглы (`Is 2FA protected` / `Is visible` / `Is registry` / `Is macros visible`) и `Description`.
 
 ### Не нахожу `Pre-Processor` в карточке поля — куда он делся
 
 `Pre-Processor` и `Pre-Processor Settings` из карточки поля убраны: этих контролов нет ни в `Create manually`, ни в `Edit Field`, и колонки `Pre Processor` в таблице `Settings → Fields` тоже нет. Выбрать пре-процессор (`String`, `Taboola CPC`) из интерфейса больше нельзя.
 
-Рядом в карточке поля нет ещё трёх контролов: `Is Used For Cost` убран вовсе (секция «`Is Used For Cost`» этого документа), а `Format` и `Data source` задаются только при создании поля — в `Edit Field` их нет.
+`Is Used For Cost` из карточки поля убран вовсе (секция «`Is Used For Cost`» этого документа). `Data source` задаётся только при создании поля — в `Edit Field` его нет. `Format` меняется и в `Edit Field`: смена формата меняет дефолт значения, formatter и тип плейсхолдера поля ([models/visit-field.md](../models/visit-field.md)).
 
 ## Geo Code как select (Available Values)
 

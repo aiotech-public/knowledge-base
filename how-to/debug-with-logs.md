@@ -1,12 +1,12 @@
 ---
 id: debug-with-logs
 title: Debug с логами AIO (How-to)
-description: Settings → Logs, дропдаун Namespace (Destination Handler, Tracker, Traffic Filter, Conversions, Remarketing и др.), Loggable UUID, Show Logs (JSON-снапшоты + Domain logs), debug JSON визита, 2FA для нотификаций.
+description: Settings → Logs, дропдаун Namespace (Destination Handler, Tracker, Traffic Filter, Conversions, Remarketing и др.), Loggable UUID, Show Logs (JSON-снапшоты + Domain logs), право на логи `settings.logs.view`, debug JSON визита, 2FA для нотификаций.
 doc_type: how-to
 builds: [erp, mtk]
-related: [visit-timeline, ui-common, remarketing-campaigns, domains, tracker, landings, architecture, conversion-model]
+related: [visit-timeline, ui-common, remarketing-campaigns, permissions-model, domains, tracker, landings, architecture, conversion-model]
 language: ru
-updated: 2026-09-11
+updated: 2026-09-23
 ---
 
 # Debug с логами AIO
@@ -107,9 +107,15 @@ updated: 2026-09-11
 `Show logs` action на сущности открывает окно логов — **полные JSON-снапшоты настроек сущности** после каждого изменения.
 
 - Что именно изменилось — **не трекается отдельно**, нужно вручную сравнить два соседних снапшота (дифф глазами).
-- Доступ: правый клик по сущности → `Show logs` (требует Imperative `Show Logs: <раздел>` в Position).
+- Доступ: правый клик по сущности → `Show logs`; пункт открывается правом Position `settings.logs.view` (`Settings: logs page`) — тем же, что и страница `Settings → Logs`.
 
 Применение: «кто и когда поменял настройку X» — `Show logs` даёт полный снапшот, дифф ищется глазами.
+
+### Нет пункта Show logs / Visit logs или раздела Settings → Logs — какое право нужно
+
+**Все логи открываются одним правом Position — `settings.logs.view` (в списке императивов — `Settings: logs page`): и страница `Settings → Logs`, и пункт `Show logs` на любой сущности, и `Visit logs` на визите, и логи трекера.** Отдельных прав на логи по разделам (вида `Show Logs: <раздел>`) больше нет — выдавать их не нужно, старые такие императивы ничего не открывают.
+
+Сервер проверяет то же право: окно `Show logs` читает ту же таблицу логов, что и `Settings → Logs`, поэтому без `settings.logs.view` логи не откроются ни одним путём. Нет пункта `Show logs` в меню правого клика или раздела `Logs` в `Settings` — добавьте в Position юзера Allow на `settings.logs.view` (или на весь раздел `settings`). Пункт `User logs` в `Settings → Users` показывается по праву на просмотр юзеров (`settings.users.view`), но логи юзера и там открываются только с `settings.logs.view`. Как устроены Positions и Allow/Deny — [models/permissions-model.md](../models/permissions-model.md).
 
 ### Логируется ли репойнт домена сервер→сервер
 

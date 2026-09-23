@@ -6,14 +6,14 @@ doc_type: how-to
 builds: [erp, mtk]
 related: [distributions-model, auto-rules, flow-model, remarketing-campaigns, flow-editor, push-notifications, domains, glossary]
 language: ru
-updated: 2026-09-11
+updated: 2026-09-23
 ---
 
 # Distributions (How-to)
 
 Пошаговые процедуры создания и редактирования Distributions всех типов. Концептуальное устройство (типы, дерево, Strategy, Business Models) — в [models/distributions-model.md](../models/distributions-model.md).
 
-В ERP раздел доступен всем; **в MTK — только с платным модулем `MTK Distribution`** (отдельная вкладка `Distributions` с `Content Library` внутри), его подключает команда AIO — *Билды, тарифы, триал и статусы тенанта*.
+В ERP раздел доступен всем; **в MTK — только с платным модулем `Distribution`** (отдельная вкладка `Distributions` с `Content Library` и группами плейсхолдеров внутри). Модуль включается самостоятельно — кнопка `Enable` в секции `Modules` биллинг-модалки; как он попадает в счёт — *Билды, тарифы, триал и статусы тенанта*.
 
 ---
 

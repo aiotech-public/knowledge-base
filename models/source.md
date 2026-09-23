@@ -4,9 +4,9 @@ title: Source — концепт
 description: Что такое Source в AIO — пресет происхождения трафика, который определяет suuid входа, маппинг URL-параметров в поля визита (rewrites) и постбэк-трекеры. Чем отличается от Tracker/Channel/Campaign. Концепт; процедуры — how-to/source-trackers.md.
 doc_type: model
 builds: [erp, mtk]
-related: [source-trackers, ui-map, server, custom-fields, user-fields, tracker, placeholders, visit-lifecycle, distributions-model]
+related: [source-trackers, ui-map, server, custom-fields, user-fields, conversion-model, tracker, placeholders, visit-lifecycle, distributions-model]
 language: ru
-updated: 2026-09-11
+updated: 2026-09-23
 ---
 
 # Source — концепт
@@ -21,7 +21,7 @@ updated: 2026-09-11
 
 ### Что такое `suuid` и как он определяет источник входа
 
-В tracking-ссылке вместе с `cuuid` (кампания) едет **`suuid` = UUID этого Source**. Пара `cuuid`+`suuid` — это «координаты входа»: агент на домене снимает их из URL и передаёт AIO, а AIO по ним определяет, в какую кампанию и через какой источник класть визит и какие правила парсинга URL применять (агент работает по командам AIO — [models/server.md](server.md)). Один Source переиспользуется во многих кампаниях (например, единый «Facebook» source на все FB-запуски).
+В tracking-ссылке вместе с `cuuid` (кампания) едет **`suuid` = UUID этого Source**. Пара `cuuid`+`suuid` — это «координаты входа»: агент на домене снимает их из URL и передаёт AIO, а AIO по ним определяет, в какую кампанию и через какой источник класть визит и какие правила парсинга URL применять (агент работает по командам AIO — [models/server.md](server.md)). Один Source переиспользуется во многих кампаниях (например, засеянный в тенант `FB w/ CAPI` — на все FB-запуски).
 
 Отдельного поля-типа у Source нет: под какую рекламную площадку заточен пресет, определяет его **код** — тот, что приехал из шаблона, выбранного при создании (готовые ссылки для рекламного кабинета, поля Link Generator и `rewrites`). Свойство `Integration type` есть у других сущностей (Destinations / Sender providers / Domain checkers / Traffic filters), а у Source такого поля в интерфейсе нет — ни выбора типа в форме создания, ни колонки или фильтра `type` в таблице `Tracker → Sources`. Расходы Source тянет иначе: он умеет принять параметр из URL рекламной платформы (например, CPC или трекинг-плейсхолдер), а правила маппинга (rewrites в JSON) проставляют его в поле `Cost` визита — детали в `how-to/source-trackers.md`.
 
@@ -63,7 +63,7 @@ updated: 2026-09-11
 ### Зачем к Source привязывают Trackers — постбэки «наружу»
 
 К Source прикрепляются **Trackers** — конфиги отправки событий из AIO во внешние системы при наступлении событий по визиту/конверсии. Два типа:
-- **Conversion type** трекера — на какое событие он реагирует (Lead / Purchase …);
+- **Conversion type** трекера — на какое событие он реагирует (`Lead`, `Registration`, `Approved`, `Install` … — набор типов конверсий задаёт вертикаль шаблона тенанта, [models/conversion-model.md](conversion-model.md));
 - **Tracker type** — куда и как шлёт (полный список типов и описание каждого — [models/tracker.md](tracker.md)); если у Source нет conversion API (как Facebook CAPI / TikTok Events API) — выбирают HTTP GET.
 
 То есть Source — это не только «вход» (парсинг URL), но и точка, откуда уходят **обратные сигналы** в рекламную платформу (например, FB CAPI «случился лид» для оптимизации). Поэтому Source концептуально двунаправлен: ловит на входе, рапортует на выходе. Детали — `how-to/source-trackers.md`.

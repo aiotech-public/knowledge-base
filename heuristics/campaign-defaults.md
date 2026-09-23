@@ -4,9 +4,9 @@ title: Эвристики по Campaign Template и дефолтам
 description: Правила большого пальца — как настраивать Campaign Template и дефолты, чтобы минимизировать ручной ввод и защититься от типичных ошибок при запуске кампаний.
 doc_type: heuristic
 builds: [erp, mtk]
-related: [glossary, distributions-model, campaigns, source-trackers, sdk, forms, flow-model, landings]
+related: [glossary, distributions-model, campaigns, source-trackers, forms, sdk, form, flow-model, landings]
 language: ru
-updated: 2026-08-26
+updated: 2026-09-23
 ---
 
 # Эвристики: Campaign Template и дефолты
@@ -54,7 +54,7 @@ updated: 2026-08-26
 
 **Когда:** настройка `Non-SDK Form Handler` / SDK-формы / intl-tel-input.
 
-**Делайте:** дефолтную страну формы (для intl-tel-input, валидации телефона) берите **из настроек лэнда** (Static Language Country), а не из гео визита. *(Без Static Language Country SDK берёт страну из гео визита; жёсткий SDK-фолбэк, если ничего не задано — `defaultCountryCode: GB`.)*
+**Делайте:** дефолтную страну формы (для intl-tel-input, валидации телефона) берите **из настроек лэнда** (Static Language Country), а не из гео визита. *(Без Static Language Country SDK берёт страну из гео визита; жёсткий SDK-фолбэк, если ничего не задано — `defaultCountryCode: GB`, то же значение стоит в шаблонном `AIO SDK Macros Collection`.)* Макрос `AIO Static Language Country for Form` в шаблонах Finance, Nutra и Sweeps уже есть и подключён к лэндам-примерам с формой; страну он берёт у лэнда, только если там задана ровно одна страна, язык — если ровно один язык, иначе — у визита; детали в [how-to/forms.md](../how-to/forms.md).
 
 **Почему:** под VPN гео визита врёт → форма покажет неправильный код страны → пользователь запутается / введёт несовместимый телефон.
 
@@ -78,7 +78,7 @@ updated: 2026-08-26
 
 **Делайте:** дефолтная **AIO-форма** (SDK или Non-SDK Form Handler) предпочтительнее кастомной (внешняя форма рекламодателя, кастомная HTML-форма). Кастомная — только под специфический UX, который дефолтная не покрывает.
 
-**Почему:** дефолтная форма знает `intl-tel-input`, `Form Behavior`, плейсхолдеры визита из коробки. Кастомная — это новая поверхность отказа.
+**Почему:** дефолтная форма знает `intl-tel-input`, `Form Behavior`, плейсхолдеры визита из коробки. Кастомная — это новая поверхность отказа. Готовые формы под вертикаль уже лежат в тенанте из шаблона — набор по вертикали в [models/form.md](../models/form.md); для повторного касания в Finance это `Default Leads Form` и `Leads Form w/ Consent` с чекбоксом согласия на контакт.
 
 Также см. *Вертикали в арбитраже трафика*, [how-to/forms.md](../how-to/forms.md).
 

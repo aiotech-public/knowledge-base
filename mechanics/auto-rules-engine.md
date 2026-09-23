@@ -6,7 +6,7 @@ doc_type: mechanic
 builds: [erp]
 related: [auto-rules, meta-ads, permissions-model, notification-center]
 language: ru
-updated: 2026-09-11
+updated: 2026-09-23
 ---
 
 # Движок автоправил — когда думает, что считает и что делает с вердиктом
@@ -128,7 +128,7 @@ updated: 2026-09-11
 
 Права нужны ровно те же, что для ручного действия на странице Meta: `meta.campaigns.edit.stop`, `meta.ad-sets.edit.stop`, `meta.ads.edit.stop`, `meta.ad-sets.edit.change-budget` и соседние — они перечислены в [how-to/meta-ads.md](../how-to/meta-ads.md). Если у владельца такого права нет, запись уходит в `failed` с текстом `Owner lacks permission <слаг права>`. Права того, кто подтвердил действие, при исполнении не смотрятся вообще.
 
-Отсюда следствие: смена владельца ассайна меняет и набор видимых ему сущностей, и права, под которыми ходят действия. Передаётся ассайн действием `Change ownership` в контекстном меню `Assignments` — вместе с `Access type`, который решает, кто ассайн видит ([how-to/auto-rules.md](../how-to/auto-rules.md)). Подтвердить действие из Telegram может только владелец ассайна — кто и откуда может подтверждать, в [how-to/auto-rules.md](../how-to/auto-rules.md). Как устроены ветки прав — в [models/permissions-model.md](../models/permissions-model.md).
+Отсюда следствие: смена владельца ассайна меняет и набор видимых ему сущностей, и права, под которыми ходят действия. Передаётся ассайн действием `Change ownership` в контекстном меню `Assignments` — вместе с `Access type`, который решает, кто ещё видит ассайн ([how-to/auto-rules.md](../how-to/auto-rules.md)). Если при передаче оставлена галка `Keep Editor access for the previous owner`, прежний владелец сохраняет на ассайн роль `Editor` и видит его, но новые прогоны и созданные ими действия идут уже под новым владельцем; действие, записанное в журнал до передачи, исполняется под тем владельцем, который заморожен в его строке. Уведомление с кнопками подтверждения в Telegram адресовано владельцу ассайна — кто и откуда может подтверждать, в [how-to/auto-rules.md](../how-to/auto-rules.md). Как устроены ветки прав — в [models/permissions-model.md](../models/permissions-model.md).
 
 ## Что движок не исполняет — `start`, `duplicate`, `keep` и `wait`
 

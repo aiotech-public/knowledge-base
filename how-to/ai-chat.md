@@ -6,7 +6,7 @@ doc_type: how-to
 builds: [erp, mtk]
 related: [onboarding-tours, meta-spend-allocation, notification-center, mcp-server]
 language: ru
-updated: 2026-09-11
+updated: 2026-09-23
 ---
 
 # AIO Chat — ассистент по трафику в интерфейсе

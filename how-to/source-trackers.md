@@ -4,9 +4,9 @@ title: Sources / Trackers / Postbacks (How-to)
 description: Source Rewrites (UTM → slug), создание постбэк-трекеров, FB CAPI кастомные события, чтение логов трекеров.
 doc_type: how-to
 builds: [erp, mtk]
-related: [source, tracker, glossary, conversion-model, ui-map, custom-fields, campaigns, sdk, placeholders, ui-common, visit-lifecycle, debug-with-logs]
+related: [source, tracker, glossary, conversion-model, ui-map, custom-fields, campaigns, sdk, placeholders, permissions-model, ui-common, visit-lifecycle, debug-with-logs]
 language: ru
-updated: 2026-09-11
+updated: 2026-09-23
 ---
 
 # Sources / Trackers / Postbacks (How-to)
@@ -65,14 +65,16 @@ updated: 2026-09-11
 
 ### Структура JSON источника
 
-Сырой JSON виден во вкладке **`Raw`** редактора (обычная настройка делается в структурированных вкладках `Links` / `Rewrites` / `Replaces`). JSON источника — это не только `rewrites`. На примере дефолтного **FB CAPI** источника блоки такие:
+Сырой JSON виден во вкладке **`Raw`** редактора (обычная настройка делается в структурированных вкладках `Links` / `Rewrites` / `Replaces`). JSON источника — это не только `rewrites`. На примере источника **`FB w/ CAPI`**, который приезжает в тенант из шаблона (структура одна во всех вертикалях; различаются лейблы и предвыбранные значения селектов, а iGaming добавляет третье событие), блоки такие:
 
-- **`replace`** — массив определений полей, которые юзер заполняет в Link Generator. Каждый элемент: `required`, `key`, `label`, `placeholder`, `description`, `tooltip`, `values`, `dynamic-type`, `static-data-key`, `dynamic-data-type`, `value`.
-  - **`dynamic-type`**: `text` (свободный ввод) или `select` (дропдаун — тогда `values` = map опций `ключ→label`, а `value` задаёт дефолт).
-  - Дефолты событий FB: `fb_lead_action` → `value: "Lead"`, `fb_ftd_action` → `value: "Purchase"`.
-  - Примеры полей в редакторе: `creative` (Creative, использует launcher), `fb_account_id` (Account ID, напр. `200000000002`), `fb_capi_token` (FB CAPI Token, `EAAd…`-токен из BM), `fb_pixel` (FB Pixel, напр. `1000000000000000`), плюс `fb_pixel_domain` как replace-параметр.
-- **`links`** — три варианта генерируемой ссылки: `FB Ad Short Link` (type `link`), `FB AD Parameters` (type `url_parameters` — добавляется к FB-объявлению как appendix с FB-макросами `{{ad.id}}`, `{{adset.id}}` и т.д.), `FB Ad Full Link` (type `link`, для теста).
-- **`settings`** / **`placeholders`** / **`rewrites`** — доп. настройки источника и маппинг URL→поля (см. ниже).
+- **`replace`** — массив определений полей, которые заполняются в Link Generator. Каждый элемент: `required`, `key`, `label`, `placeholder`, `description`, `tooltip`, `values`, `dynamic-type`, `static-data-key`, `dynamic-data-type`, `value`.
+  - **`dynamic-type`**: `text` (свободный ввод) или `select` (дропдаун — тогда `values` = map опций `ключ→label`, а `value` — вариант, предвыбранный при открытии Link Generator).
+  - В `FB w/ CAPI` четыре поля: `token` (`FB CAPI Token`, `EAAd…`-токен из BM), `pixel` (`FB Pixel`, напр. `1000000000000000`) — оба `text`, не обязательные; `fb_action` и `fb_action_f` — селекты стандартных событий Meta (`Lead`, `Purchase`, `CompleteRegistration` … + пункт `Nothing`). В iGaming есть пятое — `fb_action_i` под событие установки. Лейблы и предвыбранные значения селектов различаются по вертикали — [how-to/campaigns.md](campaigns.md) → «Lead Action и событие покупки».
+
+### Блок `links` и остальные ключи JSON источника
+
+- **`links`** — у засеянного `FB w/ CAPI` одна ссылка `Facebook Launch Link` (type `link`, `luuid: true`): в параметрах `cuuid` / `suuid` / `launcher`, replace-параметры (`pixel`, `token`, `fb_action`, `fb_action_f`) и FB-макросы `{{ad.id}}`, `{{ad.name}}`, `{{adset.id}}`, `{{adset.name}}`, `{{campaign.id}}`, `{{campaign.name}}`, `{{placement}}`. Ссылок типа `url_parameters` (отдельный хвост параметров под объявление) в нём нет — только эта полная ссылка.
+- **`settings`** / **`placeholders`** / **`rewrites`** — доп. настройки источника (у засеянного `settings` и `placeholders` пустые) и маппинг URL→поля (секция «Source Mapping / Rewrites» ниже).
 
 ### Флаг `luuid` у ссылки типа `link`
 
@@ -103,9 +105,9 @@ Source настраивается **JSON-конфигом** (поле `Source co
 
 После `Confirm`: каждый визит, пришедший на этот Source с заданным параметром, пишет значение в указанное поле визита.
 
-### Пример rewrites — дефолтный источник «FB w/ CAPI»
+### Пример rewrites — засеянный источник «FB w/ CAPI»
 
-**Пример — дефолтный источник «FB w/ CAPI»** (его `rewrites`): `pixel→fb_pixel`, `token→fb_capi_token`, `fb_action→fb_lead_action`, `fb_action_f→fb_ftd_action`, `adset_name→fb_ad_set_name`, `adset_id→fb_ad_set_id`, `placement→fb_placement`.
+**Пример — источник `FB w/ CAPI` из шаблона тенанта** (его `rewrites`, одинаковые во всех вертикалях): `ad_id→fb_ad_id`, `ad_name→fb_ad_name`, `adset_id→fb_ad_set_id`, `adset_name→fb_ad_set_name`, `campaign_id→fb_campaign_id`, `campaign_name→fb_campaign_name`, `placement→fb_placement`, `pixel→fb_pixel`, `token→fb_capi_token`, `fb_action→fb_lead_action`, `fb_action_f→fb_ftd_action`; в iGaming добавляется `fb_action_i→fb_install_action`.
 
 > Эти поля (`fb_pixel`, `fb_lead_action`, `fb_capi_token`) затем **читает SDK** на лэнде (`fbPixel` / `fbCapi`, см. [reference/sdk.md](../reference/sdk.md)). Цепочка: параметр в ссылке → Source rewrite → поле визита → SDK.
 
@@ -113,7 +115,7 @@ Source настраивается **JSON-конфигом** (поле `Source co
 
 ### Экшены источника (правый клик)
 
-**Экшены источника (правый клик):** `Edit source`, `Copy source`, `Source logs`, `Assign to folder`, `Source visits`, `Source conversions`, `Show sessions`, `Build Roll Up report`, `Share`, `Change ownership`, `Archive`.
+**Экшены источника (правый клик):** `Edit source`, `Copy source`, `Source logs`, `Source visits`, `Source conversions`, `Show sessions`, `Build Roll Up report`, `Archive`; в группе `Folders` (только ERP — в MTK у этой таблицы папок нет) — `Assign to folder` / `Unassign from folder`; в группе `Teams & permissions` — `Share` и `Change ownership` (при выделении нескольких строк — ещё `Share also`, `Force share`, `Unshare`, `Mass change ownership`). Набор пунктов зависит от уровня доступа к строке: `Share` виден при уровне `Own` или шаре с `Can share further`, `Change ownership` — при `Own`; свой уровень — строка `Your access: <уровень>` внизу меню ([models/permissions-model.md](../models/permissions-model.md)).
 
 Правку можно открыть и без меню: иконка-карандаш у первой колонки строки открывает то же окно `Edit source` в один клик ([reference/ui-common.md](../reference/ui-common.md)).
 
@@ -129,7 +131,7 @@ Source настраивается **JSON-конфигом** (поле `Source co
 
 1. **Name** — имя трекера.
 2. **Sources** — для каких Source-ов трекер срабатывает (мульти-селект). **Обязательно**.
-3. **Conversion type** — тип конверсии (`Lead`, `Purchase`, `Push Subscribe`, кастомные из `Settings → Conversion types`).
+3. **Conversion type** — тип конверсии из `Settings → Conversion types` (засеянный набор зависит от вертикали шаблона: например, `Lead`, `Registration`, `Approved`, `Install`, `Push Subscribe`; свои добавляются там же).
 4. **Tracker type** — механизм отправки (полный список 11 типов — [models/tracker.md](../models/tracker.md)). **От типа зависят поля payload ниже.** Если у Source нет conversion API (как Facebook CAPI / TikTok Events API) — выбирают `HTTP Get`.
 5. **Delay in seconds** — задержка перед отправкой (`No delay` / N секунд).
 6. `Confirm`. Вкл/выкл трекера — тоггл `Switch Activity` в редакторе (или экшен `Switch activity` правым кликом).
@@ -142,7 +144,7 @@ Source настраивается **JSON-конфигом** (поле `Source co
 
 Для `HTTP Get` / постбэк-URL — поле **`URL`** с эндпоинтом партнёрки. Макросы партнёрки в URL заменяют на AIO-плейсхолдеры, напр. `click_id={{aio.visit.fields.<source>_click_id}}` — поле визита, куда для данного Source пишется click ID. Список доступных плейсхолдеров открывается кликом по иконке-шестиграннику (hexagon) в поле `URL`.
 
-> В UI **два разных «type»**: `Conversion type` (что за конверсия — Lead / Purchase) и `Tracker type` (механизм отправки — FB CAPI / постбэк). Не путать.
+> В UI **два разных «type»**: `Conversion type` (что за конверсия — `Lead` / `Registration` / …) и `Tracker type` (механизм отправки — FB CAPI / постбэк). Не путать.
 
 В списке трекеров есть колонка **`Quality`** — ранний индикатор поломки отбивки без захода в логи; метрика применима ко всем типам трекеров (`HTTP Get`, CAPI, TikTok и т.д.). Механика и определение — [models/tracker.md](../models/tracker.md).
 
@@ -174,7 +176,7 @@ Source настраивается **JSON-конфигом** (поле `Source co
 
 ### Подключить ещё один Source к существующему CAPI-трекеру
 
-Если завёл новый FB-источник и хочешь, чтобы по нему тоже уходили FB CAPI отбивки, не обязательно создавать трекер с нуля — можно добавить Source в уже существующий: `Tracker → Trackers → ПКМ по трекеру → Edit Tracker` → добавить FB-источник в поле `Sources` → `Confirm`. По умолчанию `Lead` и `Purchase` конверсии триггерят трекеры дефолтного `FB w/ CAPI` источника.
+Если завёл новый FB-источник и хочешь, чтобы по нему тоже уходили FB CAPI отбивки, не обязательно создавать трекер с нуля — можно добавить Source в уже существующий: `Tracker → Trackers → ПКМ по трекеру → Edit Tracker` → добавить FB-источник в поле `Sources` → `Confirm`. Засеянные CAPI-трекеры привязаны только к `FB w/ CAPI`; какие типы конверсий они отбивают в каждой вертикали — [models/tracker.md](../models/tracker.md) («Какие трекеры заведены из коробки»).
 
 ## FB CAPI трекер с кастомным событием
 
@@ -196,7 +198,8 @@ Source настраивается **JSON-конфигом** (поле `Source co
 В FB CAPI трекере поле **`Event`** обычно ссылается на плейсхолдер по типу конверсии:
 
 - `{{aio.visit.fields.fb_lead_action}}` — событие лида, выбранное как **Lead Action** в Link Generator;
-- `{{aio.visit.fields.fb_ftd_action}}` — парное событие целевого действия / покупки, выбранное в Link Generator.
+- `{{aio.visit.fields.fb_ftd_action}}` — парное событие целевого действия / покупки, выбранное в Link Generator;
+- `{{aio.visit.fields.fb_install_action}}` — событие установки (третий селект, есть только у `FB w/ CAPI` iGaming-шаблона; его читает засеянный `FB AIO Install`).
 
 Так событие определяется тем, что выбрали при генерации ссылки (см. [how-to/campaigns.md](campaigns.md) → Lead Action и событие покупки). **Альтернатива** — захардкодить `Event` статикой прямо в трекере; тогда для этого Conversion Type всегда отправляется одно и то же событие, независимо от выбора в Link Generator.
 
@@ -216,15 +219,15 @@ Source настраивается **JSON-конфигом** (поле `Source co
 
 ### Source Rewrites не работает — rewrite стоит не на том Source
 
-Проверить, что rewrite **на нужном Source** (а не на дефолтном `FB`). Каждый Source — свой набор rewrites.
+Проверить, что rewrite **на нужном Source** (а не на засеянном `FB w/ CAPI`, если новый источник скопирован с него). Каждый Source — свой набор rewrites.
 
 ### «Платформа не видит лиды» — смотреть Tracker logs
 
 `Trackers → Tracker logs` → проверь outgoing-запрос. Возможные причины: (1) токен рекламной платформы инвалидирован — нужно перегенерить и пересоздать ссылку; (2) трекер не для нужного Source; (3) не тот тип конверсии.
 
-### `Install` и `Purchase` в одном трекере не работают — нужно два трекера
+### `Install` и `Registration` в одном трекере не работают — нужно два трекера
 
-Один трекер на один Conversion Type. Создать два трекера.
+Один трекер на один Conversion Type. Создать два трекера — так и засеяно в iGaming-шаблоне: `FB AIO Install` под `Install`, `FB AIO Registration` под `Registration`, третий трекер под целевое действие вертикали ([models/tracker.md](../models/tracker.md)).
 
 ### `Tracker logs` пуст — конверсия не сматчилась с трекером
 

@@ -4,16 +4,16 @@ title: Как в AIO управляют рекламой Meta/Facebook — мо�
 description: "Meta-модуль AIO — рекламный кабинет Facebook внутри платформы: подсекции (Ad Accounts, Social Profiles, Campaigns/Ad Sets/Ads, Pages), управление иерархией (Start/Stop на кампании, ad set и объявлении, Budget Manager с CBO/ABO, Fetch Targeting, Pull Data), статус и enum причин бана рекламного аккаунта, поля кабинета, статус соцпрофиля, колонки вкладок Campaigns/Ad Sets/Ads (родные Meta Insights — Total Spend/Impressions/Clicks; трекерной колонки Meta Spend там нет), быстрый фильтр Ad account по рекламному кабинету, кнопка уровня матчинга Meta Spend и почему она не меняет числа Meta Insights, Meta Ad Preview (переключатель View — живое превью или сохранённая картинка объявления), автоправила со страниц Meta (Apply Auto Rules, Backtest Rules, колонка Auto Rules). ERP /app/facebook, MTK /app/mtk/meta (Meta+ платный)."
 doc_type: how-to
 builds: [erp, mtk]
-related: [meta-spend-allocation, notification-center, google-ads, permissions, analytics, auto-rules-engine, auto-rules, ui-common]
+related: [meta-spend-allocation, notification-center, google-ads, permissions, meta-data-health, analytics, auto-rules-engine, auto-rules, ui-common]
 language: ru
-updated: 2026-09-11
+updated: 2026-09-23
 ---
 
 # Как в AIO управляют рекламой Meta/Facebook — модуль Meta (Ad-Manager внутри платформы)
 
 **Meta-модуль — это рекламный кабинет Facebook прямо внутри AIO: подключаешь соцпрофиль, тянешь из Meta свою иерархию (ad account → campaign → ad set → ad) и управляешь ей из платформы, не заходя в Ads Manager Facebook.** Кампании, адсеты и объявления стартуешь и стопаешь, меняешь бюджеты (CBO/ABO), подтягиваешь таргетинг и данные по спенду — всё из таблиц AIO. Модуль читает данные из Meta через подключённый соцпрофиль и шлёт команды обратно в Meta.
 
-В ERP модуль живёт по пути `/app/facebook`, раздел в навигации называется `Facebook`. В MTK — по пути `/app/mtk/meta`, называется `Meta`, и это **платный подключаемый модуль `Meta+`** (в базовый MTK не входит, активируется по подписке — см. секцию «Meta-модуль в MTK: add-on `Meta+`» ниже и *Как устроен MTK-вид AIO: навигация, пресеты из шаблона и методы под типовые задачи*).
+В ERP модуль живёт по пути `/app/facebook`, раздел в навигации называется `Facebook`. В MTK вкладка `Meta` есть и в базовом виде — сокращённый раздел по пути `/app/mtk/meta`; платный модуль **`Meta+`** переключает эту вкладку на полный модуль `/app/facebook`, как в ERP (секция «Meta-модуль в MTK: базовая вкладка `Meta` и модуль `Meta+`» ниже и *Как устроен MTK-вид AIO: навигация, пресеты из шаблона и методы под типовые задачи*).
 
 Это **не** про раскладку рекламного спенда по трафику в отчётах — та механика (`Meta Spend`, report-time аллокация) описана в [meta-spend-allocation.md](../mechanics/meta-spend-allocation.md). И это **не** про алерт о бане рекламного аккаунта — правило нотификации `fb_ad_account_banned` описано в [notification-center.md](../mechanics/notification-center.md).
 
@@ -21,8 +21,9 @@ updated: 2026-09-11
 
 ## Подсекции Meta-модуля: соцпрофили, кабинеты, иерархия рекламы, страницы
 
-**Модуль разбит на подсекции по уровням Meta-иерархии — каждая своя вкладка со своей таблицей и своим permission на просмотр.** Порядок в навигации: Social Profiles → Ad Accounts → Campaigns → Ad Sets → Ads. Права на просмотр раздают отдельно на каждый уровень (`meta.social-profiles.view`, `meta.ad-accounts.view`, `meta.campaigns.view`, `meta.ad-sets.view`, `meta.ads.view`) — см. [permissions.md](permissions.md).
+**Модуль разбит на подсекции по уровням Meta-иерархии — каждая своя вкладка со своей таблицей и своим permission на просмотр.** Порядок в навигации: Data health → Social Profiles → Ad Accounts → Campaigns → Ad Sets → Ads. Права на просмотр раздают отдельно на каждый уровень (`meta.social-profiles.view`, `meta.ad-accounts.view`, `meta.campaigns.view`, `meta.ad-sets.view`, `meta.ads.view`) — см. [permissions.md](permissions.md).
 
+- **Data health** (`meta.social-profiles.view`) — страница `Meta Data Health`: насколько свежие данные по каждому кабинету, какие кабинеты и профили требуют действий, лимиты Meta и расписание подтяжки — [meta-data-health.md](meta-data-health.md).
 - **Social Profiles** (`meta.social-profiles.view`) — подключённые FB-аккаунты, через которые AIO ходит в Meta API. Отсюда тянется всё остальное. Детали ниже в секции «Social Profile».
 - **Ad Accounts** (`meta.ad-accounts.view`) — рекламные кабинеты, привязанные к соцпрофилю: статус, баланс, платёжные поля, метрики. Детали в секции «Ad Account».
 - **Campaigns / Ad Sets / Ads** (`meta.campaigns.view` / `meta.ad-sets.view` / `meta.ads.view`) — три уровня рекламной иерархии Meta, каждый своей вкладкой. Управление (Start/Stop, бюджеты, таргетинг) — в секции «Управление кампаниями, адсетами и объявлениями».
@@ -47,10 +48,10 @@ Right-click на строке (или на нескольких выделенн
 
 - **`Fine`** — соцка живая, данные тянутся. В `status_text` при этом лежит `Everything is fine` (после успешного синка), либо `Everything is fine😂!` (сразу после первого пулла ad accounts на подключении — эмодзи и `!` в тексте штатны, не баг).
 - **`Down`** — соцка отвалилась (токен протух / аккаунт слетел), синк не идёт. `status_text` тогда несёт причину.
-- **`Issues`** — синк идёт с ошибками, но соцка не считается отвалившейся.
+- **`Issues`** — синк идёт с ошибками, но соцка не считается отвалившейся. Сюда же попадает профиль, упёршийся в лимит запросов Meta: в `Down` он не уходит, счётчик ошибок не растёт.
 - **`Pulling`** — прямо сейчас идёт подтяжка. Пока стоит этот статус, ручной `Pull data` отбивается сообщением `Already pulling`.
 
-Здоровье синка видно по двум полям: `failed_pulls_count` (счётчик подряд-неудачных пуллов — растёт, когда AIO не может дотянуться до Meta через эту соцку) и `successfully_pulled_at` (когда последний раз успешно подтянули). Если `failed_pulls_count` растёт, а `successfully_pulled_at` давно не обновлялся — соцка отваливается.
+Здоровье синка видно по двум полям: `failed_pulls_count` (счётчик подряд-неудачных пуллов — растёт, когда AIO не может дотянуться до Meta через эту соцку) и `successfully_pulled_at` (когда последний раз успешно подтянули). Если `failed_pulls_count` растёт, а `successfully_pulled_at` давно не обновлялся — соцка отваливается. После 5 неудачных подтяжек подряд профиль выводится из фоновой подтяжки (на странице `Meta Data Health` его кабинеты, у которых нет другого живого профиля, попадают в группу `Profile excluded after failures`) — вернуть его можно перепривязкой или ручным `Pull data`.
 
 ### Что пишется в `status_text` соцки при ошибке синка
 
@@ -97,14 +98,14 @@ Right-click на строке (или на нескольких выделенн
 - **`Connect`** (`meta.social-profiles.edit.connect`) — подключить соцку через Meta App (экшен `Connect Meta App`, поле логина `meta_login`). Доступен, когда соцку можно подключить. После успешного подключения (и после `Pull data`) AIO подтягивает рекламные кабинеты и рапортует `Fetched %s ad accounts.` (`%s` = число найденных кабинетов) — если число ноль или меньше ожидаемого, у соцки нет доступа к кабинетам.
 - **`Pull data`** (`meta.social-profiles.edit.pull-data`) — подтянуть данные из Meta с выбором глубины: `backward_data` (`1 Day` / `5 Days` / `7 Days` / `1 Month` / `3 Months` / `6 Months Backward`) и `backward_insights` (`1 Day` / `5 Days` / `7 Days` / `1 Month Backward`). Отдельно данные и отдельно инсайты (метрики; в разговоре — «инсайты» / «инстайты»). Слишком частый повторный `Pull data` отбивается — см. секцию «Троттлинг `Pull Data`» ниже.
 - **`Disconnect`** (`meta.social-profiles.edit.disconnect`) — отвязать соцку.
-- **`Logs`** (`meta.social-profiles.view.show-logs`) — лог активности соцпрофиля (что тянулось, какие ошибки).
+- **`Logs`** (`settings.logs.view` — общее право на логи всех сущностей, в матрице `Settings: logs page`) — лог активности соцпрофиля (что тянулось, какие ошибки).
 
 ### Троттлинг `Pull Data`: `Already pulling` / `Should be at least 30 minutes between pull tries`
 
 **Ручной `Pull data` (на соцпрофиле и на рекламном кабинете) нельзя дёргать подряд — он отбивается двумя сообщениями.** Частые формулировки: «Pull Data не жмётся», «пишет already pulling», «просит подождать 30 минут».
 
 - **`Already pulling`** — предыдущий пулл ещё идёт. Дождись, пока текущий синк завершится, и повтори.
-- **`Should be at least 30 minutes between pull tries`** — между ручными подтяжками должно пройти не меньше 30 минут. Свежие данные всё равно приходят фоновым синком (соцка синкается сама примерно раз в 30 минут), ручной `Pull data` нужен, только если очень надо подтянуть немедленно.
+- **`Should be at least 30 minutes between pull tries`** — между ручными подтяжками должно пройти не меньше 30 минут. Свежие данные всё равно приходят фоновым синком (у активного кабинета спенд и лиды за сегодня — каждые 5 минут, расписание целиком — [meta-data-health.md](meta-data-health.md)), ручной `Pull data` нужен, только если очень надо подтянуть немедленно: он запускает полное обновление сразу.
 
 Оба ограничения — защита от спама Meta API. Фоновый синк они не трогают: данные обновляются сами, `Pull data` — это разовое ускорение поверх.
 
@@ -180,7 +181,7 @@ Right-click на строке (или на нескольких выделенн
 
 Команда уходит в Meta через соцпрофиль; диалог просит подтверждение и ждёт ответа сервера Meta (`Waiting for the server answer...`). Пришедшие от Meta статус и `effective status` AIO сразу перезаписывает у объекта — колонка статуса в таблице обновляется без отдельного `Pull data`.
 
-Уровни ad set и объявления есть только в ERP: в MTK-виде вкладок `Ad Sets` и `Ads` нет, там `Start` / `Stop` доступны на кампании — см. секцию «Meta-модуль в MTK: add-on `Meta+`» ниже.
+Уровни ad set и объявления есть в полном модуле (`/app/facebook` — ERP и MTK с `Meta+`); в базовой MTK-вкладке `Meta` вкладок `Ad Sets` и `Ads` нет, там `Start` / `Stop` доступны на кампании — см. секцию «Meta-модуль в MTK: базовая вкладка `Meta` и модуль `Meta+`» ниже.
 
 ### Budget Manager — бюджет кампании: CBO и ABO
 
@@ -222,6 +223,18 @@ Right-click на строке (или на нескольких выделенн
 **В таблицах `Campaigns`, `Ad Sets` и `Ads` есть колонка `Auto Rules` — бейдж со счётчиком ассайнов автоправил, накрывающих строку; строка без покрытия подписана `No rules`.** Наведение раскрывает список ассайнов поимённо, клик по ассайну открывает его форму.
 
 Как читается счётчик и почему на длинной странице колонка показывает `No rules` у всех строк — [how-to/auto-rules.md](auto-rules.md).
+
+### Какое право нужно на экшен Meta — `403 Action access denied`
+
+**Каждый ручной экшен Meta-модуля сервер проверяет по его ключу права позиции: без права приходит `403` `Action access denied (<ключ> required)`, и тот же ключ скрывает пункт контекстного меню.** У Owner / Admin права позиции не проверяются — у них полный доступ. Ключи по уровням:
+
+- кампания (ERP) — `meta.campaigns.edit.start`, `.stop`, `.change-budget`, `.budget-manager`;
+- адсет (ERP) — `meta.ad-sets.edit.start`, `.stop`, `.change-budget`, `.fetch-targeting`;
+- объявление (ERP) — `meta.ads.edit.start`, `.stop`;
+- рекламный кабинет — `meta.ad-accounts.edit`, `meta.ad-accounts.edit.pull-data`;
+- соцпрофиль — `meta.social-profiles.edit.connect`, `.disconnect`, `.pull-data`.
+
+Права раздаются по префиксу: `Allow meta.campaigns` или `Allow meta.campaigns.edit` покрывает все экшены кампании. Движок автоправил проверяет те же ключи у владельца ассайна и без права кладёт действие в `Failed` с текстом `Owner lacks permission <слаг>` — [mechanics/auto-rules-engine.md](../mechanics/auto-rules-engine.md).
 
 ## Колонки и фильтры на вкладках `Campaigns` / `Ad Sets` / `Ads`
 
@@ -292,8 +305,8 @@ Right-click на строке (или на нескольких выделенн
   - **`Токен Facebook-профиля протух или отозван — переподключите соц-аккаунт.`** — токен соцки мёртв (Meta-код 190). Первый шаг — реконнект соцки (`Disconnect` → `Connect`).
   - **`Ошибка Facebook при получении превью: <текст>`** — прочая ошибка Facebook (хвост — до 300 символов текста от Meta). Обычно временное на стороне Facebook; повтори позже, при повторе — реконнект соцки.
 
-## Meta-модуль в MTK: add-on `Meta+`
+## Meta-модуль в MTK: базовая вкладка `Meta` и модуль `Meta+`
 
-**В MTK Meta-модуль — это платный подключаемый модуль `Meta+`, а не часть базового вида.** Путь — `/app/mtk/meta`, вкладка в навигации называется `Meta`. Активируется по подписке (диалог `Enable Meta+`, цена в месяц идёт следующим инвойсом) — подключает команда AIO / оплата тенанта.
+**В MTK вкладка `Meta` есть без доплаты: это сокращённый раздел `/app/mtk/meta` — `Data health`, `Social Profiles`, `Ad Accounts`, `Campaigns` (вкладок `Ad Sets` и `Ads` нет, недоступный путь редиректит на соцпрофили). Платный модуль `Meta+` переключает пункт `Meta` в меню на полный Meta-модуль `/app/facebook` — тот же, что в ERP, со всеми уровнями иерархии.** `Meta+` подключает команда AIO по запросу (`@aio_concierge`); кнопки самостоятельного включения в интерфейсе у него нет — в отличие от модулей `Distribution` и `PWA + Push`. Надбавка приходит строкой `MTK Meta` в следующем инвойсе — *Билды, тарифы, триал и статусы тенанта*.
 
-В MTK-виде `Meta+` даёт подмножество подсекций: **Social Profiles, Ad Accounts, Campaigns** (Ad Sets и Ads отдельными вкладками в MTK-роуте нет — недоступный путь редиректит на `social-profiles`). Механика управления та же, что в ERP: подключение соцки, статус кабинета, старт/стоп и бюджеты кампаний. Что вообще есть в MTK-виде и чем он отличается от полной версии — *Как устроен MTK-вид AIO: навигация, пресеты из шаблона и методы под типовые задачи*.
+Механика управления в обоих вариантах та же, что в ERP: подключение соцки, статус кабинета, старт/стоп и бюджеты кампаний; видимость пунктов зависит от прав позиции (`meta.*`). Что вообще есть в MTK-виде и чем он отличается от полной версии — *Как устроен MTK-вид AIO: навигация, пресеты из шаблона и методы под типовые задачи*.

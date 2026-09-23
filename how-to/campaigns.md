@@ -4,9 +4,9 @@ title: Campaigns (How-to)
 description: Создание кампании, редактор Edit Campaign (карточки шагов, Flow preview, серый Save), генерация трекинговой ссылки, привязка FB, косты FB (основной способ — метрика Meta Spend; старый перелив в Costs — legacy), ручной Update costs, события FB (Lead Action и событие покупки), типичные ошибки.
 doc_type: how-to
 builds: [erp, mtk]
-related: [flow-model, landings, visit-lifecycle, meta-spend-allocation, glossary, notifications-flow, domain, user-fields, flow-editor, campaign, permissions-model, analytics, source, custom-fields, destinations, meta-ads, notification-center, api, ui-common, permissions, distributions-model, domains, source-trackers, campaign-defaults, placeholders]
+related: [flow-model, landings, visit-lifecycle, architecture, meta-spend-allocation, glossary, notifications-flow, domain, user-fields, flow-editor, campaign, permissions, analytics, tracker, source, custom-fields, permissions-model, mechanics-pwa, destinations, meta-data-health, meta-ads, notification-center, api, ui-common, distributions-model, domains, source-trackers, campaign-defaults, placeholders]
 language: ru
-updated: 2026-09-11
+updated: 2026-09-23
 ---
 
 # Campaigns (How-to)
@@ -53,7 +53,7 @@ updated: 2026-09-11
 4. Заполни шаги кампании (правая часть окна). Состав шагов зависит от Flow: типично `White / Preland / Offer / OfferName / Destination`. Для каждого шага — выбираешь объекты из дропдауна (лэнды, дестинейшны, домены, оффер-неймы). Шаг с незаполненным обязательным полем помечается красным значком в шапке карточки, и `Save` остаётся неактивным — см. «Save серый — в каком шаге ошибка».
 5. Если Flow содержит шаг `Filter` — заполни его параметры: **Allowed Countries** (гео), **Allowed Languages** (браузерные языки), **Allowed Devices** (устройства), **Allowed OS** (ОС).
 
-   Шаблонные Flow с фильтром обычно названы с пометкой **`w/Filter`** (это конвенция именования — пометку пишут вручную в имени Flow, автоматически она не проставляется). Выбор `w/Filter`-Flow при создании кампании сразу выводит на шаге два поля — `Allowed Countries` и `Allowed Languages`.
+   Есть ли во флоу шаг фильтра, видно в окне выбора флоу — у строки стоит бейдж `Traffic filter` или `No filter`; по имени не угадать: в имя ничего не дописывается автоматически, а у флоу из шаблона тенанта пометки вроде `w/Filter` нет. В засеянных флоу шаг фильтра (нода `AIO Filter`, в двух iGaming-флоу — `Filter`) есть почти везде — без него только превью-флоу и `Deeplink Android` в iGaming ([context/architecture.md](../context/architecture.md)). Флоу с фильтром сразу выводит на шаге поля `Allowed Countries` и `Allowed Languages`.
 6. *(опционально)* Заполни **FB CAPI Token** и **FB Pixel** на уровне кампании. По дефолту эти поля **на уровне визита**, заполняются из ссылки при генерации в `Link Generator`. Если хочется, чтобы для всех визитов кампании всегда применялся один пиксель/токен независимо от ссылки — нужно вынести эти поля на уровень кампании. Отдельного экшена нет, делается через команду AIO.
 7. *(опционально)* В самом низу левой панели `Campaign details` — **`Costs update strategy`**: это старый перелив FB-костов на визиты (метрика `Costs` для классического ROI). Основной способ видеть косты и профит по FB — метрика `Meta Spend` в отчётах ([mechanics/meta-spend-allocation.md](../mechanics/meta-spend-allocation.md)), она работает и без выбранной стратегии. `Cost Update Strategy` нужна, только когда важен именно visit-level `Costs`.
 8. Нажми **Save**. После сохранения кампания готова к генерации ссылки.
@@ -168,7 +168,7 @@ Right-click по кампании в `Tracker → Campaigns`:
 | **Force filter mode** | принудительный Filter Mode |
 | **Replace destination** | сменить Destination (в т.ч. массово) |
 | **Build Roll Up report** | аналитика по кампании |
-| **Share** / **Change owner** | шеринг / смена владельца (см. [models/permissions-model.md](../models/permissions-model.md)) |
+| **Share** / **Change ownership** | шеринг / смена владельца и `Access type` (группа `Teams & permissions`; см. «Change ownership / Mass change ownership» ниже и [how-to/permissions.md](permissions.md)) |
 | **Update costs** / **`Update Costs by <Field>`** | ручной ввод костов за период — сумма или CPC, разливается на визиты кампании (см. «Update Costs (ручное)») |
 | **Highlight row** / **Archive** | подсветка строки / архив |
 
@@ -202,7 +202,7 @@ Right-click по кампании в `Tracker → Campaigns`:
 - **Source** — источник трафика (FB, Google, Taboola и т.п.). От него зависят следующие поля.
 - **Link Generation Name** — *(опционально)* удобное имя, чтобы потом найти эту ссылку в History.
 - **Source-specific параметры**:
-  - Для FB: **FB Pixel**, **CAPI Token**, какие события отправлять при лиде (**Lead Action**: Lead, Purchase, Reg, Complete Registration) и при целевом действии / покупке (парное событие). В тенанте есть преднастроенный source **`FB w/ CAPI`** с уже включённым CAPI — для FB-запуска выбираешь его в дропдауне `Source`.
+  - Для FB: **FB Pixel**, **FB CAPI Token** и селекты событий FB — какое стандартное событие Meta отправлять при первой конверсии (**Lead Action**; `Lead`, `Purchase`, `CompleteRegistration` …) и при целевом действии вертикали (парный селект); в iGaming есть третий — событие установки. Лейблы селектов и предвыбранные значения — в секции «Lead Action и событие покупки». В тенанте есть засеянный source **`FB w/ CAPI`** с уже привязанными CAPI-трекерами ([models/tracker.md](../models/tracker.md)) — для FB-запуска выбираешь его в дропдауне `Source`.
 - **Lock campaign to this domain** *(toggle)* — привязать кампанию к этому домену. По умолчанию любой добавленный в AIO домен может открыть любую кампанию. С toggle — только этот домен.
 
 **Минимум для FB-ссылки:** `Domain`, `Source`, события FB (`Lead Action` и событие покупки), `FB Pixel`, `CAPI Token` → `Generate Link`.
@@ -270,7 +270,7 @@ Encrypted- и Slug-ссылка **различаются при каждой г�
 
 `Generated Links` — история ранее сгенерированных ссылок. **Путь:** на странице со списком кампаний → стрелочка вниз справа от `+Campaign` → `Generated Links`.
 
-**Видимость:** байер — только свои; тимлид — ссылки своих байеров; Admin — все.
+**Видимость:** в `Generated Links` видны ссылки, сгенерированные вами и участниками с более низким уровнем в ваших командах. Все ссылки тенанта видят Owner / Admin и позиции с `Scopes` или `Editor Scopes` на кампании (`scopes.tracker.campaigns` / `edit-scopes.tracker.campaigns`). Как работают уровни в команде — [models/permissions-model.md](../models/permissions-model.md).
 
 `Generated Links` ≠ `Link Generator History` — это разные сущности.
 
@@ -297,7 +297,7 @@ Encrypted- и Slug-ссылка **различаются при каждой г�
 
 ### Ссылка для 3-сервиса PWA
 
-**Путь:** `Link Generator → Source = 3rd Party PWA Link Generator → Generate → выбрать домен`.
+**Путь:** `Link Generator → Source = 3rd Party PWA Link Generator → Generate → выбрать домен`. Источник `3rd Party PWA Link Generator` засеян только в iGaming-шаблоне (ERP и MTK): в нём по одной ссылке на каждый партнёрский PWA-сервис, без replace-полей и rewrites — состав ссылок и что они передают, [mechanics/pwa.md](../mechanics/pwa.md). В тенанте другой вертикали такого источника из коробки нет.
 
 После — копируешь ссылку в сторонний PWA-сервис, создаёшь там пвашку, получаешь публичный домен, добавляешь как Destination (см. [how-to/destinations.md](destinations.md) → PWA-Destination через 3-сервис).
 
@@ -316,7 +316,7 @@ Encrypted- и Slug-ссылка **различаются при каждой г�
 1. `Meta → Social profiles → + Social profile` (раздел **Meta** — топ-левел, не Settings) → выбрать метод подключения:
    - **`By Meta application`** (Most used, дефолт) — через официальную AIO↔Meta-апку (OAuth). Задать имя + в дропдауне `Application` выбрать **`AIO Ads App`**. Поле `Proxy` можно оставить пустым.
    - **`By developer token`** (Advanced) — через developer-токен вручную созданного Meta-app. Токен вставляется в поле **`Token`**; `Proxy` тоже можно оставить пустым.
-2. Задать `Polling Interval` (`Auto 30 Minutes` / `Manually`). *(опц.)* Поле `Commission` — комиссия на spend в процентах; AIO добавит её к итоговому косту (удобно для арендованных аккаунтов, где платишь провайдеру процент со спенда). → `Confirm`.
+2. Задать `Pulling interval` (`Auto` / `Manually`). *(опц.)* Поле `Commission` — комиссия на spend в процентах; AIO добавит её к итоговому косту (удобно для арендованных аккаунтов, где платишь провайдеру процент со спенда). Если кабинеты от одного поставщика, выберите его в поле `Supplier` — тогда действует комиссия поставщика, а `Commission` профиля остаётся запасной ([meta-data-health.md](meta-data-health.md)). → `Confirm`.
 3. ПКМ на соцке → `Connect`.
 4. Скопировать OAuth-ссылку, **открыть её в том браузере или профиле, где залогинен нужный аккаунт соцсети**.
 5. Дать разрешения официальной AIO-апке. Соцка начнёт пулиться автоматически.
@@ -337,17 +337,18 @@ Encrypted- и Slug-ссылка **различаются при каждой г�
 >
 > Вопрос «где косты / спенд / профит по FB / умная аттрибуция по разрезам» → `Meta Spend` (п.1). Перелив в кампанию (п.2) трогай, только когда нужен именно visit-level `Costs` для старого ROI.
 
-### Polling Interval и перелив костов — два разных процесса
+### `Pulling interval` (Polling Interval) и перелив костов — два разных процесса
 
 В природе AIO **два разных интервала**, их часто путают.
 
-1. **`Polling Interval` (FB → AIO).** Поле соцки с двумя значениями: **`Auto 30 Minutes`** (дефолт — AIO тянет данные из FB каждые 30 минут) и **`Manually`** (только вручную). Ручной триггер — правый клик на соцке → `Pull data` (диалог с полями глубины `Backward for data` / `Backward for insights`). Это AIO опрашивает Meta Marketing API и складывает результат в своё хранилище. Ручной `Pull data` нельзя дёргать подряд — не чаще раза в 30 минут (иначе `Already pulling` / `Should be at least 30 minutes between pull tries`), детали — [meta-ads.md](meta-ads.md).
+1. **`Pulling interval` (FB → AIO).** Поле соцки с двумя значениями: **`Auto`** (дефолт — AIO сам тянет данные из FB по расписанию групп кабинетов: у активного кабинета спенд и лиды за сегодня каждые 5 минут, структура каждые 30 минут; расписание целиком — [meta-data-health.md](meta-data-health.md)) и **`Manually`** (только вручную). Ручной триггер — правый клик на соцке → `Pull data` (диалог с полями глубины `Backward for data` / `Backward for insights`). Это AIO опрашивает Meta Marketing API и складывает результат в своё хранилище. Ручной `Pull data` нельзя дёргать подряд — не чаще раза в 30 минут (иначе `Already pulling` / `Should be at least 30 minutes between pull tries`), детали — [meta-ads.md](meta-ads.md).
+
 2. **Перелив костов на визиты (AIO → визиты).** Раз в **10 минут** AIO переливает спулленные из Meta cost-данные **на визиты** (старый механизм, наполнение метрики `Costs`) на выбранном в `Cost Update Strategy` уровне (дефолт `AIO Meta` = по `FB Ad ID` визита; выше по иерархии — `adset_id`, `campaign_id` или рекламный аккаунт целиком). Косты видны только там, где есть матчащие визиты; если по выбранному ключу визита нет — его spend в метрике `Costs` не переливается (часть теряется). **Важно:** на `Meta Spend` это не влияет — `Meta Spend` считается отдельно, в момент отчёта, на уровне `Campaign` / `Adset` / `Ad`, выбранном кнопкой уровня матчинга в тулбаре таблицы (по умолчанию `Campaign`), независимо от `Cost Update Strategy`.
 
 Из этого:
 
-- Если соцку только что подключили — нужно подождать сначала первый `Polling Interval` (~30 минут), потом ещё один цикл перелива (~10 минут). До этого данных в кампании просто нет.
-- Косты и метрики Meta в `Campaigns` могут отставать суммарно до 30-40 минут (хуже — если очередь перелива загружена). Косты каждой кампании AIO обновляет по крону не чаще, чем раз в ~10 минут, — поэтому свежий спенд Meta всегда виден в кампании с лагом (перечень авто-процессов — *Что AIO проставляет и делает сам — фоновые задачи и их расписание*).
+- Если соцку только что подключили — нужно подождать, пока AIO подтянет её кабинеты и первую статистику по активным кабинетам, потом ещё один цикл перелива (~10 минут). До этого данных в кампании просто нет.
+- Косты и метрики Meta в `Campaigns` отстают на сумму двух задержек: свежесть данных Meta (у активного кабинета — до 5 минут плюс задержка самой Meta по часовой статистике до часа) и цикл перелива (хуже — если очередь перелива загружена). Косты каждой кампании AIO обновляет по крону не чаще, чем раз в ~10 минут, — поэтому свежий спенд Meta всегда виден в кампании с лагом (перечень авто-процессов — *Что AIO проставляет и делает сам — фоновые задачи и их расписание*).
 - Метрики AIO-уровня (визиты, лиды, конверсии) — в реальном времени, не зависят от этих интервалов.
 
 ### Структура раздела Meta — Social profiles + read-only зеркала
@@ -378,7 +379,7 @@ AIO-визитов почти всегда **меньше**, чем кликов
 
 1. `Edit Campaign` → поле **Cost Update Strategy** → `AIO Meta` (или другая стратегия из дропдауна).
 2. Соцка подключена через `Connect` (см. раздел `Привязка FB-аккаунта (Connect)` выше в этом же файле).
-3. Всё. Дальше работают два цикла: AIO пуллит данные из Meta раз в **30 минут** (`Polling Interval`), потом раз в **10 минут** переливает их **на визиты** на уровне, выбранном в `Cost Update Strategy` (по умолчанию `AIO Meta` = **FB Ad ID**, именно объявление, — точнее, чем адсет / FB-кампания / аккаунт; см. «Уровни матчинга Cost Update Strategy» выше). Если по выбранному уровню визита нет — его spend не переливается (часть костов теряется).
+3. Всё. Дальше работают два цикла: AIO пуллит данные из Meta по своему расписанию (`Pulling interval` = `Auto`: у активного кабинета статистика за сегодня каждые **5 минут**), потом раз в **10 минут** переливает их **на визиты** на уровне, выбранном в `Cost Update Strategy` (по умолчанию `AIO Meta` = **FB Ad ID**, именно объявление, — точнее, чем адсет / FB-кампания / аккаунт; см. «Уровни матчинга Cost Update Strategy» выше). Если по выбранному уровню визита нет — его spend не переливается (часть костов теряется).
 
 ### Конфиг-слой автосинка
 
@@ -420,7 +421,7 @@ AIO-визитов почти всегда **меньше**, чем кликов
 
 FB Insights API иногда отдаёт **выбросы** костов (`$250` вместо `$15`) — это баг Facebook, AIO видит его в респонсе. Держатся ~30-60 минут, потом нормализуются. Плюс FB Insights финализирует косты ретроактивно — ~2 дня вглубь (см. `Ретро-окно атрибуции — 2 дня (фиксированное)`).
 
-AIO опрашивает FB на своём `Polling Interval` (дефолт — каждые 30 минут, см. `Polling Interval и перелив костов — два разных процесса`). Воркэраунды на выбросы: (1) подождать, пока FB нормализует; (2) собирать косты у себя и перетирать массовым `Update Costs` по `ad_id`; (3) ручной `Pull Data` (не чаще раза в 30 минут).
+AIO опрашивает FB по расписанию групп кабинетов (у активного кабинета статистика за сегодня — каждые 5 минут, вчерашний день пересчитывается раз в 4 часа; см. «`Pulling interval` (Polling Interval) и перелив костов — два разных процесса» и [meta-data-health.md](meta-data-health.md)). Воркэраунды на выбросы: (1) подождать, пока FB нормализует; (2) собирать косты у себя и перетирать массовым `Update Costs` по `ad_id`; (3) ручной `Pull Data` (не чаще раза в 30 минут).
 
 ### AIO Meta хранит FB-данные локально — доступны после бана
 
@@ -501,13 +502,21 @@ Google **не передаёт `account_id`** в URL автоматически 
 
 ## Lead Action и событие покупки (какие FB-события слать)
 
-**Lead Action** — какое событие AIO отправляет в FB Pixel/CAPI при лиде (по постбэку от рекламодателя). Парное поле — **событие целевого действия / покупки** (по умолчанию отправляет `Purchase`).
+**Lead Action** — какое событие AIO отправляет в FB Pixel/CAPI при первой конверсии воронки (по постбэку от рекламодателя): его значение уезжает в поле визита `fb_lead_action`. Парный селект — **событие целевого действия вертикали** (поле `fb_ftd_action`; по умолчанию отправляет `Purchase`). Оба живут в источнике `FB w/ CAPI` и показываются в Link Generator, когда выбран этот источник; какой трекер какой селект читает — [models/tracker.md](../models/tracker.md).
 
 ### Доступные события
 
-`Lead`, `Purchase`, `Reg`, `Complete Registration` + кастомные конверсии из `Conversion Types`.
+Оба селекта отдают один и тот же закрытый список стандартных событий Meta (17 значений + пункт `Nothing`, чтобы событие не слать): `AddPaymentInfo`, `AddToCart`, `AddToWishlist`, `CompleteRegistration`, `Contact`, `CustomizeProduct`, `Donate`, `FindLocation`, `InitiateCheckout`, `Lead`, `Purchase`, `Schedule`, `Search`, `StartTrial`, `SubmitApplication`, `Subscribe`, `ViewContent`. Типы конверсий AIO из `Settings → Conversion types` в этот список не попадают — они выбираются в трекере, а не в ссылке.
 
-Полный набор FB CAPI-событий в дропдаунах события лида и события покупки (стандартные события Meta): `AddPaymentInfo`, `AddToCart`, `AddToWishlist`, `CompleteRegistration`, `Contact`, `CustomizeProduct`, `Donate`, `FindLocation`, `InitiateCheckout`, `Lead`, `Purchase`, `Schedule`, `Search`, `StartTrial`, `SubmitApplication`, `Subscribe`, `ViewContent`. Дефолты — событие лида = `Lead`, событие покупки = `Purchase`.
+### Что предвыбрано в селектах — зависит от вертикали шаблона
+
+Лейбл первого селекта и предвыбранные значения приезжают вместе с источником `FB w/ CAPI` и различаются по вертикали:
+
+- **Finance, Nutra** — первый селект подписан `FB Lead Action ( CAPI )`, предвыбрано `Purchase`; парный селект — тоже `Purchase`.
+- **Sweeps** — первый селект подписан `FB Registration Action ( CAPI )`, предвыбрано `Lead`; парный селект подписан `FB Lead Action ( CAPI )`, предвыбрано `Purchase`.
+- **iGaming** — первый селект `FB Registration Action ( CAPI )`, предвыбрано `Purchase`; парный — `Purchase`; третий селект `FB Install Action ( CAPI )` → поле `fb_install_action`, предвыбрано `CompleteRegistration`.
+
+Практическое следствие: ссылка, сгенерированная без правки селектов, в Finance / Nutra / iGaming отправит в FB `Purchase` уже на первую конверсию (лид или регистрацию). Хочешь, чтобы лид уходил как `Lead`, — выбери его в первом селекте до генерации.
 
 ### Как настроить
 
@@ -554,20 +563,44 @@ Action атомарно меняет Destination во всех выбранны�
 
 Аналогично — **Replace Domain** (для случаев бана домена и срочного переноса трафика).
 
-## Change owner / Mass change owner
+## Change ownership / Mass change ownership — как передать кампанию другому владельцу
 
-Передача владения сущностью. Прежний owner остаётся в `Shared` (если ему дали доступ), новый — owner.
+**Владельца кампании меняет действие `Change ownership` в контекстном меню кампании (группа `Teams & permissions`); для нескольких выделенных кампаний — `Mass change ownership`.** Отдельного пункта `Change owner` нет: владелец и `Access type` меняются одной формой (`Transfer ownership and update the access level.`).
 
-Типовой сценарий: один юзер создал кампанию, протестировал, передал владение байеру, который её дальше ведёт.
+Типовой сценарий: один юзер создал кампанию, протестировал и передаёт её байеру, который дальше её ведёт.
 
-1. Right-click на кампании → `Change owner` (в дропдауне выбираешь нового owner-а из `Tenant users`).
-2. Выбрать нового owner-а → подтвердить.
+1. Right-click на кампании → `Change ownership`.
+2. `Access type` — кто ещё видит кампанию без шаринга: `Private`, `Use` или `View` (в форме уже стоит текущее значение; что даёт каждое — [how-to/permissions.md](permissions.md)).
+3. `Tenant users` — новый владелец.
+4. `Keep Editor access for the previous owner` — оставить или снять галку (разбор ниже) → подтвердить.
 
-### Owner vs Tenant Owner — путаница
+### Что остаётся у прежнего владельца кампании — `Keep Editor access for the previous owner`
 
-Owner сущности ≠ Tenant Owner — разные понятия ([models/permissions-model.md](../models/permissions-model.md)). `Change owner` меняет владельца **сущности**, а не тенанта. Tenant Owner — тот, кто создал тенант; сменить его нельзя (можно лишь через `Manage Tenant` выдать роль `Owner` ещё одному юзеру) — [models/permissions-model.md](../models/permissions-model.md).
+**Галка `Keep Editor access for the previous owner` включена по умолчанию: прежний владелец получает на кампанию шару с ролью `Editor`.** Он продолжает видеть кампанию и править её настройки, но без права раздавать доступ дальше, менять владельца и архивировать.
 
-Массово — выдели несколько кампаний → ПКМ → `Mass change owner` → целевой юзер → подтвердить. Точный UI-лейбл — [how-to/permissions.md](permissions.md) → Change Ownership.
+Если галку снять, прежний владелец видит кампанию только на общих основаниях: по уровню в команде, по `Access type` кампании или по другим шарам. Как устроены роли шары — [how-to/permissions.md](permissions.md).
+
+### Кто может сменить владельца кампании — нет пункта `Change ownership`
+
+**Пункт `Change ownership` показывается только на кампаниях, где у вас уровень доступа `Own`.** Его имеют владелец кампании, участник с более высоким уровнем в команде владельца, позиция с `Editor Scopes` на кампании (`edit-scopes.tracker.campaigns`) и Owner / Admin тенанта; полный список источников уровня — [models/permissions-model.md](../models/permissions-model.md). Дополнительно нужен ключ позиции `tracker.campaigns.share.ownership` (или покрывающий его раздел). Какой уровень у вас на кампанию, видно внизу контекстного меню строки — `Your access: <уровень>`.
+
+Отказы сервера дословно: `No access to this object (own level required)` — не хватает уровня на кампанию; `Action access denied (tracker.campaigns.share.ownership required)` — в позиции нет права.
+
+### `Mass change ownership` сменил владельца не у всех выделенных кампаний
+
+**`Mass change ownership` применяется только к кампаниям, где у вас уровень `Own`; остальные пропускаются, а не роняют всё действие.** Форма та же — `Access type`, `Tenant users`, `Keep Editor access for the previous owner`. Ещё до подтверждения диалог предупреждает плашкой вида `Will apply to 3 of 5: 2 skipped, no access`, а после выполнения показывает итог `Applied: 3 · Skipped: 2` и строку `no access: <имена кампаний>`. Ошибкой всё действие заканчивается, только если ни одной кампании с уровнем `Own` в выделении нет.
+
+### Owner кампании vs Tenant Owner — путаница
+
+Owner сущности ≠ Tenant Owner — разные понятия ([models/permissions-model.md](../models/permissions-model.md)). `Change ownership` меняет владельца **сущности**, а не тенанта. Tenant Owner — тот, кто создал тенант; сменить его нельзя, и роль `Owner` другому юзеру не выдаётся: через смену роли назначаются только `Admin` и `Employee` — [models/permissions-model.md](../models/permissions-model.md).
+
+### Владелец кампании автоматически получает `Use` на её лэнды, дестинейшены, источник и домен
+
+**При каждом сохранении кампании в её форме — при создании и при правке — владелец кампании автоматически получает шару с ролью `Use` на лэнды и дестинейшены из настроек кампании, на её источник и домен по умолчанию.** Так владелец видит в своей кампании всё, на что она ссылается, даже если эти объекты принадлежат другим.
+
+Выдача срабатывает только на объекты, которые не принадлежат владельцу, не открыты всем через `Access type` (`Use` / `View`) и на которые у него нет своей шары. Роль `Use` оставляет объект видимым в списках и селектах, но карточку не открывает и править не даёт: нужен просмотр или правка лэнда — его шарят отдельно с ролью `Viewer` или `Editor` ([how-to/permissions.md](permissions.md)).
+
+Смена владельца через `Change ownership` эту выдачу сама не делает — новый владелец получает `Use` на связанные объекты при следующем сохранении кампании в форме. Копия через `Copy campaign` сохраняется той же формой кампании, поэтому автор копии (он же её владелец) получает `Use` сразу при сохранении копии.
 
 ## Freeze Top / Freeze Bottom
 

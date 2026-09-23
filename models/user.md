@@ -6,7 +6,7 @@ doc_type: model
 builds: [erp, mtk]
 related: [permissions-model, permissions, architecture, notification-center, tenant, ui-map]
 language: ru
-updated: 2026-09-11
+updated: 2026-09-23
 ---
 
 # User — концепт (модель)
@@ -32,19 +32,21 @@ updated: 2026-09-11
 Доступ в **конкретном тенанте** определяют **атрибуты** юзера, а не он сам:
 - **Role** — Owner / Admin / Employee;
 - одна или несколько **Positions** — наборы прав через *Imperatives* (Allow/Deny по секциям), с `Priority` при конфликте;
-- членство в **Team** с уровнем Member / Leader / Head.
+- членство в одной или нескольких **Teams** с числовым уровнем (`Level N`, от 0 до 100): кто выше по уровню в команде, получает уровень `Own` на объекты, которыми владеют участники ниже.
 
 Как из этого вычисляется «что видно / что можно» — **целиком** в `models/permissions-model.md` (это **отдельная модель** — модель доступа, со своими сущностями Role/Position/Team/Imperative/Sharing). Концептуально: **User — сущность-actor, Permissions — модель того, что у этой сущности есть в тенанте.** Поэтому это разные модели.
 
 ### Кто такой Owner сущности и чем отличается от Tenant Owner
 
-- Создал сущность (кампанию / лэнд / домен / дистрибуцию…) → стал её **Owner**. `Change Owner` передаёт владение (прежний owner остаётся как shared с теми же правами).
-- **Owner сущности ≠ Tenant Owner** — разные понятия; полное объяснение и механика Change Owner: [models/permissions-model.md](permissions-model.md).
+- Создал сущность (кампанию / лэнд / домен / дистрибуцию…) → стал её **Owner** (уровень доступа `Own`: правка, шаринг, смена владельца, архив). Владение передаётся диалогом `Change ownership` (массово — `Mass change ownership`); галка `Keep Editor access for the previous owner` включена по умолчанию, и прежний владелец получает шару `Editor` — править может, но без права раздавать, смены владельца и архива. Галку сняли — прежний владелец видит объект только по общим правилам доступа.
+- **Owner сущности ≠ Tenant Owner** — разные понятия; полное объяснение и механика `Change ownership`: [models/permissions-model.md](permissions-model.md), процедура — [how-to/permissions.md](../how-to/permissions.md).
 - Юзер фигурирует в данных как **Campaign Owner** и **Launcher** (кто сгенерил конкретную ссылку) — эти «роли в контексте» влияют, например, на маршрутизацию `Fill Field Distribution` (см. `models/distributions-model.md`).
 
 ### Как логируются действия User
 
 - **Каждое действие логируется** (IP / User-Agent / timestamp / что сделал) — инструмент разбора «кто это сделал». Логирование работает для любого юзера тенанта.
+
+- **Действия под `Log in as user` помечаются отдельно.** Owner или Admin тенанта может войти под сотрудника своего тенанта (`Settings → Users` → правый клик по юзеру → `Log in as user`) на срок до 2 часов. Экшены, выполненные в такой сессии, пишутся в логи от имени этого юзера с пометкой `Impersonated by <имя> (<uuid>)`; в логах самого юзера видно, кто и до какого времени открывал сессию. Процедура — [how-to/permissions.md](../how-to/permissions.md).
 
 ### Жизненный цикл User: почему деактивировать, а не удалять
 
@@ -56,7 +58,7 @@ updated: 2026-09-11
 
 - **состоит в одном или нескольких Tenant** (membership многие-ко-многим); права — свои в каждом.
 - **HAS Role / Positions / Team** (в данном тенанте) → модель доступа `models/permissions-model.md`.
-- **OWNS сущности** (Owner); `Change Owner` передаёт владение.
+- **OWNS сущности** (Owner); `Change ownership` передаёт владение.
 - фигурирует как **Campaign Owner / Launcher** — контекстные роли, влияющие на Distribution-маршрутизацию.
 
 ## Частые путаницы: User vs Permissions, Owner сущности vs Tenant Owner, Launcher
@@ -65,7 +67,7 @@ updated: 2026-09-11
 |---|---|
 | **User vs Permissions** | User — *сущность*-actor (аккаунт). Permissions (Role/Position/Team/Sharing) — *модель доступа*: что у юзера есть **в тенанте** (`models/permissions-model.md`). User ≠ его права. |
 | **User (аккаунт) vs membership в тенанте** | Аккаунт **один**; он состоит в нескольких тенантах. «Юзер в тенанте» — это аккаунт + его роль/позиции **в этом** тенанте. Удаление из одного тенанта не удаляет аккаунт. |
-| **Owner сущности vs Tenant Owner** | Tenant Owner — владелец **тенанта** (full access ко всему в нём). Owner сущности — кто **её** создал. Разные «owner». |
+| **Owner сущности vs Tenant Owner** | Tenant Owner — владелец **тенанта** (full access ко всему в нём). Owner сущности — кто **её** создал или кому передали владение через `Change ownership`. Разные «owner». |
 | **User vs Launcher** | Launcher — юзер, **сгенерировавший конкретную ссылку** (роль-в-контексте, фиксируется в момент генерации). У Direct-визитов `Launcher = Unknown`. |
 
 ## Частые ошибки с User: не тот тенант, удаление, нет 2FA, Monitoring User
@@ -78,6 +80,6 @@ updated: 2026-09-11
 ## Смежные документы по User, доступу и тенанту
 
 - **Что у юзера есть (модель доступа целиком)** → [models/permissions-model.md](permissions-model.md).
-- **Процедуры** (инвайт / деактивация / Position / Share / Change Ownership) → [how-to/permissions.md](../how-to/permissions.md).
+- **Процедуры** (инвайт / деактивация / Position / Share / `Change ownership` / `Log in as user`) → [how-to/permissions.md](../how-to/permissions.md).
 - **Тенант-контейнер** → [models/tenant.md](tenant.md).
 - **UI** → [reference/ui-map.md](../reference/ui-map.md) (`Settings → Users / Positions / Teams`; смена тенанта и `Manage Tenant` в меню профиля).

@@ -3,10 +3,10 @@ id: how-to-pwa
 title: Как создать и настроить AIO PWA (внутреннюю)
 description: "Создание внутренней PWA в AIO — раздел Content → PWA, PWA Builder и PWA-макрос; витрина в Design Settings (селектор Skin, скины из AIO skin library, импорт содержимого со страницы приложения, язык витрины, слайды 9:16, переключатели значков, date-макросы в отзывах); вшивание во флоу; рассылка пушей на собранную PWA-аудиторию remarketing-кампанией с привязкой на Landing Type; установка на Android и iOS, кнопка ухода на оффер в iOS-модалке, конверсия Install, поле визита PWA Hess Reason."
 doc_type: how-to
-builds: [erp]
-related: [mechanics-pwa, destinations, remarketing-campaigns, conversion-ai-testing, campaigns, domains, landings, user-fields, placeholders, sdk, conversion-model, visit-field, ui-common, flow-model, push-notifications, notifications-flow, metric, glossary]
+builds: [erp, mtk]
+related: [mechanics-pwa, destinations, custom-pwa, remarketing-campaigns, conversion-ai-testing, campaigns, domains, landings, user-fields, landing, placeholders, sdk, conversion-model, visit-field, ui-common, flow-model, push-notifications, notifications-flow, metric, glossary]
 language: ru
-updated: 2026-09-11
+updated: 2026-09-23
 ---
 
 # Как создать и настроить AIO PWA (внутреннюю)
@@ -19,17 +19,19 @@ updated: 2026-09-11
 
 ## TL;DR
 
-- **PWA в AIO = обычный лэнд** + manifest для Chrome + Service Worker, но живёт она в **своём разделе `Content → PWA`**: в `Content → Landings` показываются только обычные лэнды (режим `Editor`), PWA туда не попадает. На шаге `Content` флоу PWA при этом выбирается как обычный лэнд.
+- **PWA в AIO = обычный лэнд** + manifest для Chrome + Service Worker, но живёт она в **своём разделе `Content → PWA`**: в `Content → Landings` показываются только обычные лэнды (режим `Editor`), PWA туда не попадает. На шаге `Content` флоу PWA при этом выбирается как обычный лэнд. В MTK всё то же, но раздел называется `PWA` (вкладка верхнего меню, страница `/app/mtk/pwa/landers`) и открывается только платным модулем `PWA + Push` — *Как устроен MTK-вид AIO: навигация, пресеты из шаблона и методы под типовые задачи*.
 
-- **Два пути собрать:** (A) кнопка **`+ PWA`** в `Content → PWA` → встроенный **PWA Builder** (новая PWA с нуля); (B) **PWA-макрос** — превратить уже загруженный лэнд в PWA (указываешь ID кнопки Install + div-элементы).
+- **Как собрать:** (A) кнопка **`+ PWA`** в `Content → PWA` → `PWA landing` → встроенный **PWA Builder** (новая PWA с нуля); (B) **PWA-макрос** — превратить уже загруженный лэнд в PWA (указываешь ID кнопки Install + div-элементы); плюс **`+ PWA` → `Custom PWA`** — свой лэнд из ZIP, который AIO оборачивает в готовый PWA-шелл ([how-to/custom-pwa.md](custom-pwa.md)).
+
+- **Конверсии `Install` / `Open PWA` / `Push Subscribe` для PWA из Builder-а и Custom PWA задаются на `Lander Type`, а не в самой PWA** — секция «Где задать конверсии установки, открытия и подписки» ниже.
 
 - **Source для внутренней PWA — это FB** (обычная трекинговая ссылка), **не** `Third Party PWA Link Generator` (тот нужен только для сторонних сервисов).
 
 - **Витрину собирают в `Design Settings`:** вид — селектором `Skin`, готовое содержимое — кнопкой `Library` (скины ведёт AIO) либо импортом со страницы приложения, язык один на PWA, слайды вертикальные ~9:16.
 
-- **Push с PWA:** подписка работает **по умолчанию** (`Push Subscribe Toggle` не нужен), а рассылку по собранной аудитории делает **remarketing-кампания** ([how-to/remarketing-campaigns.md](remarketing-campaigns.md)) — её привязывают к `Landing Type` этой PWA.
+- **Push с PWA:** подписка работает **по умолчанию** (`Push Subscribe Toggle` не нужен), а рассылку по собранной аудитории делает **remarketing-кампания** ([how-to/remarketing-campaigns.md](remarketing-campaigns.md)) — её привязывают к `Landing Type` этой PWA. В MTK новый тенант вертикали iGaming получает такую привязку из шаблона — готовые remarketing-кампании уже привязаны к типу лендинга `PWA` (в шаблонах MTK Finance / Sweeps набора рассылки нет); тенанту без набора или созданному раньше, чем шаблон стал включать рассылку, привязку ставит команда AIO, остальное настраивается самостоятельно.
 
-- **Android и iOS:** на уровне флоу есть готовое разделение **Android / iOS / Desktop**, установка работает и на Android, и на iOS, но по-разному — на Android + Chrome браузер показывает prompt «Установить», на iOS SDK показывает модалку с ручными шагами Add to Home Screen и кнопкой, которая уводит визит на оффер без установки. Web-push при этом задокументирован под Chrome.
+- **Android и iOS:** в iGaming-шаблоне есть готовый флоу `Advanced - PWA / OneLink` с разводкой **Android / iOS / остальное**, установка работает и на Android, и на iOS, но по-разному — на Android + Chrome браузер показывает prompt «Установить», на iOS SDK показывает модалку с ручными шагами Add to Home Screen и кнопкой, которая уводит визит на оффер без установки. Web-push при этом задокументирован под Chrome.
 
 ---
 
@@ -42,11 +44,19 @@ updated: 2026-09-11
 
 ## Что должно быть готово до начала
 
-- Тенант с доступом к `Content → PWA` (Путь A) либо к `Content → Landings` и `Content → Macros` (Путь B). Разделы `Landings` и `PWA` открываются одним и тем же правом `content.landings.view`. **Создание PWA требует отдельного права** — в настройках прав оно называется **`Content: landings PWA`** (слаг `content.landings.edit.pwa`); без него кнопки создания PWA на странице не будет.
+- Тенант с доступом к `Content → PWA` (Путь A) либо к `Content → Landings` и `Content → Macros` (Путь B). Раздел `Landings` открывается правом `content.landings.view` (`Content: landings page`), раздел `PWA` — своим ключом `content.landings.view.pwa` (`Content: PWA page`). Второй вложен в первый по префиксу: `Allow content.landings.view` открывает оба раздела, а `PWA` можно отнять отдельно (`Deny content.landings.view.pwa` строкой ниже) или выдать без `Landings`. **Создание PWA требует отдельного права:** собрать PWA в Builder-е — **`Content: landings PWA`** (`content.landings.edit.pwa`), залить свой ZIP как `Custom PWA` — **`Content: landings custom PWA`** (`content.landings.edit.custom-pwa`). Без обоих кнопки `+ PWA` на странице не будет.
+
 - Подключённый Source (FB) и домен под кампанию — как для обычного лэнда (см. [how-to/campaigns.md](campaigns.md), [how-to/domains.md](domains.md)).
+
 - Если планируешь push — заранее посмотри [how-to/remarketing-campaigns.md](remarketing-campaigns.md): рассылку по визитам, прошедшим PWA, собирают remarketing-кампанией.
+
 - Понимание, что внутренняя PWA — это **лэнд**: в флоу она ставится как обычный лэндинг на шаг **`Content`**, а не отдельным «PWA»-шагом или Destination-ом (Destination-ом PWA бывает только у 3rd party). После PWA визит идёт дальше по флоу — на оффер. См. [mechanics/pwa.md](../mechanics/pwa.md).
-- Нужные типы конверсий заведены в тенанте: `Install` / `Open PWA` (их фиксирует сама PWA) и `Push Subscribe`. Если их нет — создать в `Settings → Conversion Types` (могут отсутствовать, если тенант не под PWA-шаблон). *(Конверсии воронки рекламодателя — `Registration`, `Purchase`, повторное касание и т.п. — приходят постбэком от рекламодателя, это **не** PWA-конверсии.)*
+
+- Нужные типы конверсий заведены в тенанте: `Install` / `Open PWA` (их фиксирует сама PWA) и `Push Subscribe`. Из коробки все три есть только в iGaming-шаблоне (ERP и MTK); в шаблонах Finance / Nutra / Sweeps заведён один `Push Subscribe`, а `Install` / `Open PWA` создаются вручную в `Settings → Conversion Types`. *(Конверсии воронки рекламодателя — `Registration`, целевое действие вертикали, повторные конверсии — приходят постбэком от рекламодателя, это **не** PWA-конверсии.)*
+
+- Тип лэнда под PWA: в iGaming-шаблоне есть тип `PWA` («PWA Landing»), в шаблонах других вертикалей такого типа нет — PWA Builder примет любой существующий тип, но под привязку ремаркетинга удобнее завести отдельный (см. «Где у PWA привязывается ремаркетинг-кампания — на `Landing Type`»).
+
+В MTK вместо `Content → PWA` — страница `PWA` платного модуля `PWA + Push` (`/app/mtk/pwa/landers`): без модуля Путь A в MTK недоступен, как включить — *Билды, тарифы, триал и статусы тенанта*.
 
 ---
 
@@ -55,19 +65,19 @@ updated: 2026-09-11
 Когда: нужна PWA-шка, собранная в AIO «с нуля», без своего готового лэнда.
 
 1. Открой раздел **`Content → PWA`** (отдельный пункт меню рядом с `Content → Landings`).
-2. Нажми **`+ PWA`** (экшен `Create PWA`) — кнопка сразу открывает встроенный **PWA Builder**, промежуточного выбора «что создать» нет.
+2. Нажми **`+ PWA`** — откроется выбор, как собирать: **`PWA landing`** (встроенный **PWA Builder**, помечен рекомендуемым) или **`Custom PWA`** (свой ZIP в PWA-шелле, [how-to/custom-pwa.md](custom-pwa.md)). Пункты показываются по правам: `PWA landing` — с `content.landings.edit.pwa`, `Custom PWA` — с `content.landings.edit.custom-pwa`. Для этого пути выбери `PWA landing`.
 3. Настрой элементы PWA в Builder-е (три блока: `PWA Settings`, `Design Settings`, `Comments`; + опц. `Content Splits`, см. ниже). Так как это лэнд, к нему применимы все возможности лэндов: можно завести **Content Splits** на любой элемент (название, описание, иконка, рейтинг, комментарии, дизайн) — тип `Text` / `Image` / `HTML`. См. [how-to/landings.md](landings.md) → Content Splits.
 4. Сохрани. Дальше PWA используется как **обычный лэнд** на шаге **`Content`** Campaign Flow (см. «Вшить PWA во флоу»).
 
-Вернуться к настройкам созданной PWA — экшен **`Manage PWA`** в её строке на той же странице.
+Вернуться к настройкам созданной PWA — экшен **`Manage PWA`** в её строке на той же странице (у PWA, собранной через `Custom PWA`, — `Manage Custom PWA`).
 
 ### Почему PWA нет в списке `Content → Landings`
 
-Потому что у PWA свой раздел: `Content → PWA` показывает PWA, а `Content → Landings` — только лэнды режима `Editor`. У каждого лэнда есть режим (`mode`), и именно он решает, на какой странице лэнд виден. Фильтр по режиму странице навязан и в интерфейсе не показывается — снять его или посмотреть «все лэнды одним списком» нельзя. Права при этом общие: оба раздела открываются одним `content.landings.view`.
+Потому что у PWA свой раздел: `Content → PWA` показывает PWA, а `Content → Landings` — только лэнды режима `Editor`. У каждого лэнда есть режим (`mode`), и именно он решает, на какой странице лэнд виден. На `Content → Landings` фильтр по режиму навязан и в интерфейсе не показывается — снять его или посмотреть «все лэнды одним списком» нельзя. Права у разделов разные: `Content → Landings` открывается правом `content.landings.view`, а `Content → PWA` — отдельным `content.landings.view.pwa`. На странице PWA над таблицей есть переключатель `All` / `AIO PWAs` / `Custom PWAs`: по умолчанию `All` — в списке оба режима, PWA из Builder-а и `Custom PWA`; выбранный вариант запоминается в браузере.
 
 На выбор лэнда во флоу это не влияет: в диалоге выбора лэнда фильтра по режиму нет, PWA там присутствует наравне с обычными лэндами.
 
-Что ещё отличает страницу PWA от `Content → Landings`: экшен создания — `+ PWA` (сразу Builder), экшен правки строки — `Manage PWA`, каретки `Manage templates` / `Manage landing types` на странице PWA нет, а настройки таблицы (набор и порядок колонок) у неё свои и с Landings не наследуются.
+Что ещё отличает страницу PWA от `Content → Landings`: экшен создания — `+ PWA` (выбор `PWA landing` / `Custom PWA`), экшен правки строки — `Manage PWA` или `Manage Custom PWA` по режиму строки, каретки `Manage templates` / `Manage landing types` на странице PWA нет, а настройки таблицы (набор и порядок колонок) у неё свои и с Landings не наследуются.
 
 ### Что настраивается в PWA Builder — три блока настроек
 
@@ -77,15 +87,21 @@ Builder делится на три блока: `PWA Settings`, `Design Settings`
 
 Кавычки в текстах, набранных в полях Builder-а, заменяются на типографские: `'` → `’`, `"` → `”`. Так сделано намеренно — одна и та же строка попадает и в HTML витрины, и в JS-строку.
 
-### PWA Settings — конфиг PWA и привязка конверсий
+### PWA Settings — имя, тип и гео PWA
 
-**`PWA Settings`** — как PWA выглядит внутри AIO + привязка конверсий. Поля: `PWA name`, `Lander type` (= PWA), `Countries`, `Description`, `Languages`, `Tags`, плюс **три отдельных поля выбора конверсии**:
+**`PWA Settings`** — как PWA выглядит внутри AIO: `PWA name`, `Description`, `Lander type`, `Countries`, `Languages`, `Tags`. Полей выбора конверсий в Builder-е больше нет — конверсии установки, открытия и подписки задаются на типе лэнда (секция ниже).
+
+### Где задать конверсии установки, открытия и подписки PWA — на `Lander Type`
+
+**Конверсии, которые PWA спавнит сама, задаются в форме типа лэнда (`Lander Type`) этой PWA — три поля появляются, когда у типа включён `Is PWA?`:**
 
 - **`Conversion type on install`** — конверсия установки: PWA спавнит её, когда визит подтвердил браузерный диалог установки (см. «Conversion Spawn на шаге Offer»).
 - **`Conversion type on open`** — конверсия при тапе по иконке PWA на домашнем экране смартфона.
 - **`Conversion type on subscribe`** — конверсия при подписке на push.
 
-Это те самые `Install` / `Open PWA` / `Push Subscribe`, что должны существовать в тенанте (см. «Вшить PWA во флоу» и `Settings → Conversion Types`).
+Настройка типа действует на все PWA этого типа, собранные в Builder-е и через `Custom PWA`: значения, которые раньше хранились в самой PWA, больше не используются — берутся значения типа. Поле типа пустое → соответствующая конверсия не спавнится. Поля видны только у типа с включённым `Is PWA?`: если PWA привязана к типу без этого флага, включите его у типа (или переведите PWA на тип, где он включён) — иначе конверсии задать негде. Выбирают те самые `Install` / `Open PWA` / `Push Subscribe`, что должны существовать в тенанте (см. «Вшить PWA во флоу» и `Settings → Conversion Types`). Флаг `Is PWA?` и остальные флаги типа — [models/landing.md](../models/landing.md).
+
+PWA-макрос (путь B) через тип не идёт: там uuid конверсий по-прежнему пишутся в конфиг `pwa.conversions` на самом лэнде.
 
 ### Как добавить Content Split в PWA Builder (A/B тест элементов PWA)
 
@@ -95,6 +111,8 @@ Builder делится на три блока: `PWA Settings`, `Design Settings`
 4. Скопируй placeholder сплита и вставь его в нужный элемент (например, `App name`). Сохрани — варианты начнут тестироваться и оптимизироваться AI.
 
 Связывать элементы между сплитами можно через Color Groups (см. [how-to/landings.md](landings.md) → Content Splits).
+
+Готовый образец — PWA-лэнд `AIO PWA Example w/ Splits` из iGaming-шаблона («AIO PWA lander with content splits - header, icon and description come from LP Split Content fields»): заголовок, иконка и описание витрины берутся из полей группы `LP Split Content` — `lp_header`, `lp_image`, `lp_description`, — со стратегией `Machine Learning` под целевую конверсию вертикали.
 
 ## Путь B. PWA-макрос (превратить любой лэнд в PWA)
 
@@ -114,7 +132,7 @@ Builder делится на три блока: `PWA Settings`, `Design Settings`
   - `pwa-preloader` — короткий лоадер перед экраном установки;
   - `pwa-inside` — лоадер, видимый когда лэнд открыт **уже установленной** PWA (пока идёт подписка на push и редирект на оффер).
 
-Готового лэнда-примера «из коробки» под этот сценарий может не быть — тогда берётся эталонный PWA-скрипт и адаптируется под конкретный лэнд: меняются id кнопки и контейнеров под разметку лэнда.
+Лэнда-примера под этот сценарий в шаблонах тенанта нет, а заготовка макроса есть только в iGaming-шаблоне (ERP и MTK): `AIO Custom PWA` (слаг `aio_custom_pwa`, не глобальный, активен) в `Content → Macros` — «Install flow for hand-made PWA landings. Insert {{aio:macros:aio_custom_pwa}} into such a landing; landings built by the AIO PWA generator already have their own and must not get this one». Его конфиг адаптируется под конкретный лэнд: меняются id кнопки и контейнеров под разметку. В шаблонах других вертикалей макрос заводится с нуля по образцу ниже.
 
 ### Нужна ли intent-модалка в HTML лэнда
 
@@ -156,7 +174,7 @@ window.aioBus.push({ type: "config", config: {
 ```
 
 3. Если это отдельный макрос — вызови его на лэнде после `{{aio}}`: `{{aio:macros:<slug>}}`.
-4. Заведи в тенанте нужные `Conversion Types` (`Install` / `Open PWA` / `Push Subscribe`) и подставь их UUID в `conversions`.
+4. Заведи в тенанте нужные `Conversion Types` (`Install` / `Open PWA` / `Push Subscribe`) и подставь их UUID в `conversions`. Для PWA-макроса это единственное место: настройка конверсий на `Lander Type` действует только на PWA из Builder-а и `Custom PWA`.
 
 ### Откуда берутся `hess` и `sess` — ссылки продолжения флоу
 
@@ -278,15 +296,17 @@ SDK умеет увидеть, что приложение в этом брау�
 
 ### Есть ли готовые флоу-шаблоны под PWA в тенанте?
 
-Преднастроенные PWA-флоу и шаблоны (включая **Advanced Flow** с разделением по платформам) есть **только если тенант создавался под соответствующий шаблон**. Если их в тенанте нет — собери флоу сам в `Tracker → Flows`: PWA подставляется как лэнд на шаг `Content` внутри обычной воронки. В PWA-шаблоне на месте PWA можно оставить PWA-лэнд либо поставить лэнд/скипы. *(Имена конкретных шаблонов бывают тенант-специфичны — ориентируйся на структуру, не на имя.)* Полный разбор шаблонов, нод и платформенного разделения — в [models/flow-model.md](../models/flow-model.md) (раздел «Advanced Flow и APK-шаблоны»).
+Готовые PWA-флоу есть **только в iGaming-шаблоне** (ERP и MTK) — три флоу с кампаниями-примерами `AIO EXAMPLE`: `PWA / OneLink` (фильтр → PWA-шаг → оффер), `PWA / OneLink w/ Landing` (после PWA — `Spawn Install` и прилэнд до оффера) и `Advanced - PWA / OneLink` (разводка Android / iOS / остальное). На PWA-шаге каждого из них в одном сплите стоят собственная PWA `AIO PWA Example w/ Splits` и партнёрские PWA-дестинейшены — на месте примера можно оставить свою PWA либо поставить лэнд. Состав флоу и кампаний-примеров — [mechanics/pwa.md](../mechanics/pwa.md); ноды и разбор — [models/flow-model.md](../models/flow-model.md) (раздел «Advanced Flow и APK-шаблоны»). В шаблонах Finance / Nutra / Sweeps PWA-флоу нет.
+
+Если готового флоу в тенанте нет — собери его сам в `Tracker → Flows`: PWA подставляется как лэнд на шаг `Content` внутри обычной воронки.
 
 ### Source — это FB, не Link Generator
 
-Для **внутренней** PWA ссылка генерируется как для обычной кампании: Source = **FB**, обычная трекинговая ссылка AIO. `Third Party PWA Link Generator` здесь **не нужен** — он только для возврата визита из **стороннего** PWA-сервиса (см. [how-to/destinations.md](destinations.md)).
+Для **внутренней** PWA ссылка генерируется как для обычной кампании: Source = **FB** (в шаблонах тенанта он заведён как `FB w/ CAPI`), обычная трекинговая ссылка AIO. `Third Party PWA Link Generator` здесь **не нужен** — он только для возврата визита из **стороннего** PWA-сервиса (см. [how-to/destinations.md](destinations.md)).
 
 ### Domain Change — зачем он PWA
 
-В Advanced Flow после фильтра обычно стоит **Domain Change**, чтобы PWA-шка открывалась под **другим** доменом, не тем, на котором крутится FB-трафик — это разносит «рекламный» домен и домен, под которым живёт PWA. Общая механика и мотивация Domain Change (замена домена без переподключения FB) — в [how-to/domains.md](domains.md) и [models/flow-model.md](../models/flow-model.md).
+**Domain Change** в PWA-флоу ставят после фильтра и до шага с PWA, чтобы PWA открывалась на **своём** домене, отдельном от домена рекламной ссылки. В готовых PWA-флоу iGaming-шаблона (включая `Advanced - PWA / OneLink`) этого шага нет — его добавляют сами. Общая механика и мотивация Domain Change (замена домена без переподключения FB) — в [how-to/domains.md](domains.md) и [models/flow-model.md](../models/flow-model.md).
 
 ### Conversion Spawn на шаге Offer (важно: внутренняя vs 3rd party)
 
@@ -295,9 +315,9 @@ SDK умеет увидеть, что приложение в этом брау�
 - **Сторонние PWA-сервисы** не умеют слать постбэк на факт установки, поэтому `Install` спавнят при переходе визита в Offer («дошёл до оффера → значит установил и открыл»).
 - **Внутренняя AIO-PWA** спавнит `Install` сама — **в момент, когда визит подтвердил браузерный диалог установки**, а не по самому клику по кнопке. Поэтому для аиошной PWA спавн `Install` на уровне Offer **убирают** (иначе задвоение).
 
-Соответственно `Install` у внутренней PWA = «подтвердил диалог установки» (на iOS браузерного диалога нет — там `Install` фиксируется при первом запуске установленного приложения), у 3rd party = «установил и открыл». Что именно считается установкой на Android и на iOS и как это ложится в таблицу конверсий PWA (`Install` / `Open PWA`) — в [mechanics/pwa.md](../mechanics/pwa.md). *(Конверсии воронки рекламодателя — `Registration`, `Purchase`, повторное касание и т.п. — приходят постбэком от рекламодателя; это **не** PWA-конверсии, см. [models/conversion-model.md](../models/conversion-model.md).)*
+Соответственно `Install` у внутренней PWA = «подтвердил диалог установки» (на iOS браузерного диалога нет — там `Install` фиксируется при первом запуске установленного приложения), у 3rd party = «установил и открыл». Что именно считается установкой на Android и на iOS и как это ложится в таблицу конверсий PWA (`Install` / `Open PWA`) — в [mechanics/pwa.md](../mechanics/pwa.md). *(Конверсии воронки рекламодателя — `Registration`, целевое действие вертикали, повторные конверсии — приходят постбэком от рекламодателя; это **не** PWA-конверсии, см. [models/conversion-model.md](../models/conversion-model.md).)*
 
-Типы `Install` / `Open PWA` могут **отсутствовать** в тенанте (заводятся под PWA-шаблон). Если их нет — создай в `Settings → Conversion Types`, иначе спавнить и считать будет нечего.
+Типы `Install` / `Open PWA` из коробки есть только в iGaming-шаблоне (ERP и MTK); в тенанте другой вертикали их нет — создай в `Settings → Conversion Types`, иначе спавнить и считать будет нечего.
 
 ---
 
@@ -311,25 +331,31 @@ Push с PWA — это две независимые части: **подпис�
 
 Подписаться визит может **только на странице** (на PWA/лэнде); после ухода со страницы — нельзя.
 
-> **Конверсия `Push Subscribe` должна существовать в тенанте**, иначе подписки не считаются. Нет — заведи в `Settings → Conversion Types` (см. [models/conversion-model.md](../models/conversion-model.md)).
+> **Конверсия `Push Subscribe` должна существовать в тенанте**, иначе подписки не считаются. Во всех семи шаблонах тенанта она заведена из коробки; нет — заведи в `Settings → Conversion Types` (см. [models/conversion-model.md](../models/conversion-model.md)).
 
-> **Если Service Worker подкладывается вручную** (не через Builder/макрос, а отдельным файлом для обычного лэнда): он должен лежать **в корне домена**, иначе подписки не регистрируются. Исторический способ — sub-page с путём `push-service-worker/push-client-worker.js`. См. *уточните у поддержки*.
+> **Подписка на обычном лэнде (не PWA)** — отдельный макрос `AIO Push Subscription` (в шаблонах ERP Finance / Nutra / Sweeps лежит в `Content → Macros` выключенным) плюс поле `Push Subscribe Toggle`; Service Worker он регистрирует сам. Если Service Worker подкладывается вручную отдельным файлом, он должен лежать **в корне домена**, иначе подписки не регистрируются.
 
 ### Как настроить рассылку пушей на собранную PWA-аудиторию
 
 Рассылку по визитам, которые прошли PWA, делает **remarketing-кампания** — дефолтный способ рассылки в AIO. Процедура целиком — [how-to/remarketing-campaigns.md](remarketing-campaigns.md), здесь не дублируется.
 
-Коротко под PWA: заводишь флоу типа `Notifications` с узлом `Drip schedule`, кампанию, которая на этот флоу указывает, и триггер запуска — `Schedule` или `Conversion Trigger`. **Стоящий по умолчанию `Manual` не запускает ничего**, поэтому кампания «из коробки» молча не отправляет ни одного пуша. Аудиторию кампания набирает привязкой к сущностям трафика (см. «Где у PWA привязывается ремаркетинг-кампания — на `Landing Type`»), содержимое пушей берёт из дистрибуции, выбранной в шагах узла ([how-to/push-notifications.md](push-notifications.md)).
+Коротко под PWA: заводишь флоу типа `Notifications` с узлом `Drip schedule`, кампанию, которая на этот флоу указывает, и триггер запуска — `Schedule` или `Conversion Trigger`. **Стоящий по умолчанию `Manual` не запускает ничего**, поэтому кампания, сохранённая с этим дефолтом, молча не отправляет ни одного пуша. Аудиторию кампания набирает привязкой к сущностям трафика (см. «Где у PWA привязывается ремаркетинг-кампания — на `Landing Type`»), содержимое пушей берёт из дистрибуции, выбранной в шагах узла ([how-to/push-notifications.md](push-notifications.md)). В MTK флоу рассылки не строится — кампания указывает на готовый флоу типа `Notifications` из шаблона тенанта или от команды AIO.
 
 Собрать цепочку добивочных пушей прямо в кампанийном флоу нодой `Notifications Flow` тоже можно — это кастомный вариант для нестандартных сценариев ([mechanics/notifications-flow.md](../mechanics/notifications-flow.md)); дефолт под PWA — remarketing-кампания.
 
+### Какие remarketing-кампании под PWA приходят из шаблона тенанта
+
+Готовый набор remarketing-кампаний под PWA-аудиторию приходит из шаблона тенанта в вертикали iGaming (ERP и MTK; в шаблонах Finance / Nutra / Sweeps набора под PWA нет — там нет и типа лендинга `PWA`): по паре на переход воронки (например, установка → регистрация) плюс одна по всем стадиям сразу. Кампания с суффиксом `| Drip` запускается триггером `Conversion` — серия стартует от конверсии предыдущей стадии (для перехода установка → регистрация — от `Install`, стоп-конверсия `Registration`, обязательные конверсии `Install` + `Push Subscribe`); кампания с суффиксом `| Cron` — триггером `Schedule`, рассылка по расписанию по всем, кто застрял перед следующей стадией. Все они уже привязаны к типу лендинга `PWA` и шлют из глобальных наборов пушей AIO ([how-to/push-notifications.md](push-notifications.md)). Ещё одна кампания-пример, `Example - Custom Pushes | Drip`, ни к чему не привязана и собрана на тенантных дистрибуциях-примерах (`Example - After Install - 4 pushes …` и подобных) — её клонируют под свои тексты. Что получает новый MTK-тенант и что делать, если `Audience` пусто, — [how-to/remarketing-campaigns.md](remarketing-campaigns.md).
+
 ### Где у PWA привязывается ремаркетинг-кампания — на `Landing Type`
 
-Привязку ставят **на `Landing Type` этой PWA**: тогда каждый визит, прошедший любую PWA этого типа, попадает в аудиторию кампании на проходе.
+Привязку ставят **на `Landing Type` этой PWA**: тогда каждый визит, прошедший любую PWA этого типа, попадает в аудиторию кампании на проходе. Так собран и набор из шаблона тенанта: на типе лендинга `PWA` уже висят готовые кампании по переходам воронки — см. «Какие remarketing-кампании под PWA приходят из шаблона тенанта».
 
 Блок привязки узнаётся по кнопке `Add campaign` (пустое состояние `No campaigns added yet`) и стоит не только на PWA: он есть у семи сущностей трафика — источников, кампаний, флоу, обычных лэндов, типов лэндов, рекламодателей и дестинейшенов. В карточке `Landing Type` блок подписан `Remarketing campaigns`; в PWA Builder-е и в карточке обычного лэнда подписи у блока нет — только кнопка. Отдельным разделом стал список PWA, а не привязка кампаний. У родительской сущности вроде `Landing Type` привязка по умолчанию работает в режиме «собирать аудиторию»: сама PWA её не наследует — кампанией помечается визит.
 
 ⚠️ Тот же блок показан **в PWA Builder-е, в диалоге загрузки ZIP и в диалоге генерации лэнда — но оттуда привязка не сохраняется**, список после сохранения всегда пустой. Рабочие точки — `Landing Type` и обычное создание лэнда. Разбор — [how-to/remarketing-campaigns.md](remarketing-campaigns.md).
+
+В MTK блок `Add campaign` не показывается ни на одной сущности, а аудитория набирается той же привязкой на типе лендинга `PWA`: новому тенанту вертикали iGaming она приходит из шаблона вместе с готовыми remarketing-кампаниями, тенанту без набора (шаблоны MTK Finance / Sweeps) или созданному раньше, чем шаблон стал включать рассылку, её ставит команда AIO ([how-to/remarketing-campaigns.md](remarketing-campaigns.md)).
 
 В аудиторию попадают только визиты, не улетевшие в trash. Пометка визита кампанией накопительная: колонка `RMK Audience` показывает историю попаданий, а не текущий состав аудитории.
 
@@ -351,17 +377,17 @@ Push с PWA — это две независимые части: **подпис�
 
 Счётчики доставок и открытий заполняет Service Worker AIO — тот самый, который регистрирует на лэнде SDK-макрос `pwa`. Поэтому учёт работает только по **push-рассылкам на PWA-лэндах** и только тогда, когда пуш отправила **remarketing-кампания**: у пушей из `Notifications Flow` таких событий не появляется вообще, а по другим каналам рассылки (например, Telegram) `Delivered` / `Opened` всегда 0.
 
-Готовой колонки-процента (CTR / open-rate) нет ни на одном пути: система даёт счётчики, а процент собирают метрикой `Computable metric` поверх `Remarketing count` ([models/metric.md](../models/metric.md)). Как устроен сам учёт — [mechanics/notifications-flow.md](../mechanics/notifications-flow.md).
+Встроенной колонки-процента (CTR / open-rate) нет ни на одном пути: система даёт счётчики, а процент собирают метрикой `Computable metric` поверх `Remarketing count` ([models/metric.md](../models/metric.md)). В шаблонах тенанта такая метрика уже заведена — `Push Open Rate %` = `Opened Pushes / Delivered Pushes` поверх счётчиков `Sent Pushes` / `Delivered Pushes` / `Opened Pushes` / `Failed Pushes` — во всех четырёх ERP-шаблонах и в MTK iGaming; в MTK Finance / Sweeps метрик рассылки нет. Как устроен сам учёт — [mechanics/notifications-flow.md](../mechanics/notifications-flow.md).
 
 ---
 
 ## iOS / Android / Desktop — есть ли iOS-версия?
 
-Коротко: **установка работает и на Android, и на iOS**, но по-разному — на Android + Chrome установку предлагает сам браузер, на iOS визит ставит приложение вручную через Add to Home Screen, а SDK показывает модалку с шагами. На уровне флоу iOS обрабатывается отдельной веткой (готовое разделение Android / iOS / Desktop). Web-push при этом задокументирован под Chrome.
+Коротко: **установка работает и на Android, и на iOS**, но по-разному — на Android + Chrome установку предлагает сам браузер, на iOS визит ставит приложение вручную через Add to Home Screen, а SDK показывает модалку с шагами. На уровне флоу iOS обрабатывается отдельной веткой (в iGaming-шаблоне — готовый флоу `Advanced - PWA / OneLink` с разводкой Android / iOS / остальное). Web-push при этом задокументирован под Chrome.
 
 ### Что по iOS / Android / Desktop точно есть в системе
 
-- **Advanced Flow разделяет трафик по платформам.** После фильтра идёт Domain Change, затем: если `Android` → своя ветка с PWA; иначе если `iOS` → отдельная iOS-ветка; всё, что не Android и не iOS (десктоп и пр.) — по дефолту сразу в оффер. Это готовый шаблон (см. [models/flow-model.md](../models/flow-model.md)).
+- **Готовый флоу `Advanced - PWA / OneLink` (iGaming-шаблон, ERP и MTK) разводит трафик по платформам.** После `Filter` стоит шаг `Condition` `Android` (правило `aio.visit.os_name = Android`) → ветка `Android PWA / Onelink` → `Offer`; отклонённые идут на `Condition` `iOS` (`aio.visit.os_name = iOS`) → `iOS PWA / Onelink` → `Offer`; всё, что не Android и не iOS (десктоп и пр.), уходит на шаг `Fallback Offer` — в кампании-примере `Advanced Flow - Campaign Example` это `Offer Distribution` («OS-split funnel example: Android and iOS each get the PWA, rejected and desktop traffic falls back to a geo-routed offer via Offer Distribution»). На обеих PWA-ветках в примере стоит один и тот же сплит: `AIO PWA Example w/ Splits` + партнёрские PWA. Шага Domain Change в этом флоу нет. Разбор нод — [models/flow-model.md](../models/flow-model.md).
 - **Android / iOS / Windows** доступны как UA/OS-фильтры фильтра (быстрые селекторы устройств) и как групперы аналитики (`ua_os_name`).
 - **Установка есть и на Android + Chrome (браузерный prompt), и на iOS (ручной Add to Home Screen).** Детали поведения по платформам/браузерам (включая выход из in-app webview на Android) — [reference/sdk.md](../reference/sdk.md) §II.15 «`pwa` — install + web-push + Android-intent».
 
@@ -398,12 +424,20 @@ Push с PWA — это две независимые части: **подпис�
 
 ## Типичные ошибки при настройке PWA
 
-- **Service Worker не в корне домена** → подписки не регистрируются. Клади `push-client-worker.js` в корень (или через sub-page `push-service-worker/push-client-worker.js`), не на CDN как обычный файл.
+- **Service Worker не в корне домена** → подписки не регистрируются. Актуально только для своего Service Worker: PWA-макрос и засеянный макрос `AIO Push Subscription` регистрируют `/aio-static/aio-sw.js` сами. Свой файл клади в корень (или через sub-page `push-service-worker/push-client-worker.js`), не на CDN как обычный файл.
+
 - **Нужных Conversion Types нет в тенанте** (`Install` / `Open PWA` / `Push Subscribe`) → установки, открытия и подписки не считаются. Заведи их в `Settings → Conversion Types`.
+
+- **Конверсии не выбраны на типе лэнда PWA** → PWA из Builder-а или `Custom PWA` не спавнит `Install` / `Open PWA` / `Push Subscribe`, даже если типы конверсий в тенанте есть. Проверь поля `Conversion type on install` / `on open` / `on subscribe` в `Lander Type` этой PWA.
+
 - **Для внутренней PWA оставили Conversion Spawn `Install` на шаге Offer** → задвоение install. Спавн на оффере нужен только сторонним сервисам; внутренняя PWA трекает install сама.
+
 - **Взяли `Third Party PWA Link Generator` для внутренней PWA** — он только для возврата визита из стороннего сервиса. Внутренняя PWA запускается обычной FB-ссылкой.
+
 - **Ждут на iOS браузерный prompt установки, как на Android** — на iOS установка ручная: SDK показывает модалку с шагами Add to Home Screen. Про iOS-push «как на Android» гарантий нет; iOS-ветку часто ведут через отдельный сервис.
-- **Ждут готовый CTR / open-rate пушей** — готовой колонки-процента нет ни на одном пути: по пушам Remarketing-кампании есть счётчики `Delivered` и `Opened`, по пушам `Notifications Flow` — только логи в `Marketing → Messages`. Процент собирают метрикой `Computable metric` поверх `Remarketing count`.
+
+- **Ждут готовый CTR / open-rate пушей** — встроенной колонки-процента нет ни на одном пути: по пушам Remarketing-кампании есть счётчики `Delivered` и `Opened`, по пушам `Notifications Flow` — только логи в `Marketing → Messages`. Процент — метрика `Computable metric` поверх `Remarketing count`; в ERP-шаблонах и MTK iGaming она заведена как `Push Open Rate %`.
+
 - **Ищут созданную PWA в `Content → Landings`** — её там нет: у PWA свой раздел `Content → PWA`.
 
 ### Кнопка установки: что выглядит поломкой, но ею не является

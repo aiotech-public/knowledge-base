@@ -6,7 +6,7 @@ doc_type: model
 builds: [erp, mtk]
 related: [destinations, ui-map, flow-model, conversion-model, distributions-model, visit-lifecycle, analytics, user-fields, source, business-model]
 language: ru
-updated: 2026-09-11
+updated: 2026-09-23
 ---
 
 # Destination — концепт
@@ -23,7 +23,7 @@ updated: 2026-09-11
 - **Advertiser** — *кому* мы льём (рекламодатель / партнёрка / CRM как организация). **Опциональна:** участвует **только** в пути `By Advertiser`. В `By Integration` (raw API-интеграция) и в `Simple Redirect` адвертайзер **не используется** вовсе.
 - **Destination** — *конкретный канал пуша* (URL/интеграция + маппинг полей визита в параметры получателя). В пути `By Advertiser` привязан к адвертайзеру; в `Simple Redirect` — самостоятельный редирект-URL без адвертайзера.
 
-У одного Advertiser может быть несколько Destination. В модалке `+Destination` — 4 плитки: **`By advertiser`** (выбираешь сервис, AIO подтягивает преднастройки интеграции), **`Simple redirect`** (голый redirect-URL **без адвертайзера и без API-интеграции** — не для реальных офферов: теряется аналитика по Advertiser; узкие случаи), **`Telegram`** (интеграция типа `Telegram Destination`), **`By integration`** (raw API-интеграция без адвертайзера). Процедура и отличие `Simple Redirect` от `By Advertiser` — [how-to/destinations.md](../how-to/destinations.md). `Integration type` у интеграционных дестинейшнов — Bridge / IREV.
+У одного Advertiser может быть несколько Destination. В модалке `+Destination` — 4 плитки: **`By advertiser`** (выбираешь сервис, AIO подтягивает преднастройки интеграции), **`Simple redirect`** (голый redirect-URL **без адвертайзера и без API-интеграции** — не для реальных офферов: теряется аналитика по Advertiser; узкие случаи), **`Telegram`** (интеграция типа `Telegram Destination`), **`By integration`** (raw API-интеграция без адвертайзера). Процедура и отличие `Simple Redirect` от `By Advertiser` — [how-to/destinations.md](../how-to/destinations.md). `Integration type` у интеграционных дестинейшнов — например `Bridge` / `IREV Lite` (в шаблонах Finance и Nutra под них лежат примеры `Example Bridge Integration` и `Example IREV Integration` — [how-to/destinations.md](../how-to/destinations.md)).
 
 **Telegram Destination** — особый выход: трафик уходит не на форму получателя, а в **TG-бот/канал**, целевое действие — подписка на канал. Требует Sender Provider типа `Telegram` + `Behaviour` (`Bot -> Channel` — визит сначала попадает в бота, тот шлёт приглашение вступить в канал; `Channel` — редирект сразу в канал). Бот **должен быть админом канала**, иначе Telegram не отдаёт событие вступления и конверсия подписки не вернётся (обратная петля не замкнётся) — это требование Telegram к правам бота, не специфика AIO. Процедура — [how-to/destinations.md](../how-to/destinations.md) → Destination типа Telegram.
 
@@ -51,7 +51,7 @@ updated: 2026-09-11
 
 ## Почему лид и конверсия — разные события: обратная петля постбэка
 
-Главное, что путает новичков: **лид (push) и конверсия — разные события.** Пуш — это «мы отправили данные рекламодателю». Конверсия приходит **позже, входящим постбэком** от получателя (или через Tracker source-а) и привязывается к визиту по `visit_uuid`. **Постбэк — штатный путь возврата конверсий: получатель сам присылает результат, AIO его принимает.** На один пуш может прийти серия конверсий (`Lead` → серия обновлений статуса `Sale Status Update` → `Purchase`). Семантику конверсии задаёт `Conversion Type`, деньги — `Business Model` + Revenue/Payout-дистрибуции. См. [models/conversion-model.md](conversion-model.md), [models/distributions-model.md](distributions-model.md).
+Главное, что путает новичков: **лид (push) и конверсия — разные события.** Пуш — это «мы отправили данные рекламодателю». Конверсия приходит **позже, входящим постбэком** от получателя (или через Tracker source-а) и привязывается к визиту по `visit_uuid`. **Постбэк — штатный путь возврата конверсий: получатель сам присылает результат, AIO его принимает.** На один пуш может прийти серия конверсий (`Lead` → серия обновлений статуса `Sale Status Update` → конверсия целевого действия вертикали; так собран набор типов в шаблоне Finance). Семантику конверсии задаёт `Conversion Type`, деньги — `Business Model` + Revenue/Payout-дистрибуции. См. [models/conversion-model.md](conversion-model.md), [models/distributions-model.md](distributions-model.md).
 
 Поэтому Destination концептуально стоит на стыке двух слоёв: «маршрутизация» (пуш визита наружу) и «деньги» (конверсии, которые с него возвращаются).
 

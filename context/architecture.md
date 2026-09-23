@@ -4,9 +4,9 @@ title: Архитектура AIO
 description: SaaS-приложение + AIO-агент на серверах клиента, CDN для лэндов, тенанты, репойнт при бане, мониторинг.
 doc_type: context
 builds: [erp, mtk]
-related: [server, landing, domains, tenant, notification-center, domain, meta-spend-allocation, campaigns, visit-lifecycle, permissions-model, glossary]
+related: [server, landing, registration, business-model, permissions-model, domains, remarketing-campaigns, tenant, notification-center, domain, meta-spend-allocation, campaigns, visit-lifecycle, glossary]
 language: ru
-updated: 2026-09-11
+updated: 2026-09-23
 ---
 
 # Архитектура AIO
@@ -75,24 +75,59 @@ updated: 2026-09-11
 
 Понятие `Workspace` **не используется** — используется только `Tenant`. Если кто-то говорит «воркспейс», имеется в виду тенант.
 
-### Шаблон тенанта
+### Шаблон тенанта — откуда берётся новый тенант
 
-Новый тенант поднимается **из шаблона**. Шаблон содержит:
+**Новый тенант — одноразовая копия тенанта-донора, привязанного к шаблону; шаблон выбирается карточкой на шаге «Тенант» регистрации.** Публичных шаблонов семь, по вертикали и билду: `ERP Finance`, `ERP iGaming`, `ERP Nutra`, `ERP Sweeps` и `MTK Finance`, `MTK iGaming`, `MTK Sweeps`. На карточке — логотип, имя и короткое описание вертикали (`Trading, loans, investments.`, `Casino, slots, poker funnel`, `Health, weight-loss products.`, `Prize giveaways and contests.`); список подставляется под билд тенанта ([how-to/registration.md](../how-to/registration.md)).
 
-- Преднастроенные флоу (Two-Step with Filter, One-Step with Filter и т.п.).
-- Дефолтные кампании-примеры.
-- Готовый источник `Facebook CAPI`.
-- Преднастроенные роли (`Owner / Admin / Employee`).
-- Преднастроенный антифрод (`Traffic Filters`).
-- Шаблоны сообщений рассылки (`Message templates`) и правила уведомлений (`Notification Rules`) — если они заведены в самом шаблоне. Поэтому в свежем тенанте уже могут лежать готовый текст рассылки и настроенный алерт, которых никто в этом тенанте не создавал.
+Копия снимается один раз, в момент создания: правки в доноре в уже созданный тенант не попадают, сменить шаблон у существующего тенанта нельзя — тенант не хранит, из какого шаблона создан. Сущности-примеры узнаются по имени: у трафиковых кампаний — суффикс `- Campaign Example`, у лэндов и дестинейшенов — `Example …` / `… Example #N`, у кампаний рассылок — `Example - …` и хвост `| Drip` / `| Cron`, плюс `Preview Campaign`; метка-тег на них не приезжает. Всё приехавшее — обычные сущности тенанта: их правят, архивируют и заменяют своими. Шаблон — стартовая точка, а не ограничение: команды запускаются по-разному, и состав подстраивают под себя.
 
-Тенанты собираются из шаблонов, но все команды запускаются по-разному, поэтому шаблон подстраивается под специфику команды.
+### Что приезжает из шаблона Finance — флоу, лэнды, формы
+
+**`ERP Finance` и `MTK Finance` строятся вокруг двухшаговой воронки прилэнд → оффер с SDK-формой; у каждого флоу есть кампания-пример.** Флоу ERP: `1/2Step | Manual Offer Name` (и варианты `+ TY`, `+ TY + Domain Change`), `1/2Step | Offer Name Distribution` (оффер-нейм из дистрибуции), `1Step | Form Landing`, `Preview Flow`; в MTK те же сценарии названы `1/2Step | Preland to Offer…`, флоу с дистрибуцией оффер-нейма нет. Кампании-примеры повторяют имена флоу (`Manual Offer Name - Campaign Example`, `Form Landing - Campaign Example` …).
+
+Лэнды: `Preland Example #1 w/ AI Splits & Dynamic Offer Name`, `Example Preland w/ Form — Starter Plan Quiz`, `Offer Example #1 w/ Dynamic Offer Name` (SDK-форма), `Example Offer Page — Custom HTML Form` (своя HTML-форма через `AIO Non-SDK Form Handler`), `Example White Page — Budget`, `AIO Thank You Page`; в MTK вместо двух лэндов с динамическим оффер-неймом — `Example Preland w/ AI Splits — News Story` и `Example Offer Page — Immediate Connect`. Формы: `Default Leads Form`, `Leads Form w/ Consent`, `2-Step Leads Form`, `Qualifying Form w/ Investment Range`, `Short Form - Name & Phone`. Дестинейшены: `Dummy API [ DEBUG ]` (принимает лид и всегда отвечает успехом — для проверки воронки без реальной партнёрки), `Example Bridge Integration`, `Example IREV Integration`.
+
+### Что приезжает из шаблона Nutra и Sweeps — флоу, лэнды, формы
+
+**`ERP Nutra` — воронка под заказ товара; `ERP Sweeps` / `MTK Sweeps` — короткие one-step-воронки под подарок или розыгрыш.**
+
+Nutra: флоу `1/2Step | Preland -> Order Page`, `1Step | Order Page`, `Preview Flow`; кампании-примеры — `Preland -> Order`, `Order Page`, `Multigeo IT-ES-PL`, `Landings AI by Leads`, `Package Upsell`, `Quiz Order`, `Custom HTML Form` (все с суффиксом `- Campaign Example`, у части задано гео). Лэнды: `Preland Example #1 - Health Quiz`, `Preland Example #2 - News Story`, `Offer Example #1 - Order Form (SDK)`, `Offer Example #2 - Package Upsell`, `Offer Example #3 - Custom HTML Form`, `Example White Page - Wellbeing Guide`, `AIO Thank You Page`. Формы заказа: `Order Form - Name & Phone`, `Order Form - Package & Address`, `Order Form - Full Address`, `Quiz Form - Age & Contacts`. Дестинейшены — примеры под четыре партнёрские интеграции плюс `Dummy API - Flow Testing`, `Example Bridge Integration`, `Example IREV Integration`.
+
+Sweeps: флоу `Default 1Step Flow` (и `w/ Domain Change`; в ERP ещё `w/ Dynamic Product`), `1/2Step | Preland -> Offer w/ Form` (в MTK ещё вариант `+ Antifraud`), `1step preview`; кампании-примеры `Prize Wheel -> SDK Form`, `Quiz Boxes -> Custom Form`, `Multigeo US-DE-FR`, `Domain Change`, `Landings AI by Registrations` (в ERP ещё `Dynamic Product`). Лэнды: `Preland Example #1 - Prize Wheel`, `Preland Example #2 - Gift Boxes w/ Quiz Form`, `Offer Example #1 - AIO SDK Form`, `Offer Example #2 - Custom HTML Form`, `Example White Page - Weeknight Recipes`, `AIO Thank You Page`. Формы: `Email Only Form`, `Default SOI Form`, `Quiz Form - Prize & Age`, `Shipping Form - Physical Prize`. Дестинейшены: `Dummy API` и три `Simple Redirect`-примера.
+
+### Что приезжает из шаблона iGaming — PWA-флоу без форм
+
+**`ERP iGaming` и `MTK iGaming` собраны вокруг PWA и редиректов на оффер — SDK-форм в них нет.** Флоу: `Web - Preland / Offer`, `PWA / OneLink`, `PWA / OneLink w/ Landing`, `Advanced - PWA / OneLink` (ветвление по `Android` / `iOS` шагами `Condition`), `Deeplink Android`, `Preview Flow`; на каждый — кампания-пример (`Web Flow - Campaign Example`, `Default Flow - PWA Campaign Example`, `PWA w/ Landing Flow - Campaign Example`, `Advanced Flow - Campaign Example`, `Android Deeplink - Campaign Example`). Лэнды: `AIO PWA Example w/ Splits` (тип `PWA`), `Example Preland — Bonus Chests`, `Example Preland — Wheel of Fortune`, `Example Offer Page — LuckySpin`, `Example White Page`. Дестинейшены — `Simple Redirect`-примеры с адвертайзерами: сторонние PWA-сервисы (`Example … PWA`) и партнёрские офферы (`Example Partners | …`, `Example Direct Brand | …`). Источников больше, чем в других вертикалях: кроме `FB w/ CAPI`, `Google` и `Preview Link` — генератор ссылок под сторонние PWA и два источника под Android-приложения.
+
+### Что приезжает из шаблона — общий слой всех вертикалей
+
+**Под флоу в каждом шаблоне лежит общий слой: источники, трекеры, типы конверсий, бизнес-модели, дистрибуции, фильтры, поля, метрики, пресеты, макросы, позиции и команды.**
+
+- **Источники:** `FB w/ CAPI`, `Google`, `Preview Link` (в Sweeps — `1Step Preview Link`). **Трекеры** типа `Facebook Conversion API`: в Finance, Nutra и Sweeps — `FB Lead` плюс трекер под целевое событие вертикали (`FB Registration` в Sweeps, `FB Approved` в Nutra); в iGaming — `FB AIO Install`, `FB AIO Registration`, трекер под целевое событие вертикали и пример HTTP-постбэка `Example - 3rd Party PWA Postback`.
+
+- **Типы конверсий:** Finance — `Lead`, `Lead Rejected`, `Fraud Lead`, `Push Subscribe`, `Sale Status Update` и тип под целевое действие вертикали; Nutra — `Lead`, `Approved`, `Rejected`, `Trash`, `Push Subscribe` (с десятками slug-синонимов под статусы партнёрок); Sweeps — `Lead`, `Registration`, `Fraud Lead`, `Lead Rejected`, `Push Subscribe`; iGaming — `Install`, `Open PWA`, `Registration`, `Push Subscribe`, `Correction` и два типа под целевые события вертикали.
+
+- **Бизнес-модели** — восемь во всех шаблонах (`Arrived` / `Static` / `Zero` / `Cancel` × `Revenue` / `Payout`); `Revenue Distribution` стоит на `Arrived Revenue`, `Payout Distribution` — на `Zero Payout` ([models/business-model.md](../models/business-model.md)).
+
+- **Дистрибуции:** `Payout Distribution` и `Revenue Distribution` везде; в ERP ещё `Buyer UTM Distribution` (шаг `Fill Buyer UTM` в начале флоу-примеров, кроме превью- и deeplink-флоу), в ERP Finance — `Offer Names Distribution`, в iGaming — `Offer Distribution` и `Direct Traffic Distribution`; деревья `Message Templates` с примерами пушей (`Example - … pushes`) — в ERP-шаблонах и MTK iGaming.
+
+- **Фильтры (`Settings → Traffic Filters`):** `AIO Filter Service` везде — шаг `AIO Filter` (в части iGaming-флоу подписан `Filter`) в флоу-примерах работает через него; `AIO Antifraud` — в Finance, Nutra и Sweeps: после отправки формы в флоу стоят шаги `AIO Antifraud` → `Check Antifraud Points` (`Condition`, в шаблоне условие `fraud_score < 999` — пропускает всё, порог задаётся под себя) → при отказе `Spawn Fraud Lead` (в Nutra — `Spawn Trash Lead`). В Finance и Nutra эта связка стоит во всех флоу-примерах, в ERP Sweeps — в `Default 1Step Flow` и `1/2Step | Preland -> Offer w/ Form`, в MTK Sweeps — только в `1/2Step | Preland -> Offer w/ Form + Antifraud`.
+
+- **Поля визита:** лиды (`first_name`, `email`, `phone` …), трекинг (`buyer_utm`, `creative`; в Finance ещё `offer_name`), параметры Facebook и Google, сплиты лэнда (`lp_header`, `lp_subheader`, `lp_header_image`; в iGaming — `lp_header`, `lp_image`, `lp_description`), кастомные `campaign_field_1..3` / `landing_field_1..3` / `source_field_1..3` / `destination_field_1..3`; в MTK ещё `sub1`…`sub15`.
+
+- **Метрики и пресеты:** набор метрик вертикали (воронка, деньги, `[Meta] …`, в ERP и MTK iGaming — счётчики пушей) и пресеты таблиц и Roll Up (`Unit Economics`, `Landing Quality`, `By Buyer [Owner → Campaign]`, `FB Structure [Campaign → Adset]` …); одноимённые метрики в разных вертикалях могут считаться по-разному — проверяйте формулу в `Settings → Metrics`.
+
+- **Макросы:** глобальные `AIO SDK Macros Collection` (везде), `AIO GTAG` (кроме iGaming) и `AIO Push Subscription` (ERP Finance / Nutra / Sweeps, приезжает выключенным); локальные под лэнды-примеры — `AIO Form Loader`, `AIO Non-SDK Form Handler`, `AIO Static Language Country for Form` (в Finance ещё `AIO Autologin Redirect` и глобальный `AIO Save Landing Params to Visit`, в Sweeps — `AIO Pre-Fill Form Handler`); в iGaming, кроме коллекции, только `AIO Custom PWA`.
+
+- **Типы лэндов:** `Preland`, `Offer`, `White` везде; `Preland w/ Form` и `Thank-You Page` — Finance и Nutra, `Thank-You Page` — Sweeps, `PWA` — iGaming; шаблон лэнда один — `Simple`. **Типы адвертайзеров:** `Offer`, `PWA`.
+
+- **Позиции и команды:** `Full Access`, `Team Lead`, `Buyer`, `Tech`, `Analyst` (в ERP ещё `Creative`, `Finance`) и команды `Tech Department`, `Media Buying Team A`, `Media Buying Team B` — владелец нового тенанта при создании входит в каждую из них с уровнем 1 (`Level 1`); базовые роли `Owner` / `Admin` / `Employee` создаёт сам продукт, не шаблон ([models/permissions-model.md](../models/permissions-model.md)).
 
 ### Что из шаблона в новый тенант НЕ приезжает — архив, домены и сервера
 
 **Архивные сущности шаблоном не переносятся: в новый тенант едет только живое.** Правило действует почти на всё, что копируется: теги, поля визита, формы, метрики, типы конверсий, пресеты, источники, дестинейшны, трекеры, макросы, креативы, трафик-фильтры, дистрибуции, команды, флоу с их шагами, кампании, адвертайзеры, группы плейсхолдеров, ленды и позиции. Производные сущности подрезаются по живым родителям: языки форм берутся только у неархивных форм, ноды — только у неархивных дистрибуций, переходы флоу — только между неархивными шагами.
 
-**Домены и сервера шаблоном не копируются вообще.** Вместо них новому тенанту заводится тестовая пара «сервер + домен» для экспериментов — [how-to/domains.md](../how-to/domains.md). Из-за этого в кампаниях-примерах домен не выбран: перед запуском домен в кампании выбирается вручную.
+**Рабочие домены и сервера шаблоном не копируются.** Новый тенант может получить от шаблона пробную пару — сервер `Trial Server` и домен, помеченный в интерфейсе тултипом `Domain provided for free, use it at your own risk`; для рабочего трафика свои сервер и домен заводятся самостоятельно ([models/server.md](../models/server.md), [how-to/domains.md](../how-to/domains.md)). В кампаниях-примерах домен не выбран — перед запуском его выбирают вручную. Не копируются также папки, шаринги и пользователи донора. Записей `Message templates` и правил уведомлений в публичных шаблонах нет — рассылки-примеры живут в деревьях `Message Templates` и кампаниях типа `Notifications` ([how-to/remarketing-campaigns.md](../how-to/remarketing-campaigns.md)).
 
 ### Multi-tenancy
 
@@ -251,7 +286,7 @@ updated: 2026-09-11
 
 Отдельные интеграции для мониторинга бана доменов (`Tech → Domain checkers`): **`Google Threat`** (API-проверка и браузерная дают разные результаты — дополнительный сигнал, не главный) и **VirusTotal** (лимит по IP запроса, не по ключу; ~100-150 доменов на аккаунт). Подробнее — [how-to/domains.md](../how-to/domains.md).
 
-Рекомендация: **добавить сразу** — обе интеграции бесплатные, мониторинг бана включается из коробки.
+Рекомендация: **добавить сразу** — обе интеграции бесплатные, и после подключения мониторинг бана работает без дополнительной настройки (из шаблона тенанта чекеры и провайдеры `Tech` не приезжают).
 
 ## Что из этого следует на практике
 

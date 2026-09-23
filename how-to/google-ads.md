@@ -6,7 +6,7 @@ doc_type: how-to
 builds: [erp]
 related: [meta-ads, meta-spend-allocation, permissions]
 language: ru
-updated: 2026-08-26
+updated: 2026-09-23
 ---
 
 # Как в AIO смотрят рекламу Google Ads — модуль Google (кабинет Google Ads внутри платформы)
@@ -70,7 +70,9 @@ updated: 2026-08-26
 
 ### Организация аккаунтов: папки, теги, шаринг
 
-Google-аккаунты организуют папками (`Assign folder`, права `google.accounts.folders.view` / `.edit`), тегами и шарингом на других пользователей тенанта (`google.accounts.share`; шаринг с передачей владения — `google.accounts.share.ownership`). Архивирование — `google.accounts.edit.archive` (поле `is_archived`). Удобно, когда аккаунтов много и их надо группировать по вертикали/команде.
+Google-аккаунты организуют папками (`Assign to folder` / `Unassign from folder`, право `google.accounts.edit.assign-folder`; сами папки — `google.accounts.folders.view` / `.edit`), тегами и шарингом на других пользователей тенанта. Архивирование — `google.accounts.edit.archive` (поле `is_archived`). Удобно, когда аккаунтов много и их надо группировать по вертикали/команде.
+
+**Google-аккаунт шарится только поштучно: в контекстном меню строки есть одиночный `Share`, массовых `Share also` / `Force share` / `Unshare` на странице аккаунтов нет.** Шаринг проверяется по праву `google.accounts.share`, передача владельца и `Access type` — одиночным `Change ownership` по праву `google.accounts.share.ownership`, массового `Mass change ownership` здесь тоже нет. Пошарить разом несколько аккаунтов можно через папку: шаринг папки Google-аккаунтов раздаёт доступ её содержимому, как у папок других разделов. Как работают роли шары, папки и `Change ownership` — [how-to/permissions.md](permissions.md).
 
 ## Ad Account: рекламный кабинет Google Ads, статус, стратегия подтяжки
 

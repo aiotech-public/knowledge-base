@@ -6,7 +6,7 @@ doc_type: model
 builds: [erp, mtk]
 related: [tenant, user, permissions-model, source, campaign, flow-model, visit, visit-lifecycle, visit-field, landing, sdk, form, content-library, landings, destination, advertiser, conversion-model, tracker, auto-rules, distributions-model, business-model, domain, server, architecture, marketing-flow, notifications-flow, metric, analytics, domains, glossary, placeholders, ui-map]
 language: ru
-updated: 2026-09-11
+updated: 2026-09-23
 ---
 
 # Доменная модель AIO — карта сущностей и связей

@@ -6,7 +6,7 @@ doc_type: model
 builds: [erp, mtk]
 related: [architecture, domains, glossary, sdk, visit-lifecycle, flow-model, tenant, domain, landing, domain-launch, landings, permissions-model, ui-map]
 language: ru
-updated: 2026-09-11
+updated: 2026-09-23
 ---
 
 # Server / Agent — концепт (модель)
@@ -65,7 +65,7 @@ updated: 2026-09-11
 
 ### Мониторинг сервера: Pinging, Monitoring User и привязка к Telegram
 
-Сервер пингуется раз в 5 минут с нескольких точек мониторинга, решение «упал/жив» — по кворуму, и недоступность должна продержаться ~150 секунд подряд, поэтому `Danger` наступает через 5–10 минут после реального падения, а не сразу (канон механики — [context/architecture.md](../context/architecture.md) → «Мониторинг и нотификации»). Статусы сервера: `Running` (иконки нет), `Processing` (синий вращающийся значок — установка или удаление идёт), `Danger` (красный крестик; подсказка у иконки показывает `status_text` — при падении `Current Incident: <причина>`, после восстановления сервер снова `Running` с `Last Incident: <причина>`). Колонка `Monitoring` (Yes/No) показывает, включён ли uptime-мониторинг; переключается экшенами `Place monitor` / `Delete monitor`. Сервер в `Processing` мониторинг не проверяет. Алерты шлёт **AIO-tech-bot** назначенному **Monitoring User**-у — **только в Telegram**. Частая причина «не приходят алерты» — у аккаунта нет привязки к Telegram (AIO не может связать аккаунт с TG); 2FA через Google Authenticator привязку к TG не даёт. Механика и как проверить — [context/architecture.md](../context/architecture.md) §Monitoring User + § «AIO-tech-bot и 2FA».
+Сервер пингуется раз в 5 минут с нескольких точек мониторинга, решение «упал/жив» — по кворуму, и недоступность должна продержаться ~150 секунд подряд, поэтому `Danger` наступает через 5–10 минут после реального падения, а не сразу (механика — [context/architecture.md](../context/architecture.md) → «Мониторинг и нотификации»). Статусы сервера: `Running` (иконки нет), `Processing` (синий вращающийся значок — установка или удаление идёт), `Danger` (красный крестик; подсказка у иконки показывает `status_text` — при падении `Current Incident: <причина>`, после восстановления сервер снова `Running` с `Last Incident: <причина>`). Колонка `Monitoring` (Yes/No) показывает, включён ли uptime-мониторинг; переключается экшенами `Place monitor` / `Delete monitor`. Сервер в `Processing` мониторинг не проверяет. Алерты шлёт **AIO-tech-bot** назначенному **Monitoring User**-у — **только в Telegram**. Частая причина «не приходят алерты» — у аккаунта нет привязки к Telegram (AIO не может связать аккаунт с TG); 2FA через Google Authenticator привязку к TG не даёт. Механика и как проверить — [context/architecture.md](../context/architecture.md) §Monitoring User + § «AIO-tech-bot и 2FA».
 
 Uptime-проверки серверов и разбор инцидентов AIO делает сам по расписанию — домены упавшего сервера переезжают на живой сервер той же группы без ручного действия, **один раз на инцидент**: если репойнт домена не удался, AIO его не повторяет, домен остаётся в `Danger` с `Repoint failed: …`, и переезд запускают руками (*уточните у поддержки* → «Домен ушёл в репойнт»). Когда и как часто идут проверки — *Что AIO проставляет и делает сам — фоновые задачи и их расписание*; сам механизм репойнта — §Repoint Group выше.
 

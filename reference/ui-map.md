@@ -4,9 +4,9 @@ title: Карта интерфейса AIO (где что лежит)
 description: Полная карта навигации app.aio.tech — топ-меню (Tracker/Content/Marketing/Finance/Tech/Automations/Meta/Analytics/Settings; Dashboard из меню убран, но остаётся стартовой страницей), подразделы каждого, меню профиля (Billing, смена тенанта, Manage tenant). Чтобы быстро находить нужный раздел.
 doc_type: reference
 builds: [erp, mtk]
-related: [postback-generator, landings, analytics, landing, sdk, remarketing-campaigns, auto-rules, meta-ads, google-ads, events-exporter, live-pulse, session-analytics, registration, source-trackers, glossary, permissions-model, debug-with-logs, custom-fields, api, ui-common, profile-settings, placeholders]
+related: [postback-generator, landings, analytics, landing, sdk, remarketing-campaigns, auto-rules, meta-ads, google-ads, events-exporter, live-pulse, session-analytics, registration, architecture, source-trackers, glossary, permissions-model, debug-with-logs, custom-fields, api, ui-common, profile-settings, placeholders]
 language: ru
-updated: 2026-09-11
+updated: 2026-09-23
 ---
 
 # Карта интерфейса AIO (где что лежит)
@@ -53,7 +53,7 @@ Content — раздел для управления лэндами, креат�
 ### Где находятся лэнды, PWA-шки и макросы — Landings, PWA и Macros
 
 - **Landings** `/landers` — лэнды в режиме `Editor`. В MTK Landings доступны как отдельная вкладка верхнего меню (`/app/mtk/landers-creatives/landers`). Слева в шапке таблицы — переключатель типов лэндов (по умолчанию `All`, в меню `All types` и список типов): выбранный тип сужает список до лэндов этого типа и переводит колонки метрик на роль-группер `LP: <Тип>` вместо позиции `#N`; выбор запоминается в браузере. Разбор — [how-to/landings.md](../how-to/landings.md), роль-групперы — [how-to/analytics.md](../how-to/analytics.md).
-- **PWA** `/pwa` — лэнды в режиме `PWA` (только ERP; пункт закрыт правом `content.landings.view`). Разделение по режиму лэнда навязано: на `Landings` видны только лэнды режима `Editor`, на `PWA` — только режима `PWA`, переключить или снять этот фильтр в интерфейсе нельзя ([models/landing.md](../models/landing.md)).
+- **PWA** `/pwa` — лэнды в режиме `PWA` (пункт закрыт правом `content.landings.view.pwa` — `Content: PWA page`; оно входит в `content.landings.view`, поэтому Allow на `content.landings` открывает обе страницы, а отнять PWA можно отдельным Deny; в MTK — страница `PWA` внутри одноимённой вкладки платного модуля `PWA + Push`, `/app/mtk/pwa/landers`). Разделение по режиму лэнда навязано: на `Landings` видны только лэнды режима `Editor`, на `PWA` — только режима `PWA`, переключить или снять этот фильтр в интерфейсе нельзя ([models/landing.md](../models/landing.md)).
 - **Macros** `/macros` — макросы (в т.ч. `AIO SDK Macros Collection`, см. [reference/sdk.md](sdk.md)). В MTK Macros перенесены в `Settings → Macros`, см. *Как устроен MTK-вид AIO: навигация, пресеты из шаблона и методы под типовые задачи*.
 
 ### Где находятся креативы, Content Library и файлы — Creatives, Files, CDN
@@ -65,7 +65,7 @@ Content — раздел для управления лэндами, креат�
 
 ## Где собираются рассылки пушей — Marketing `/app/remarketing`
 
-Marketing (в главном меню — `Marketing`) — ремаркетинг: рассылки по собранной аудитории визитов, флоу рассылок и шаблоны сообщений. По умолчанию раздел открывается на экране `Campaigns`. Только ERP.
+Marketing (в главном меню — `Marketing`) — ремаркетинг: рассылки по собранной аудитории визитов, флоу рассылок и шаблоны сообщений. По умолчанию раздел открывается на экране `Campaigns`. В MTK раздела нет — там `Campaigns`, `Template distributions` (под именем `Message templates`) и `Other` живут во вкладке `PWA` платного модуля `PWA + Push` (карта MTK-вида — *Как устроен MTK-вид AIO: навигация, пресеты из шаблона и методы под типовые задачи*).
 
 - **Campaigns** `/app/remarketing/campaigns` — ремаркетинг-кампании: аудитория, `Launch trigger`, прогоны ([how-to/remarketing-campaigns.md](../how-to/remarketing-campaigns.md)).
 - **Flows** `/app/remarketing/flows` — флоу рассылок; список сужен до флоу типа `Notifications`, в них живёт узел `Drip schedule`.
@@ -73,7 +73,7 @@ Marketing (в главном меню — `Marketing`) — ремаркетин�
 - **Messages** `/app/remarketing/messages` — отправленные сообщения.
 - **Sender providers** `/app/remarketing/sender-providers` — провайдеры отправки.
 - **Message templates** `/app/remarketing/message-templates` — отдельные записи-шаблоны сообщений; тексты ремаркетинг-рассылки лежат не здесь, а в нодах `Template distributions`.
-- **Other** `/app/remarketing/other` — служебная страница: сюда открываются групперы `Remarketing`, у которых нет своей страницы (`Channel`, `Send Result`, время).
+- **Other** `/app/remarketing/other` — служебная страница: сюда открываются групперы `Remarketing`, у которых нет своей страницы (`Channel`, `Send Result`, время). Закрыта правом `marketing.campaigns.view.analytics` (`Remarketing: analytics pages`); оно входит в `marketing.campaigns.view`, поэтому Allow на просмотр ремаркетинг-кампаний открывает и `Other`, а убрать страницу можно отдельным Deny на этот ключ.
 
 Пункт `Marketing` в главном меню показывается по правам **других** страниц раздела (`Messages`, `Message templates`, `Sender providers`, `Flows`) — роль, у которой есть только права на ремаркетинг-кампании, пункта не увидит, хотя страница `/app/remarketing/campaigns` ей открывается по прямой ссылке ([how-to/remarketing-campaigns.md](../how-to/remarketing-campaigns.md)).
 

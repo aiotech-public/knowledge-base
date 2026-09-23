@@ -1,72 +1,156 @@
 ---
 id: permissions-model
 title: Permissions Model AIO
-description: Как устроены роли, Positions, Imperatives, Teams и Sharing в AIO. Какие комбинации работают, как читать матрицу доступов, какие разделы закрыты своими ветками прав (Remarketing — marketing.*, Automations — automation.*).
+description: Модель доступа AIO — уровни доступа к объекту Use / View / Edit / Own и откуда они берутся (владение, команды с числовыми уровнями, Peers / Below, шаринг, Access type, Scopes / Editor Scopes, роли Owner / Admin / Employee), права Positions и Imperatives с серверной проверкой ключей, Your access, Change ownership, копирование, Log in as user и дословные тексты отказов.
 doc_type: model
 builds: [erp, mtk]
-related: [analytics, limits, postback-generator, session-analytics, remarketing-campaigns, permissions, auto-rules, meta-ads, auto-rules-engine, notification-center, registration, custom-fields, architecture, tenant, user, glossary, api]
+related: [architecture, analytics, limits, postback-generator, session-analytics, remarketing-campaigns, permissions, auto-rules, meta-ads, auto-rules-engine, notification-center, campaigns, registration, custom-fields, tenant, user, glossary, api]
 language: ru
-updated: 2026-09-11
+updated: 2026-09-23
 ---
 
 # Permissions Model AIO
 
-Permissions в AIO многослойны: первый уровень — три базовые роли (Owner / Admin / Employee), второй — Positions (наборы Imperatives), третий — Teams (изоляция сущностей по командам), поверх всего — индивидуальный Sharing конкретных сущностей. Если юзер не видит что-то — последовательность проверки: роль → Positions → Team → Sharing → Ownership.
+Доступ в AIO проверяется по двум независимым осям. **Права позиции** — роль плюс Positions с Imperatives — решают, какие разделы и какие действия юзеру вообще открыты. **Уровень доступа к объекту** — `Use`, `View`, `Edit` или `Own` — решает, что юзер может сделать с конкретной кампанией, лэндом или доменом; он складывается из владения, команды, шаринга, `Access type`, `Scopes` / `Editor Scopes` и роли. Действие проходит, только если в Position есть ключ этого действия и уровня на объект хватает. Когда объект не виден, не открывается или не сохраняется, первым смотрят строку `Your access` в контекстном меню объекта и точный текст отказа.
 
-## Как Roles задают базовый доступ и чем Role отличается от Position
+## Какие уровни доступа к объекту бывают — `Use`, `View`, `Edit`, `Own`
+
+**У каждого юзера на каждый объект есть один итоговый уровень из лестницы `Use` < `View` < `Edit` < `Own`; каждый следующий уровень включает всё, что дают предыдущие.**
+
+| Уровень | Что даёт |
+|---|---|
+| `Use` | Объект виден в списках и селектах, его можно выбрать в своей кампании или форме. Карточка не открывается, настройки закрыты. |
+| `View` | Плюс открыть карточку только на чтение, превью и скачивание лэнда, записи сессий, копирование (при праве копирования в Position). |
+| `Edit` | Плюс сохранять настройки, теги, цвет, папку и запускать операционные действия. |
+| `Own` | Плюс `Change ownership` и смена `Access type`, архив, раздача доступа другим. |
+
+Отдельно от уровня есть флаг «может раздавать» — `Can share further` в диалоге `Share`. При уровне `Own` он есть всегда, при шаринге выдаётся отдельной галкой. Без `Own` и без этого флага пункта `Share` на объекте нет.
+
+### Откуда складывается уровень доступа — владение, команда, шаринг, `Access type`, позиция
+
+**Итоговый уровень — максимум из всех источников, которые есть у юзера на этот объект.** Источник подписан в подсказке `Your access` (подпись — в скобках):
+
+- владелец объекта — `Own` (`owner`);
+- участник команды владельца с более высоким уровнем — `Own` на объекты нижестоящих (`subordinate’s object`);
+- участник того же уровня — что выставлено уровню кнопкой `Peers:`, по умолчанию ничего (`peer in your level`);
+- `Access type` объекта — `Use` или `View` для всех в тенанте (`for everyone`);
+- шаринг лично юзеру — уровень роли шары: `Use`, `View` (роль `Viewer`) или `Edit` (роль `Editor`) (`shared with you`);
+- шаринг любой команде, где юзер состоит, — уровень роли шары, уровень юзера в команде не важен (`shared with your team`);
+- шаринг нижестоящему или его команде — только если уровню выбран режим `Below:` с шарами (`subordinate’s object` / `shared with your subordinate’s team`);
+- `Scopes: <раздел>` в Position — `View` на все объекты раздела, `Editor Scopes: <раздел>` — `Own` (`position`);
+- роль `Owner` или `Admin` — `Own` на всё (`full access`).
+
+Шаринг не даёт больше `Edit`, `Access type` — больше `View`. Истёкшая шара (`Expires` в прошлом) не даёт ничего.
+
+## `Your access` — как узнать свой уровень доступа к объекту и откуда он
+
+**В таблицах сущностей, которые шарятся, внизу контекстного меню строки (правый клик) показано `Your access: <уровень>` — `Use`, `View`, `Edit`, `Own` или `none`; при наведении видно, откуда доступ и что он разрешает.** Разрешения перечислены с отметками: `open the card`, `edit`, `share`, `ownership & archive`. Источник подписан одним из вариантов: `owner`, `subordinate’s object` (вы выше владельца в его команде), `peer in your level`, `for everyone` (`Access type`), `shared with you`, `shared with your team`, `shared with your subordinate’s team`, `position` (`Scopes` / `Editor Scopes`), `full access`. Пункты меню, на которые уровня не хватает, скрыты. RU-подпись — `Ваш доступ: <уровень>`. Это первое, что проверяют, когда объект «не открывается», «нет кнопки `Share`» или «не сохраняется».
+
+### Иконка строки, `Read-only` и тост `Sorry, you do not have access`
+
+**Иконка действия в строке показывает, что будет по клику: карандаш `Edit` — карточка откроется на правку, глаз `Open` — только на чтение, серый перечёркнутый глаз `No access to open` — открыть нельзя.** В карточке, открытой на чтение, вместо кнопки сохранения стоит `Read-only` с подсказкой `You have no edit access to this object`.
+
+Тост `Sorry, you do not have access` значит, что карточку объекта открыть не удалось: интерфейс сам не открывает карточку ниже нужного уровня, а на любой отказ `403` при загрузке формы — нехватку уровня на объект или ключа в Position — показывает этот тост вместо текста сервера. Дословный текст сервера (`Action access denied (…)`, `No access to this object (…)`) виден, только когда отказ приходит на сохранение или запуск действия. Страница-заглушка `Sorry, you do not have access to this section` — другое: у Position нет права на весь раздел.
+
+## Как Roles задают базовый доступ — Owner, Admin, Employee
 
 | Роль | Доступ |
 |---|---|
-| **Owner** | Полный доступ ко всем сущностям тенанта. По дефолту — тот, кто создал тенант. |
-| **Admin** | Полный доступ как Owner. Может управлять юзерами через `Manage Tenant`. |
-| **Employee** | Ограниченный. Видит только то, что ему пошарили или его команде. |
+| **Owner** | Полный доступ: `Own` на все объекты тенанта и все права Position без назначения позиций. По дефолту — тот, кто создал тенант. |
+| **Admin** | Полный доступ, как у Owner. Управляет юзерами в `Settings → Users`: приглашает, меняет роль, отключает. |
+| **Employee** | Только то, что дают его Positions и лестница уровней на объекты. |
 
-**Что значит «полный доступ» у Owner/Admin:**
-- Видит все сущности тенанта вне зависимости от того, кто их создал.
-- Может назначать роли, Positions, шарить, менять owner-ов.
-- Доступно действие `Manage Tenant` в правом верхнем углу.
+**Что даёт полный доступ (Owner / Admin в текущем тенанте):**
+- уровень `Own` на все объекты тенанта независимо от автора — в `Your access` источник `full access`;
+- все права Position — серверная проверка ключей на действия к этим ролям не применяется;
+- приглашение юзеров, смена ролей, назначение Positions, создание команд, биллинг, `Log in as user` (в ERP);
+- пункт `Manage tenant` в меню профиля в правом верхнем углу — настройки самого тенанта.
 
-**Что значит «ограниченный» у Employee:**
-- Видит только: (a) свои сущности (где он `Owner`), (b) пошаренные ему лично, (c) пошаренные его команде с учётом его уровня в команде.
+### Что видит Employee — свои объекты, команда, шаринг, `Access type`, `Scopes`
+
+**Employee видит объект, только если у него есть на объект хотя бы уровень `Use` из какого-то источника.** Это:
+- свои объекты;
+- объекты участников ниже него по уровню в его командах;
+- объекты равных по уровню — если уровню так выставлено `Peers:`;
+- всё с `Access type` `Use` (в списках) или `View` (на чтение);
+- объекты, пошаренные лично ему или любой его команде;
+- шары его нижестоящих — только при режиме `Below:` с шарами;
+- все объекты разделов, где в Position есть `Scopes` / `Editor Scopes`.
+
+Объект с `Access type = Private` без шаринга видят владелец, участники выше него по уровню в его командах, равные ему по уровню (если уровню так выставлено `Peers:`), позиции со `Scopes` / `Editor Scopes` на раздел и Owner / Admin.
+
+## `Access type` — доступ для всех в тенанте: `Private`, `Use`, `View`
+
+**`Access type` задаёт уровень, который получают на объект все юзеры тенанта: `Private` — никакого, `Use` — объект виден в списках и селектах, `View` — все могут открыть карточку на чтение.** Правку `Access type` не даёт никогда: для правки нужны владение, шара `Editor`, более высокий уровень в команде владельца, `Peers:`, `Editor Scopes` или роль Owner / Admin.
+
+В таблицах и в селекте диалога `Change ownership` значения подписаны `Private` / `Use` / `View` (RU `Приватный` / `Использование` / `Просмотр`), в данных и API — `By Share` / `Everyone` / `View`. Подсказки в интерфейсе: `Private` — «Only the owner, shares and superiors by team», `Use` — «Everyone sees it in lists and selects, settings are closed», `View` — «Everyone can open it read-only». Меняется `Access type` в диалоге `Change ownership`, поэтому для смены нужен уровень `Own`. Когда нужно, чтобы все видели объект, но никто не менял, — это `View`.
+
+### У каких сущностей есть `Access type` и какое значение по умолчанию
+
+**`Access type` есть у всех сущностей, которые шарятся, и правило для всех одно: `Use` и `View` значат одно и то же, исключений по сущностям нет.** Это кампании, флоу, источники, дестинейшены, лэнды, Content Library, пресеты, поля, метрики, дистрибуции, Money Streams, внешние отчёты, списки, шаблоны сообщений, Meta-профили, Meta-шаблоны, Google-аккаунты, ассайны автоправил, домены, сервера, прокси, провайдеры доменов, серверов и DNS, а также папки, макросы, формы и адвертайзеры.
+
+Значение по умолчанию у большинства — `Private`; у папок, макросов, форм, адвертайзеров и списков (`Item lists`) — `Use`, поэтому их видят в списках и селектах все. `Use` получают и поля, которые создаются сами, когда источник создают из шаблона. У элемента Content Library `Access type` выбирают ещё в форме создания (по умолчанию `Private`). У кампаний (трафиковых и remarketing), источников, лэндов, макросов, форм, адвертайзеров, прокси, Meta-профилей, Meta-шаблонов и Google-аккаунтов колонка `Access type` в таблице по умолчанию скрыта и включается в настройках колонок.
 
 ## Как Positions кастомизируют доступ Employee
 
 Positions — это то, чем тонко настраивается доступ Employee'ов (Owner/Admin Positions не нужны — у них и так всё открыто).
 
-Создаются в `Settings → Positions`. Каждая Position — это набор **Imperatives** (см. ниже) с маркерами **Allow** или **Deny**.
+Создаются в `Settings → Positions`. Каждая Position — это набор **Imperatives** (см. ниже) с маркерами **Allow** или **Deny**. Position решает, какие разделы и действия юзеру открыты; с какими объектами он может их выполнить, решает уровень доступа к объекту.
+
+### Какие Positions уже есть в новом тенанте — набор из шаблона
+
+Новый тенант получает Positions из шаблона тенанта, базовый набор заводить с нуля не нужно. В шаблонах ERP их семь, по возрастанию `Priority`: `Full Access` (10), `Team Lead` (20), `Buyer` (30), `Tech` (40), `Creative` (50), `Analyst` (60), `Finance` (70); в шаблонах MTK — пять, без `Creative` и `Finance`. Набор одинаков у всех вертикалей одного билда. У каждой позиции в `Description` одной строкой сказано, для кого она: `Buyer` — «Launches and runs traffic. Sees only their own campaigns, no team data.», `Analyst` — «Reads everything across the tenant and changes nothing.», `Tech` — «Domains, servers, proxies and landing setup. No ad accounts, no money.», `Full Access` — «Everything the product can do. Owner and Admin already have it by role.» (позиция для сотрудника с ролью `Employee`, которому нужно всё). Это обычные Positions: их правят, переименовывают и удаляют как свои. Что ещё копируется из шаблона — [context/architecture.md](../context/architecture.md).
 
 ### Как назначить Position юзеру
 
-При `Invite User` или `Edit User` выбирается Position. Юзер может иметь **несколько Positions**.
+В инвайте выбирается одна Position; назначить юзеру позицию после регистрации — вкладка `Assigned users` самой Position (`Settings → Positions`). Юзер может иметь **несколько Positions**.
 
 ### Как Priority разрешает конфликт между Positions
 
-Когда у юзера несколько Positions, и одна Allow'ит permission X, а другая Deny'ит — выигрывает Position с **более высоким `Priority`** (числовое поле).
+**Когда одна Position юзера Allow'ит ключ, а другая Deny'ит, выигрывает Position с более высоким `Priority`: позиции применяются по возрастанию `Priority`, одна за другой, и более приоритетная применяется последней.** Пример: позиция с `Deny tech` (`Priority: 20`) и позиция с `Allow tech` (`Priority: 40`) — у юзера с обеими ключи `tech.*` разрешены, потому что разрешающая применяется позже.
 
 **Диапазон `Priority`-слайдера:** min `10`, max `500`, шаг `10` (слайдер стартует с `10`). Форм-дефолт значения — `1`, но сам слайдер начинается с `10`, поэтому практический минимум при перетаскивании — `10`.
 
-**Пример конфликта:**
-- Position «Buyer» (`Priority: 20`): Allow `Content: Landings: Edit`.
-- Position «Junior Buyer» (`Priority: 10`): Deny `Content: Landings: Edit`.
-- Юзер с обеими Positions может редактировать лэнды: у разрешающей Position приоритет выше (20 > 10).
-
 ## Какие Imperative Types существуют и чем отличаются по масштабу
 
-Imperative — это «единица разрешения» внутри Position. Они отличаются **масштабом** (от крупного к мелкому):
+Imperative — это «единица разрешения» внутри Position. Они отличаются **масштабом** (от крупного к мелкому); за каждой подписью в матрице стоит ключ, который сервер называет в тексте отказа:
 
-| Тип | Иконка | Что | Пример |
-|---|---|---|---|
-| Sections | | Целая секция со всеми подсекциями и actions | `Analytics`, `Content`, `Meta` |
-| Subsections | | Подсекция (со всеми её страницами и actions) | `Content: Landings`, `Content: Macros`, `Settings: Distributions` |
-| Pages | | Только просмотр конкретной страницы (без actions) | `Content: CDN files Page` |
-| Actions | | Конкретное действие | `Edit Landing`, `Archive Landing`, `Upload File` |
-| Features | #⃣ | Спец-фича, закрытая отдельно от раздела | `Features: heatmaps`, `Features: sessions`, `Features: table export`, `Features: postback generator` |
-| Show Logs | | Просмотр логов секции/страницы | `Show Logs: Campaigns` |
-| Sharing & Ownership Change | | Возможность шарить и менять owner'а (в UI — `Force share` / `Share also` / `Change ownership`; «пошарить на команду», «расшарить сервер») | `Share: Landings`, `Change Owner: Domains` |
-| Scopes | | View-only без необходимости явного шаринга («view-only доступ», «смотреть стату баеров без edit») | `Scope: Campaigns Read` |
-| Editor Scopes | | Право **править и шарить** сущность без владения (`Scopes` дают только видимость) | `Editor Scopes: content landings` |
+| Тип | Что | Пример подписи (ключ) |
+|---|---|---|
+| Sections | Целая секция со всеми подсекциями и действиями | `Analytics section`, `Content section`, `Meta section` |
+| Subsections | Подсекция со всеми её страницами и действиями | `Content: landings`, `Content: macros`, `Settings: distributions` |
+| Pages | Только просмотр конкретной страницы | `Content: CDN files page` (`content.cdn-files.view`), `Tracker: campaigns page` |
+| Actions | Конкретное действие | `Content: landings edit`, `Content: landings archive`, `Tracker: campaigns update costs` |
+| Features | Спец-фича, закрытая отдельно от раздела | `Features: heatmaps`, `Features: table export` |
+| Sharing & Ownership Change | Шаринг (`Share`, `Share also`, `Force share`, `Unshare`) и `Change ownership`; «пошарить на команду», «расшарить сервер» | `Content: landings share`, `Tech: servers ownership change` |
+| Scopes | `View` на все объекты раздела без шаринга («view-only доступ», «смотреть стату баеров без edit») | `Scopes: tracker campaigns` |
+| Editor Scopes | `Own` на все объекты раздела без владения и шаринга | `Editor Scopes: content landings` |
 
-**Allow / Deny toggle:** в одной Position можно скомбинировать `Allow Section X` + `Deny Subsection Y внутри X` — тогда юзер видит всю секцию X, кроме Y.
+**Allow / Deny toggle:** в одной Position можно скомбинировать `Allow Section X` + `Deny Subsection Y внутри X` — тогда юзер получает всю секцию X, кроме Y. Так у позиции `Team Lead` из шаблона тенанта (в обоих билдах) закрыты юзеры и `Streams`: Allow на всю секцию `Settings`, а ниже Deny на `settings.users` (`Settings: users`) и `settings.streams` (`Settings: streams`) — тимлид ходит по настройкам, но `Settings → Users` и `Streams` не видит.
+
+### Какой ключ Position проверяет каждое действие — серверная проверка
+
+**Действие, которое выполняет сервер, проверяется ключом права из одной карты, и тот же ключ интерфейс использует, чтобы показать или скрыть пункт меню; Owner / Admin эту проверку проходят всегда.** Ключом действия становится самый узкий существующий ключ раздела, поэтому Allow на раздел или подраздел покрывает все его действия. Открыть форму существующего объекта можно с `<раздел>.view` — карточка откроется на чтение; для сохранения нужен ключ `.edit…`. Нет ключа — `403` `Action access denied (<ключ> required)`, ключ назван в тексте.
+
+Неочевидные ключи:
+- правка и создание тегов — `settings.tags.edit` (`Settings: tags edit`), одного просмотра тегов мало;
+- повтор регистрации домена — `tech.domains.edit.buy-domain` (`Tech: domains buy domain`);
+- копирование — `<раздел>.edit.copy` (например, `Tracker: campaigns copy`), в разделе без такого ключа — `<раздел>.edit`;
+- смена владельца — `<раздел>.share.ownership` (например, `Tech: servers ownership change`), в разделе без такого ключа — `<раздел>.share`, а без него — `<раздел>.edit`;
+- приглашение юзера и смена роли — только Owner / Admin, никаким ключом Position не выдаются.
+
+### Какие ключи прав появились и какие убраны — логи, заметки, PWA, Suppliers
+
+**Отдельных прав на логи по разделам (`<раздел>.view.show-logs`) больше нет — логи открывает одно `settings.logs.view` (`Settings: logs page`); императив на удалённый `….view.show-logs` больше ничего не открывает.** Новые ключи:
+
+- `content.landings.view.pwa` (`Content: PWA page`) — страница `Content → PWA` (в MTK — `PWA → PWA`). Ключ вложен в `content.landings.view`, поэтому открывается вместе с лэндами, но отнимается отдельно (`Deny content.landings.view.pwa`) или выдаётся без `Landings`.
+- `content.landings.edit.custom-pwa` (`Content: landings custom PWA`) — создание PWA из ZIP (`Custom PWA`); конструктор PWA — `content.landings.edit.pwa`.
+- `meta.suppliers.view` / `meta.suppliers.edit` (`Meta: suppliers page` / `Meta: suppliers edit`) — поставщики рекламных аккаунтов (`Manage suppliers`).
+- `tech.servers.edit.place-monitor` (`Tech: servers place monitor`) — размещение мониторинга на сервере.
+- `settings.forms.share` / `settings.forms.share.ownership` и `settings.advertisers.share` / `settings.advertisers.share.ownership` — шаринг и смена владельца форм и адвертайзеров (только ERP).
+- `features.notes.edit` — архив заметок, своих и чужих (секция «Какие фичи закрыты отдельными Feature-императивами»).
+
+Позиция с Allow на раздел получает новые ключи этого раздела автоматически, по префиксу.
 
 ### Выгрузка таблицы в CSV — отдельное право, а не следствие доступа к таблице
 
@@ -84,25 +168,30 @@ Imperative — это «единица разрешения» внутри Posit
 
 ### Какие фичи закрыты отдельными Feature-императивами — полный список
 
-Feature-императивов семь, каждый закрывает свою фичу отдельно от доступа к разделу, где она живёт:
+Feature-императивов восемь, каждый закрывает свою фичу отдельно от доступа к разделу, где она живёт:
 
 - `Features: sessions` (`features.sessions`) — записи сессий ([how-to/session-analytics.md](../how-to/session-analytics.md)); только в билде ERP.
 - `Features: heatmaps` (`features.heatmaps`) — тепловые карты лэнда; только в билде ERP.
-- `Features: notes` (`features.notes`) — заметки; только в билде ERP.
+- `Features: notes` (`features.notes`) — заметки: видеть заметки всех юзеров тенанта, добавлять свои и править их текст; только в билде ERP.
+- `features.notes.edit` — архивировать заметки, свои и чужие: без него сервер отказывает в архиве даже своей заметки, хотя пункт `Archive` у своей заметки в интерфейсе виден; только в билде ERP. Подписи в матрице нет — ряд показывается самим ключом.
 - `Features: conversions revenue` (`features.conversions-revenue`) — колонки `Revenue` и `Revenue Business Model` в `Tracker → Conversions`. Без права этих колонок в таблице нет, хотя сама таблица открывается.
 - `Features: conversions payout` (`features.conversions-payout`) — колонки `Payout` и `Payout Business Model` там же, на тех же условиях.
 - `Features: table export` (`features.table-export`) — выгрузка таблицы в CSV ([how-to/analytics.md](../how-to/analytics.md)).
 - `Features: postback generator` (`features.conversion-postback-generator`) — экран сборки ссылки входящего постбэка ([how-to/postback-generator.md](../how-to/postback-generator.md)).
 
-Права на колонки `Revenue` / `Payout`, на выгрузку таблицы и на генератор постбэков заведены в обоих билдах — ERP и MTK; записи сессий, хитмапы и заметки есть только в ERP.
+Права раздаются по префиксу, поэтому `Allow features` или `Allow features.notes` включает и `features.notes.edit`; `Deny features.notes.edit` запрещает архивировать любые заметки, в том числе свои. Скрыть чужие заметки правами нельзя. Права на колонки `Revenue` / `Payout`, на выгрузку таблицы и на генератор постбэков заведены в обоих билдах — ERP и MTK; записи сессий, хитмапы и заметки есть только в ERP.
 
 ### Ремаркетинг закрыт своими ветками прав — доступ к трафиковым кампаниям его не даёт
 
-Раздел `Remarketing` гейтится собственными ветками прав, независимыми от трафиковых `tracker.*`: `marketing.campaigns.*` — remarketing-кампании, `marketing.template-distributions.*` — контент рассылок. В матрице `Settings → Positions` они лежат в ветках `remarketing/campaigns/*` и `remarketing/template-distributions/*`. Отдельно от них заведены права на шаринг флоу рассылок — `marketing.flows.share` и `marketing.flows.share.ownership`.
+Раздел `Remarketing` гейтится собственными ветками прав, независимыми от трафиковых `tracker.*`: `marketing.campaigns.*` — remarketing-кампании, `marketing.template-distributions.*` — контент рассылок. В матрице `Settings → Positions` обе лежат в секции `Marketing section`: у `marketing.campaigns.*` подписи вида `Marketing: campaigns view`, `Marketing: campaigns edit`, `Marketing: campaigns share`, `Marketing: campaigns ownership change`, а ветка `marketing.template-distributions.*` подписей не имеет и показывается сырым ключом. Отдельно от них заведены права на шаринг флоу рассылок — `marketing.flows.share` (`Marketing: flows share`) и `marketing.flows.share.ownership`.
 
-Перечисленные ветки объявлены только в ERP-наборе — в MTK их нет. Роли полного доступа (Owner / Admin) проходят по ним автоматически, как и по остальным императивам.
+Страница аналитики рассылок `Other` закрыта правом `marketing.campaigns.view.analytics` (лейбл `Remarketing: analytics pages`). Права раздаются по префиксу, поэтому `Allow marketing.campaigns.view` (как и `Allow marketing.campaigns` или `Allow marketing`) включает и его — страница `Other` открывается вместе с кампаниями. Отдельным ключом страницу можно выдать без страницы кампаний или отнять: `Deny marketing.campaigns.view.analytics` ниже Allow. Пункт `Other` пропадает, если стоит такой Deny или если в Position выдан не view-ключ (например, только `marketing.campaigns.edit`).
 
-Что делает сам раздел и как выглядит каждая его страница — [how-to/remarketing-campaigns.md](../how-to/remarketing-campaigns.md); процедура шаринга и скрытия флоу рассылок — [how-to/permissions.md](../how-to/permissions.md).
+Ветки `marketing.campaigns.*` и `marketing.template-distributions.*` объявлены в обоих билдах — в MTK они работают внутри вкладки `PWA` платного модуля `PWA + Push`; остальные ветки раздела (`marketing.flows.*`, `marketing.messages.*`, `marketing.message-templates.*`, `marketing.sender-providers.*`) есть только в ERP. Роли полного доступа (Owner / Admin) проходят по всем автоматически, как и по остальным императивам.
+
+Отдельных `Scopes` для remarketing-кампаний и флоу рассылок нет: на уровне объектов remarketing-кампании относятся к разделу `tracker.campaigns`, а флоу рассылок — к `tracker.flows`. Поэтому `Scopes` / `Editor Scopes` на трафиковые кампании и флоу открывают и объекты ремаркетинга (вместе с их аналитикой), но кнопки действий в разделе `Remarketing` всё равно требуют ключей `marketing.*`. У шаблонов сообщений свои ветки — `scopes.marketing.message-templates` / `edit-scopes.marketing.message-templates`.
+
+Наборы шаблонов сообщений технически — дистрибуции типа `Message Templates`. Страницу наборов и их дерево открывают ключи `marketing.template-distributions.*`, а действия с самими наборами — создание, правку узлов дерева, дублирование, архив, шаринг и смену владельца — сервер проверяет ключами дистрибуций `settings.distributions.*`, а `marketing.template-distributions.share*` ни одного действия не открывают. По объектам наборы открывает `Scopes` / `Editor Scopes` на `settings.distributions`. Что делает сам раздел и как выглядит каждая его страница — [how-to/remarketing-campaigns.md](../how-to/remarketing-campaigns.md); процедура шаринга и скрытия флоу рассылок — [how-to/permissions.md](../how-to/permissions.md).
 
 ### Automations закрыт своей веткой прав `automation.*` — доступ к Meta его не даёт
 
@@ -115,19 +204,23 @@ Feature-императивов семь, каждый закрывает сво�
 Императивов шестнадцать. В матрице `Settings → Positions` они собраны в секцию `Automation section` (RU `Раздел «Автоматизации»`), подписи гранулярных — вида `Automation: view templates`, `Automation: edit assignments`, `Automation: approve verdicts`.
 
 - Шаблоны правил — `automation.templates.view`, `automation.templates.edit`, `automation.templates.edit.duplicate`, `automation.templates.edit.archive`, `automation.templates.share`, `automation.templates.share.ownership`.
-- Ассайны — `automation.assignments.view`, `automation.assignments.edit`, `automation.assignments.edit.archive`, `automation.assignments.edit.test-run`, `automation.assignments.share`, `automation.assignments.share.ownership`. Из двух share-прав рабочее одно — `.share.ownership`; `automation.assignments.share` объявлен, но ни одного действия в интерфейсе не открывает (секция «Шаблоны автоправил шарятся, ассайны — нет»).
+- Ассайны — `automation.assignments.view`, `automation.assignments.edit`, `automation.assignments.edit.archive`, `automation.assignments.edit.test-run`, `automation.assignments.share`, `automation.assignments.share.ownership`.
 - Журнал вердиктов — `automation.actions.view`, `automation.actions.edit.approve`, `automation.actions.edit.decline`. Права `.approve` / `.decline` гейтят кнопки на странице `History`.
 - Страница статуса — `automation.status.view`.
 
-Правка дерева шаблона (фазы и правила) идёт по `automation.templates.edit` — отдельного права на узлы дерева нет. Какие императивы собрать в Position под типовые роли — [how-to/permissions.md](../how-to/permissions.md).
+Правка дерева шаблона (фазы и правила) идёт по `automation.templates.edit` — отдельного права на узлы дерева нет. Не все ключи ветки что-то проверяют: `automation.templates.share*` и сам `automation.assignments.share` не открывают ни одного действия, а шаринг, владение, дублирование и архив шаблонов проверяются ключами дистрибуций — секция «Шаблоны автоправил шарятся, ассайны — нет». Какие императивы собрать в Position под типовые роли — [how-to/permissions.md](../how-to/permissions.md).
 
-### Шаблоны автоправил шарятся, ассайны — нет: какие из `automation.*.share*` работают
+### Шаблоны автоправил шарятся, ассайны — нет: какими ключами проверяются шаринг и владение
 
-Внутри одной ветки `automation.*` шаринг устроен несимметрично. Страница `Rule Templates` — это таблица дистрибуций с зашитым типом `Auto Rules`, и от дистрибуций ей достаётся весь набор действий владения: `Share`, `Share also`, `Force share`, `Unshare` под правом `automation.templates.share`, плюс `Change ownership` и массовый `Mass change ownership` под `automation.templates.share.ownership`. Оба share-права шаблонов рабочие.
+**Страница `Rule Templates` — это таблица дистрибуций с зашитым типом `Auto Rules`, поэтому действия владения с шаблоном проверяются ключами дистрибуций, а не `automation.templates.share*`.** `Share`, `Share also`, `Force share`, `Unshare` требуют `settings.distributions.share` (`Settings: distributions share`), `Change ownership` и массовый `Mass change ownership` — `settings.distributions.share.ownership` (`Settings: distributions ownership change`). Ключи `automation.templates.share` и `automation.templates.share.ownership` объявлены в матрице, но ни одного действия не открывают. Дублирование и архив шаблона требуют сразу двух ключей: `automation.templates.edit.duplicate` / `automation.templates.edit.archive` и `settings.distributions.edit.duplicate` / `settings.distributions.edit.archive`.
 
-У ассайнов из этого набора есть только `Change ownership` (право `automation.assignments.share.ownership`, пункт виден владельцу и роли полного доступа): в диалоге меняются владелец и `Access type`. Действий `Share` / `Share also` / `Force share` / `Unshare` на странице ассайнов нет — адресно пошарить ассайн конкретному юзеру или команде из интерфейса нельзя. Право `automation.assignments.share` объявлено в матрице `Settings → Positions`, но ни одного действия не открывает: включать его в Position можно, эффекта не будет.
+У ассайнов из этого набора есть только `Change ownership` (право `automation.assignments.share.ownership`; пункт виден тому, у кого на ассайн уровень `Own`): в диалоге меняются владелец, `Access type` и галка `Keep Editor access for the previous owner`. Действий `Share` / `Share also` / `Force share` / `Unshare` на странице ассайнов нет — адресно пошарить ассайн конкретному юзеру или команде из интерфейса нельзя. Сам ключ `automation.assignments.share` ни одно действие не проверяет, но `Allow automation.assignments.share` по префиксу включает и `automation.assignments.share.ownership` — то есть открывает `Change ownership`.
 
-Кто видит ассайн — владелец, руководитель его команды, роль полного доступа и все в тенанте при `Access type = Everyone` (новый ассайн создаётся с `By Share`); обходного права вида `Scopes: …` для ассайнов нет, в отличие от флоу (`scopes.tracker.flows`). Практических рычагов два — `Access type = Everyone` и смена владельца; разбор по страницам раздела — [how-to/auto-rules.md](../how-to/auto-rules.md), процедура и то, что `Everyone` открывает ассайн ещё и на правку любому с `automation.assignments.edit`, — [how-to/permissions.md](../how-to/permissions.md) («`Access type = Everyone` открывает не только просмотр, но и правку»).
+### Кто видит ассайн автоправила и как открыть сотруднику все ассайны тенанта
+
+**Ассайн видят по общей лестнице уровней: владелец, участники с более высоким уровнем в его команде, равные по уровню (если так выставлено `Peers:`), позиции со `Scopes` / `Editor Scopes` на ассайны, Owner / Admin и все в тенанте при `Access type` `Use` (в списке) или `View` (карточка на чтение).** Новый ассайн создаётся с `Access type = Private`. Правку чужого ассайна `Access type` не даёт.
+
+Чтобы сотрудник видел все ассайны тенанта и их вердикты в `History`, в его Position вдобавок к правам на страницы (`automation.assignments.view`, для `History` — `automation.actions.view`) добавляют `scopes.automation.assignments`; чтобы ещё и правил, передавал и архивировал любые — `edit-scopes.automation.assignments`. Подписей у этих рядов в матрице нет — они показываются самими ключами. Разбор по страницам раздела — [how-to/auto-rules.md](../how-to/auto-rules.md).
 
 ### Какая страница раздела Automations каким правом открывается
 
@@ -145,48 +238,77 @@ Feature-императивов семь, каждый закрывает сво�
 
 Модалка `Settings → Positions → + Position`: `Position name` + `Description` + `Assign color` + **`Priority`** (слайдер) + две вкладки — **`Imperatives`** и **`Assigned users`** (кому назначена).
 
-Императивы — **упорядоченный список** (`#1`, `#2`, …); у каждого ряда тоггл **`Deny` / `Allow`** + дропдаун выбора правила (`+ Add imperative` добавляет ряд). Правила в дропдауне сгруппированы по **секциям-папкам**: можно взять целую секцию (`Analytics section`) или гранулярно `<Секция>: <подсекция>` (`Analytics: Roll Up report`, `Content: CDN files`…). В **дропдауне** императивы перечислены по алфавиту — это порядок выбора, **не** путать с порядком применения (сверху вниз в самом списке Position).
+Императивы — **упорядоченный список** (`#1`, `#2`, …); у каждого ряда тоггл **`Deny` / `Allow`** + дропдаун выбора правила (`+ Add imperative` добавляет ряд, ряды перетаскиваются). Правила в дропдауне сгруппированы по **секциям-папкам**: можно взять целую секцию (`Analytics section`) или гранулярно `<Секция>: <подсекция>` (`Analytics: Roll Up report`, `Content: CDN files`…). Ряды без подписи — среди них большинство веток `Editor Scopes` и новые `scopes.*` — показываются самим ключом с иконкой-ключом, искать их надо по ключу. В **дропдауне** императивы перечислены по алфавиту — это порядок выбора, **не** путать с порядком применения (сверху вниз в самом списке Position).
 
 **Порядок важен:** императивы применяются **сверху вниз** по одному, формируя итоговый набор прав (`Allow` добавляет, `Deny` убирает); результат внизу списка = «максимально допустимый набор прав юзера». То есть внутри одной Position нижний императив может перекрыть верхний. Между **разными** Positions конфликт решает `Priority` (см. выше).
 
+### Как проверить итоговые права позиции — панель `Granted permissions`
+
+**Справа в редакторе позиции панель `Granted permissions` показывает итоговый набор ключей, который дают императивы этой позиции: счётчик, поиск (`Search permissions…`) и тип каждого ключа — `folder`, `page`, `scope`, `feature`, `view`, `action` или `billing`.** Клик по строке добавляет на этот ключ `Deny`-императив (подсказка `Click to add deny imperative to this`); пустая панель — `No effective permissions yet`. Панель учитывает только эту позицию: другие позиции юзера и то, что `Scopes` / `Editor Scopes` открывают по ключам действий, в ней не видны. Отдельной матрицы «просмотр / правка» с чекбоксами в редакторе нет — как собрать позицию «только просмотр», разобрано в секции «Дать баеру смотреть стату без права редактировать».
+
 ### Почему императив в Position есть, но не применяется — `is_active`
 
-У каждого императива в списке есть per-императивный тоггл **`is_active`** (вкл/выкл). Деактивированный императив **пропускается при резолве прав** — он не удаляется из Position, но при вычислении итогового набора не участвует, будто его нет. То есть правило может физически стоять в списке (и `Allow`, и `Deny`), но быть просто выключенным.
+У каждого императива в списке есть per-императивный тоггл **`is_active`** (вкл/выкл, подсказка `Are we using item or not`). Деактивированный императив **пропускается при резолве прав** — он не удаляется из Position, но при вычислении итогового набора не участвует, будто его нет. То есть правило может физически стоять в списке (и `Allow`, и `Deny`), но быть просто выключенным.
 
 Диагностика «правило в Position есть, а доступ ведёт себя не по нему»: проверь, что нужный императив **включён** (`is_active`), а не деактивирован. Выключенный `Deny` перестаёт резать; выключенный `Allow` перестаёт давать. Это отдельная причина помимо порядка (сверху вниз) и `Priority` между Positions.
 
-### Как в матрице Positions дать только просмотр вкладки без редактирования
+## Как дать доступ ко всем объектам раздела без шаринга — `Scopes` и `Editor Scopes`
 
-В матрице Positions доступ к каждой вкладке задаётся **двумя раздельными контролами** в её ряду:
+**`Scopes: <раздел>` (ключ `scopes.<раздел>`) даёт уровень `View` на все объекты раздела, `Editor Scopes: <раздел>` (`edit-scopes.<раздел>`) — уровень `Own` на все объекты раздела, независимо от владельца, команды и шаринга.** Со `Scopes` все объекты раздела видны в списках и селектах, карточки открываются на чтение, аналитика по ним не режется по владельцу. С `Editor Scopes` к этому добавляются правка, шаринг с правом раздавать, `Change ownership`, смена `Access type` и архив. Добавлять `Scopes` к `Editor Scopes` не нужно — `Own` включает `View`. В подсказке `Your access` такой доступ подписан `position`.
 
-- **Чекбокс `access`** — право **просматривать** вкладку (видеть её содержимое).
-- **Иконка-карандаш** — право **редактировать** содержимое вкладки.
+Ветки работают и на уровне ключей действий: `scopes.<раздел>` засчитывается за ключи действий вида `<раздел>.view…`, `edit-scopes.<раздел>` — за `<раздел>.view…`, `<раздел>.edit…` и `<раздел>.share…`. Поэтому сотрудник с `Content: landings page` и `Editor Scopes: content landings` видит, правит, шарит и передаёт все лэнды тенанта без отдельных Allow на действия с лэндами. Ключ страницы раздела (`<раздел>.view`) ветки не заменяют: таблицы раздела сервер отдаёт только при Allow на него.
 
-Чтобы дать право **только на просмотр**: включить чекбокс `access`, оставить карандаш выключенным. Юзер откроет вкладку и увидит данные, но менять их не сможет. Это UI-уровень того же принципа «видеть ≠ редактировать»: чекбокс = view-императив на вкладку, карандаш = edit-императив.
+### Для каких разделов есть `Scopes` и `Editor Scopes`
 
-### Как дать сотруднику править чужие лэнды без владения — ветка `Editor Scopes`
+**Обе ветки заведены для одних и тех же 27 разделов: 10 есть в обоих билдах, 17 — только в ERP.**
 
-Ветка **`Editor Scopes`** в матрице `Settings → Positions` снимает проверку владения на редактировании лэндов: юзер правит и шарит любой доступный ему лэнд, не будучи его владельцем и без индивидуального шаринга на редактирование. В дропдауне императивов путь такой: `Editor Scopes section` → `Editor Scopes: content` → `Editor Scopes: content landings`. Листовое право одно — `edit-scopes.content.landings`, есть в **обоих билдах** (ERP и MTK).
+- ERP и MTK: `tracker.campaigns`, `tracker.sources`, `tracker.destinations`, `content.landings`, `settings.presets`, `settings.streams`, `settings.teams`, `meta.social-profiles`, `tech.domains`, `tech.proxies`.
+- Только ERP: `tracker.flows`, `content.content-library`, `content.macros`, `settings.fields`, `settings.metrics`, `settings.distributions` (включая шаблоны автоправил `Rule Templates`), `settings.external-reports`, `settings.item-lists`, `settings.forms`, `settings.advertisers`, `marketing.message-templates`, `google.accounts`, `automation.assignments`, `tech.servers`, `tech.domain-providers`, `tech.dns-providers`, `tech.server-providers`.
 
-Что открывается на любом видимом юзеру лэнде:
+Групповые узлы `scopes` / `edit-scopes` целиком, `….tracker` и `….tech` по префиксу включают все разделы внутри. В матрице ветки лежат в секциях `Scopes section` и `Editor Scopes section`; подписаны `Scopes: tracker campaigns`, `Editor Scopes: content landings`, `Scopes: macros` / `Editor Scopes: macros` и т.п., а большинство рядов `Editor Scopes` и новые `scopes.*` (`scopes.automation.assignments`, `scopes.google.accounts`, `scopes.settings.teams`) показываются сырым ключом. У папок и Meta-шаблонов таких веток нет — их открывают только владение, команда, шаринг, `Access type` и полный доступ; у трекеров и креативов объектного доступа нет вовсе — их видят все, у кого есть право раздела.
 
-- `Manage landing` — правка обычного лэнда.
-- Правка PWA-лэнда.
-- Share-экшены: `Share`, `Also Share`, `Force Share`, `Unshare`, включая массовые.
+## Как Teams дают доступ к объектам — числовые уровни участников
 
-Проверка стоит не только в UI, но и на сервере: с этим правом серверная выборка редактируемых лэндов перестаёт ограничиваться владением и шарингом. Это настоящее право, а не косметическое показывание кнопок.
+**Команда (`Settings → Teams`) даёт доступ через числовой уровень участника: кто стоит выше по уровню в той же команде, получает `Own` на объекты всех, кто ниже.** Команд в тенанте может быть несколько (по вертикалям, по группам баеров, по гео), юзер может состоять в нескольких. Пошарить объект можно на любую команду тенанта — шару получают все её участники, независимо от уровня.
 
-Передача владения (`Change Owner`) этим правом **не** покрывается — она остаётся за своим императивом и владением. Ветка `Editor Scopes` пока существует только для лэндов: для других типов сущностей (кампании, домены, дистрибуции) такого права нет.
+Три команды приезжают из шаблона тенанта во всех семи шаблонах — `Tech Department`, `Media Buying Team A` (описание: «Buyers see their own traffic; the team head sees everyone's.») и `Media Buying Team B` («A second team - proof that two teams do not see each other.»). Участников в них нет: юзеры шаблоном не копируются, поэтому состав и уровни в каждой назначаются самостоятельно.
 
-### Дал `Editor Scopes`, а чужих лэндов не видно — нужна ещё ветка `Scopes`
+### Уровень участника команды — кто выше, владеет объектами тех, кто ниже
 
-`Editor Scopes: content landings` **видимости не даёт**. Список `Content → Landings` строится по отдельной view-выборке, которую открывает право `Scopes: content landings` (`scopes.content.landings`) из ветки `Scopes`. С одним только `Editor Scopes` юзер получит право править лэнды, но в списке по-прежнему увидит лишь свои и пошаренные — новых лэндов для правки у него не появится.
+**У каждого участника команды — целый уровень от 0 до 100 (`Level N`); участник с более высоким уровнем получает на объекты, которыми владеют участники ниже него в этой же команде, уровень `Own`: видит, правит, шарит, передаёт владение и архивирует.** Равные по уровню по умолчанию объектов друг друга не видят. Наследование считается внутри каждой команды отдельно и через чужие команды не переходит: если A выше B в одной команде, а B выше C в другой, где A нет, объекты C юзеру A не достаются.
 
-Чтобы сотрудник видел и мог править все лэнды тенанта, включи в его Position **обе** ветки: `Scopes: content landings` (видимость) + `Editor Scopes: content landings` (правка и шаринг). В этом и разница между ветками: `Scopes` дают видеть без явного шаринга, `Editor Scopes` — менять и перешаривать.
+Ролей `Team Member` / `Team Leader` / `Team Head` в интерфейсе больше нет — они переведены в уровни 0, 1 и 2. По инвайту юзер попадает в команду на уровень 0. Практически: тимлиду ставят уровень выше, чем баерам (например, 1 и 0) — каждый баер видит свои кампании, тимлид владеет кампаниями всех баеров команды.
 
-## Как Teams изолируют видимость сущностей внутри тенанта
+### Что участники одного уровня получают друг на друга — настройка `Peers:`
 
-Teams создаются в `Settings → Teams`. Внутри тенанта может быть несколько команд (например, по вертикалям, по командам баеров, по гео). Тот, кто создал team, **автоматически становится `Team Head`**; дальше можно добавить любое число дополнительных Heads / Leaders / Members.
+**Что равные по уровню получают на объекты друг друга, задаётся в диалоге команды кнопкой `Peers:` (RU `Равные:`) у каждого уровня отдельно: `No access` (по умолчанию), `Use`, `View`, `Edit` или `Own`.** `Use` — объекты коллег видны в списках и селектах, настройки закрыты; `View` — карточки открываются на чтение; `Edit` — можно менять настройки, но не владеть и не шарить; `Own` — полный доступ, включая владение, шаринг и архив. Настройка действует только на объекты, которыми коллега владеет, — пошаренное коллеге через `Peers:` не передаётся.
+
+### Что поднимается от нижестоящих — настройка `Below:`
+
+**По умолчанию участник с более высоким уровнем наследует только объекты, которыми нижестоящие владеют; пошаренное нижестоящим поднимается вверх, только если уровню в диалоге команды выбран другой режим `Below:` (RU `Снизу:`).**
+
+| Режим `Below:` | Что поднимается сверх своих объектов нижестоящего |
+|---|---|
+| `Owned only` (по умолчанию, RU `Только свои`) | Ничего |
+| `Owned and direct shares` (RU `Свои и личные шары`) | Объекты, пошаренные нижестоящему лично |
+| `Owned and all shares` (RU `Свои и все шары`) | Плюс объекты, пошаренные командам нижестоящего, включая команды, где вас нет |
+
+Наследованная шара даёт уровень самой шары, а не `Own`. При любом режиме всегда видны свои объекты, шары лично вам и шары вашим командам. Для режима `Owned and all shares` диалог предупреждает: уровень увидит всё, что видят его нижестоящие.
+
+### Кто может создать и править команду
+
+**Создать команду может Owner / Admin или позиция с `Editor Scopes` на команды (`edit-scopes.settings.teams`); править существующую — они же или участник с самым высоким уровнем в этой команде, если в его Position есть `Settings: teams edit` (`settings.teams.edit`).** В диалоге создания текущий юзер заранее стоит в составе с уровнем 2; менять в диалоге собственный уровень и участие может только полный доступ (Owner / Admin). Участник, который правит команду только как старший по уровню (без полного доступа и без `Editor Scopes` на команды), не может выдать уровень выше своего, менять собственный уровень и убирать себя из команды. Отказы сервера:
+
+- `You don't have permission to create teams`;
+- `You don't have permission to edit this team (the highest level in the team is required)`;
+- `Level <N> is above your level (<M>)`;
+- `You can't change your own level`;
+- `You can't remove yourself from the team`;
+- `Level for user <uuid> must be between 0 and 100`.
+
+### Какие команды видно в `Settings → Teams` и где посмотреть уровень юзера
+
+**В `Settings → Teams` сотрудник видит только команды, в которых состоит; все команды тенанта видят Owner / Admin и позиции со `Scopes` / `Editor Scopes` на команды (`scopes.settings.teams` / `edit-scopes.settings.teams`, оба билда).** В таблице участники разбиты на колонки `Managers` (все выше нижнего уровня команды) и `Regular Members` (нижний уровень команды — не обязательно 0). В ERP в `Settings → Users` колонка `Teams` показывает команды юзера, а в подсказке к команде — его уровень в ней: `<команда> · Level N`. В диалоге шаринга доступны все команды тенанта, не только свои.
 
 ### Не сохраняется имя команды / ошибка на символах — валидация имени Team
 
@@ -196,62 +318,88 @@ Teams создаются в `Settings → Teams`. Внутри тенанта м
 
 У `Position name` набор символов не ограничен — можно кириллицу и спецсимволы; длина ограничена, но гораздо мягче — до `255` символов. Ограничение «только латиница/цифры/пробел/дефис/подчёркивание и ≤30» действует только для Team.
 
-### Уровни внутри team и что они видят
-
-| Уровень | Что видит |
-|---|---|
-| **Team Member** | Только то, что пошарили ему или его команде. Не видит сущности других Team Member'ов своей команды (если им не пошарили лично). |
-| **Team Leader** | Всё, что создано Team Members и другими Team Leaders своей команды. Не видит сущности Team Heads. |
-| **Team Head** | Всё в команде: Members + Leaders + других Team Heads. Team Heads видят сущности друг друга. |
-
-**Practical:** у баерской team обычно один Team Head (тимлид) + несколько Team Leaders (опытные баеры) + Team Members (джуны). Junior'ы не видят кампании друг друга, тимлид видит всех.
-
 ### Юзеры друг от друга не скрыты (by design)
 
 AIO намеренно не скрывает юзеров друг от друга — Slack/Discord-модель, by design. Ни юзера целиком, ни его отдельные поля (аватар, Telegram, имя/позиция) скрыть нельзя — такой настройки в системе нет.
 
-## Как работает Sharing — индивидуальный доступ к сущности
+## Как работает Sharing — доступ к конкретному объекту
 
-**Sharing** — индивидуальный grant доступа на конкретную сущность (один лэнд, одну кампанию, один домен), помимо team-логики.
+**Шаринг выдаёт юзеру или команде доступ к одному объекту (лэнду, кампании, домену, папке) с одной из трёх ролей — `Use`, `Viewer` или `Editor` — плюс, по желанию, правом раздавать дальше (`Can share further`) и сроком (`Expires`).** Роль `Use` даёт уровень `Use` (объект виден в списках и селектах, карточка закрыта), `Viewer` — `View` (карточка на чтение), `Editor` — `Edit` (правка настроек, тегов, цвета, папки и операционные действия). Владения шаринг не даёт: смена владельца, `Access type` и архив остаются за уровнем `Own`.
 
-Grant выдаётся не только на сущность, но и на **папку**: доступ уровня папки получают лежащие в ней сущности и те, что положат в папку позже. Процедура, уровни и ограничения (что снимается при изъятии из папки, у каких сущностей папок нет) — [how-to/permissions.md](../how-to/permissions.md).
+Срок по умолчанию — `No expiry`, задать можно только дату в будущем; истёкшая шара остаётся в списке с пометкой `Expired: access is no longer active` и доступа не даёт. Кто выдал шару, видно в колонке `Granted by` диалога; кому объект пошарен — в колонке **`Shares`** в списке сущностей. Пошаговая процедура, диалог `Share` и папки — [how-to/permissions.md](../how-to/permissions.md).
 
-### Шаринг кампании тянет зависимые сущности
+### Кто может шарить объект и какую роль можно выдать
 
-При шаринге кампании после выбора юзеров/команд и нажатия `Next` показывается окно со списком того, что шарится **вместе** с кампанией — её Landings и Destinations. То есть зависимые сущности не нужно шарить отдельно. Одну сущность можно пошарить сразу нескольким командам/юзерам; кому она пошарена — видно в колонке **`Shares`** в списке сущностей.
+**Шарить может тот, у кого на объект уровень `Own` (владелец, участник выше по уровню в команде владельца, равный с `Peers: Own`, позиция с `Editor Scopes` на раздел, Owner / Admin), или тот, кому объект пошарили с `Can share further`; плюс в Position нужен ключ `<раздел>.share` (в разделе без такого ключа — `<раздел>.edit`).** Выдать можно роль не выше собственного уровня на объект — более высокие кнопки ролей в диалоге не показываются. Галку `Can share further` включает только уровень `Own`, поэтому получивший её раздаёт дальше, но без права раздачи. Пункта `Share` нет на строке, где у вас `Use`, `View` или `Edit` без права раздавать. Старые шары с ролями `Share` и `Owner` теперь означают `Editor` + `Can share further`: владельцем объекта они не делают.
 
-### Mass Sharing экшены (когда выделены несколько сущностей)
+### Чужую выдачу не изменить — замок в колонке `Granted by`
 
-Как это называют: «пошарить на команду», «расшарить сервер», `Force Share` / `Also Share` / `Change Ownership`.
+**Без уровня `Own` менять и снимать можно только шары, выданные вами или участниками ниже вас по уровню в команде; чужие выдачи в диалоге `Share` стоят под замком.** Подсказка замка — `Granted by someone else: you can only change or revoke shares granted by you or your subordinates`. Шары, выданные до появления колонки `Granted by`, считаются выданными владельцем (`Granted by the owner`) — их меняет только уровень `Own`. Запрос мимо интерфейса получает `You can only change or revoke shares granted by you or your team members below you (this one was granted by the owner or another user)`.
 
-- **Share Also** (`Also Share`) — добавить юзера/команду к шарингу (предыдущие шаринги сохраняются).
-- **Unshare** — снять шаринг с указанных.
-- **Force Share** — снять предыдущие шаринги, оставить только новые.
-- **`Mass change ownership`** — массово сменить owner-а (секция «Как передать Ownership другому юзеру»). Одиночный пункт правого клика называется иначе — `Change ownership`.
+### Шаринг кампании тянет её лэнды и дестинейшены с ролью `Use`
+
+**Когда кампанию шарят, её Landings и Destinations автоматически получают роль `Use`: они видны получателю в списках и в карточке кампании, но их собственные карточки не открываются и не правятся.** Список того, что уйдёт вместе с кампанией, показывает вкладка `Details` (кнопка `Next` в диалоге `Share`) с подписью `Linked landers and destinations get the Use role, no choice here`. Если получателю нужен просмотр или правка лэнда, лэнд шарят отдельно с `Viewer` или `Editor`; уже существующая более высокая шара на зависимость не понижается. `Can share further` на зависимости не переходит, срок — как у шары кампании. `Unshare` кампании снимает и выданные вместе с ней `Use`-шары, если у получателя нет к ним другого пути (другой пошаренной кампании или папки с ними).
+
+### Откуда у владельца кампании `Use` на чужие лэнды — автошаринг при сохранении кампании
+
+**При каждом сохранении кампании её владелец автоматически получает `Use` на её лэнды, дестинейшены, источник и домен — те, что не его, не открыты всем через `Access type` и не пошарены ему лично; открыть или править эти объекты такой доступ не даёт.** Условия выдачи и что происходит при смене владельца кампании — [how-to/campaigns.md](../how-to/campaigns.md).
+
+### Шаринг папки — что получает её содержимое (ERP)
+
+**Шаринг папки выдаёт доступ её содержимому: каждый объект в папке получает у получателя роль папки (прежняя шара этого получателя на объект перезаписывается), но без `Can share further`; зависимости этих объектов (лэнды и дестинейшены кампаний) — роль `Use`.** Объект, положенный в уже пошаренную папку позже, получает у каждого получателя роль, `Can share further` и срок его шары на папку. Шарить папки могут Owner и Admin тенанта, а также те, кому они пошарили папку с `Can share further`. У трекеров и креативов объектного доступа нет — шаринг их папки на видимость не влияет. Путь к меню папки, изъятие из папки и что при этом снимается — [how-to/permissions.md](../how-to/permissions.md). Создавать и шарить папки можно только в ERP: в MTK списка папок в таблицах нет.
+
+### Массовые действия шаринга — `Share also`, `Force share`, `Unshare`, `Mass change ownership`
+
+Как это называют: «пошарить на команду», «расшарить сервер», «массово пошарить». Массовые пункты появляются только при выделении строк, в группе `Teams & permissions`.
+
+- **`Share also`** — добавить доступ тем, у кого его нет; существующую шару не понижает (роль только повышается, срок не меняется).
+- **`Force share`** — справа заранее стоят все, кому пошарен хотя бы один из выделенных объектов; всем, кто остался справа, роль, `Can share further` и срок перезаписываются на выбранные на всех выделенных объектах (по умолчанию `Viewer`, без раздачи и без срока — у кого был `Editor`, тот понизится); убранные влево теряют доступ. Пункт помечен как опасный.
+- **`Unshare`** — снять доступ у выбранных.
+- **`Mass change ownership`** — сменить владельца у всех выделенных (секция «Как передать владение — `Change ownership`»).
+
+### Массовое действие применилось не ко всем — причины пропуска
+
+**Массовое действие применяется к тем выделенным объектам, где хватает доступа, остальные пропускает с причиной; тост показывает `Applied: N` · `Skipped: M` и по строке на каждую причину.**
+
+| Причина (RU) | Что значит |
+|---|---|
+| `no access` (`нет доступа`) | Нет нужного уровня на объект; для шаринга — нет `Own` и `Can share further` |
+| `role above your level` (`роль выше вашего уровня`) | Выдаваемая роль выше вашего уровня на объект |
+| `sharing rights require owner level` (`право раздавать выдаёт только владелец`) | `Can share further` выдаётся только с уровнем `Own` |
+| `not granted by you` (`выдано не вами`) | Без `Own` затрагивается чужая выдача |
+| `not found` (`не найдено`) | Объекта уже нет |
+
+Ошибка на всю пачку — только когда применить не к чему: `No access to the selected objects (<level> level required): '<имена>'` (`403`) или, если не нашлось ни одного выделенного объекта, `Some UUIDs were not found in this model. No access to: '<…>'.` (`404`). В обычном диалоге массового действия (кроме шаринга) до подтверждения видно `Will apply to <N> of <M>: <K> skipped, no access`.
 
 ## Как Ownership определяет владельца сущности
 
-У каждой сущности (campaign, landing, domain, и т.п.) есть **Owner** — обычно тот, кто её создал.
+У каждой сущности (campaign, landing, domain и т.п.) есть **Owner** — обычно тот, кто её создал. Владелец всегда имеет на неё уровень `Own`.
 
-### Как передать Ownership другому юзеру
+### Как передать владение — `Change ownership`
 
-Действие `Change Owner` (или `Change Ownership`) передаёт владение другому юзеру: меняется только владелец сущности. Прежний владелец в шаринг автоматически не добавляется — дальше он видит сущность по общим правилам (своя команда, шаринг, `Access type = Everyone`); если доступ ему нужен, сущность шарят ему отдельно.
+**Владелец объекта меняется одним диалогом `Change ownership` (массово — `Mass change ownership`) на всех сущностях: в нём выбирается новый владелец (`Tenant users`), `Access type` и галка `Keep Editor access for the previous owner`.** Галка включена по умолчанию: прежний владелец получает шару `Editor` — править может, но без права раздавать, без смены владельца и архива. Если галку снять, прежний владелец видит объект только по общим правилам (команда, шаринг, `Access type`). Отдельного пункта `Change owner` больше нет — у кампаний, лэндов и прокси тот же `Change ownership`.
 
-Имя пункта зависит от сущности: `Change owner` / `Mass change owner` — у сущностей без колонки `Access type` (кампании, лэнды, прокси), выбирается только новый владелец; `Change ownership` / `Mass change ownership` — у сущностей с `Access type` (флоу, дистрибуции, ассайны автоправил, Sources, Destinations, Domains, Servers и т.п.), там же переключается `Everyone` / `By Share`. Что даёт `Everyone` — [how-to/permissions.md](../how-to/permissions.md).
+### Кто может сменить владельца объекта
+
+**Сменить владельца может тот, у кого на объект уровень `Own`: владелец, участник выше по уровню в команде владельца, равный с `Peers: Own`, позиция с `Editor Scopes` на раздел, Owner / Admin; плюс в Position нужен ключ `<раздел>.share.ownership` (например, `Tech: servers ownership change`; в разделе без такого ключа — `<раздел>.share`, а без него — `<раздел>.edit`).** Пункт показывается только на строках, где у вас `Own`. Отказы: `No access to this object (own level required)` или `No access to change ownership of this object (own level required)` — не хватает уровня; `Action access denied (<раздел>.share.ownership required)` — нет ключа в Position.
+
+### Копирование объекта — нужен `View`, копия ваша и `Private`
+
+**Скопировать объект можно, если он открыт вам хотя бы на `View` и в Position есть право копирования раздела (например, `Tracker: campaigns copy`); с одним `Use` копирование отказывает `No access to this object (view level required)`.** Копия принадлежит тому, кто копировал, получает `Access type = Private` и имя `<имя> Copy`; шары оригинала на неё не переносятся, теги — переносятся.
 
 ### Удаление vs деактивация юзера
 
-Чтобы было видно авторство прошлых заливок — деактивировать через `Manage Tenant`, не удалять. Процедура и предупреждение «откатить нельзя» — [how-to/permissions.md](../how-to/permissions.md).
+Чтобы было видно авторство прошлых заливок — деактивировать (`Settings → Users` → `Switch activity`), не удалять. Процедура и предупреждение «откатить нельзя» — [how-to/permissions.md](../how-to/permissions.md).
 
 ### Tenant Owner — особый случай
 
 **НЕ путать** `Owner сущности` и `Tenant Owner`. Tenant Owner — это владелец **самого тенанта**, имеет full access ко всем сущностям тенанта **независимо** от owner-ства отдельных сущностей.
 
-**Tenant Owner — тот, кто создал тенант.** Отдельного действия «сменить владельца тенанта» нет: `Change Owner` работает только на сущностях (кампания / лэнд / домен) и на роль тенанта не влияет. Единственное, что можно, — через `Manage Tenant` выдать роль `Owner` ещё одному юзеру (сделать owner'ом кого-то ещё); исходный создатель при этом остаётся owner'ом.
+**Tenant Owner — тот, кто создал тенант.** Отдельного действия «сменить владельца тенанта» нет: `Change ownership` работает только на сущностях (кампания / лэнд / домен) и на роль тенанта не влияет. Роль `Owner` другому юзеру тоже не выдаётся: смена роли (`Settings → Users` → `Edit tenant role`) назначает только `Admin` и `Employee`.
 
 ## Как добавить юзера в тенант (Invite User)
 
-Через `Settings → Users → +User`:
+Через `Settings → Users → +User`. Создавать инвайты могут только Owner и Admin — правом Position это не выдаётся.
 
 | Поле | Что |
 |---|---|
@@ -261,15 +409,15 @@ Grant выдаётся не только на сущность, но и на **�
 | Status | active/inactive |
 | Type | `User` (обычный) |
 | Till Date | срок действия |
-| Role | при инвайте доступны **`Admin` / `Employee`**. `Owner` через инвайт не выдаётся — Tenant Owner = создатель тенанта; выдать роль `Owner` ещё одному юзеру можно через `Manage Tenant` (см. «Tenant Owner — особый случай») |
-| Position | одна или несколько (если несколько — задаются Priority) |
-| Team | в какую team зачислить (с указанием уровня) |
+| Role | при инвайте доступны **`Admin` / `Employee`**. `Owner` через инвайт не выдаётся — Tenant Owner = создатель тенанта, и сменой роли `Owner` тоже не назначается. |
+| Position | одна; остальные назначают во вкладке `Assigned users` нужной Position |
+| Team | в какую team зачислить; юзер попадает в неё на уровень 0, поднять уровень можно в диалоге команды |
 
 Кнопка `Generate Invite` создаёт инвайт-код + регистрационную ссылку. Юзер регистрируется по ссылке (вводит Name, Email, Telegram, Password, опционально включает 2FA).
 
-### Как самопроверить дефолтные доступы новой Position
+### Как самопроверить доступы новой Position
 
-Полезно **самопроверить** дефолтные доступы — зарегать тестового юзера на `Buyer`, открыть в инкогнито и глазами байера увидеть, что реально видно, а что скрыто.
+**Проверить, что видит сотрудник с позицией, проще всего через `Log in as user`: Owner или Admin в ERP входит под юзера с нужной позицией и видит интерфейс его глазами** (секция «Как посмотреть интерфейс глазами сотрудника — `Log in as user`»). В MTK такого пункта нет — там регистрируют тестового юзера на позицию (например, `Buyer` из шаблона тенанта), открывают его в инкогнито и смотрят, что реально видно, а что скрыто.
 
 ### Без 2FA — поля скрыты
 
@@ -283,28 +431,52 @@ Grant выдаётся не только на сущность, но и на **�
 
 Видимость **значения** чувствительного поля визита регулируется **на уровне самого поля** — атрибутом `2FA Protected` (`Settings → Fields → Edit Field`): при `2FA Protected = Yes` значение поля скрыто в UI, пока смотрящий не введёт 2FA-код (типовой кейс — `phone`, `email`). Атрибут поля — SSOT в [how-to/custom-fields.md](../how-to/custom-fields.md) (раздел атрибутов поля). Так чувствительное содержимое закрывается ото всех без подтверждённой 2FA, а не адресно от одной Position.
 
-Более грубый уровень — **видимость самой колонки/сущности** (не значения) идёт через Position (`Deny` на нужный `Page` / `Subsection`) и через `Access Type` сущности (`Everyone` / `By Share` — см. [how-to/permissions.md](../how-to/permissions.md)).
+Более грубый уровень — **видимость самой колонки/сущности** (не значения) идёт через Position (`Deny` на нужный `Page` / `Subsection`) и через `Access type` сущности (`Private` / `Use` / `View` — секция «`Access type` — доступ для всех в тенанте»).
+
+## Как посмотреть интерфейс глазами сотрудника — `Log in as user`
+
+**Owner и Admin тенанта могут войти под другого активного юзера своего тенанта (Admin — не под Owner): `Settings → Users` → правый клик по юзеру → `Log in as user`.** Перед входом показывается подтверждение `You will work as <имя> for up to 2 hours. Every action will be logged as made on their behalf by you.` Сессия длится до 2 часов и действует только в этом тенанте — переключиться под чужим именем в другой тенант нельзя (`Tenant switching is not allowed while impersonating`). Вверху висит плашка `You are logged in as <юзер> (opened by <вы>)` с кнопкой `Exit`; тот же выход — `Exit impersonation` в меню профиля. Через 2 часа вход под юзером завершается автоматически.
+
+### Что нельзя делать под чужим аккаунтом и как это видно в логах
+
+**Под `Log in as user` нельзя править профиль юзера, его 2FA и часовой пояс: такие действия отвечают `Profile editing is not allowed while impersonating`, а пункт `Profile settings` в меню недоступен (`Unavailable while logged in as another user`).** Нельзя войти под себя, под неактивного юзера и под юзера не из этого тенанта; Admin не может войти под Owner (`Only the tenant Owner can impersonate the Owner`); войти под кого-то, уже работая под чужим аккаунтом, нельзя (`Impersonation chains are not allowed`). Каждое действие в сессии пишется в лог от имени юзера с пометкой `Impersonated by <имя> (<uuid>)`; у самого юзера в логах остаётся запись о том, кто и до какого времени под ним работал.
 
 ## Какие бывают отказы доступа — дословные ошибки прав
 
-Когда прав не хватает, действие отклоняется дословной серверной ошибкой. Точный текст = точка входа: по нему находится причина.
+**Отказ по доступу называет причину: либо в Position нет ключа действия (`Action access denied (<ключ> required)`), либо не хватает уровня на объект (`No access to this object (<level> level required)`).** Сервер проверяет сначала ключ позиции, затем уровень на объект; Owner / Admin эти проверки проходят всегда. Точный текст = точка входа: по нему находится причина. Если отказ пришёл при открытии карточки, интерфейс показывает тост `Sorry, you do not have access`; дословный текст сервера виден при сохранении или запуске действия.
 
-- **`Read access denied`** — нет права **читать** этот раздел/сущность (не хватает view-императива в Position; роль не Owner/Admin).
-- **`Edit access denied`** — нет права **редактировать** (не хватает Action-императива вроде `Edit Landing`; роль не Owner/Admin). Видеть ≠ редактировать — это разные императивы.
-- **`Visit timeline requires full access`** — таймлайн визита открывается только под ролью полного доступа (Owner / Admin-уровень), не точечным императивом.
-- **`Some UUIDs were not found in this model. No access to: '<uuid>'.`** — в массовом действии часть выделенных сущностей юзеру не видна (не пошарены / не по команде) или их нет; `<uuid>` = список недоступных.
+### `Action access denied (<ключ> required)` — не хватает права в Position
+
+**`403` с текстом `Action access denied (<ключ> required)` значит, что в Position юзера нет ключа, которым сервер закрывает это действие; ключ назван прямо в тексте — например, `Action access denied (tech.domains.edit.repoint required)`.** Лечится Allow на этот ключ или на его раздел-префикс (`tech.domains`, `tech`) — и проверкой, что его не перекрывает `Deny` ниже в списке или в позиции с большим `Priority` и что императив включён (`is_active`).
+
+Раньше такой отказ приходил текстом `Unauthorized` без имени права; теперь `Unauthorized` остался только у `401` `Auth Middleware: Unauthorized` — это протухшая сессия (нужно перелогиниться), а не нехватка прав.
+
+### `No access to this object (<level> level required)` — не хватает уровня на объект
+
+**Текст `No access to this object (use|view|edit|own level required)` значит, что ключ в Position есть, но уровня доступа к этому конкретному объекту мало.** `view` — нужно открыть карточку или скопировать, `edit` — сохранить или запустить операционное действие, `own` — архив, `Change ownership`, `Access type`. Лечится повышением уровня: шара `Viewer` / `Editor`, владение, более высокий уровень в команде владельца, `Peers:`, `Editor Scopes` на раздел. Родственные тексты:
+
+- `No access to the selected objects (<level> level required): '<имена>'` — в массовом действии ни к одному объекту не хватает уровня;
+- `No access to share this object (own level or "can share" is required)` — шаринг без `Own` и без `Can share further`;
+- `No access to change ownership of this object (own level required)` — смена владельца без `Own`;
+- `Some UUIDs were not found in this model. No access to: '<…>'.` — в массовом действии не нашлось ни одного выделенного объекта.
+
+### Отказы при шаринге — роль выше уровня, право раздавать, чужая выдача
+
+**Диалог `Share` валидирует выдачу и отвечает дословными ошибками, когда роль или флаг выдать нельзя.**
+
+- `Role <роль> is above your access level (<уровень>)` — выдаваемая роль выше вашего уровня на объект.
+- `Only the owner can grant the right to share` (и вариант `Only the owner can grant the right to share (role <роль> means Editor + can share)`) — `Can share further` или старые роли `Share` / `Owner` выдаёт только уровень `Own`.
+- `You can only change or revoke shares granted by you or your team members below you (this one was granted by the owner or another user)` — без `Own` чужую выдачу не изменить и не снять.
+
+### Отказы по ролям, тенанту и профилю
+
+- **`Visit timeline requires full access`** — таймлайн визита открывается только под ролью полного доступа (Owner / Admin), не точечным императивом.
 - **`You cannot assign this role`** — при смене роли выдаются только `Admin` / `Employee`; `Owner` так не назначается (см. «Tenant Owner — особый случай»).
 - **`You cannot edit yourself`** — свою собственную роль сменить нельзя, нужен другой Owner/Admin.
-- **`landing not found by permissions`** (`landing template not found by permissions` — для шаблона) — правка файла лэнда отклонена, потому что лэнд не виден юзеру по правам.
+- **`landing not found by permissions`** — правка файла лэнда отклонена: лэнда нет среди доступных юзеру (в его списках лэнда нет); приходит как ошибка `500`, а не `403`. Для шаблона лэнда тот же отказ звучит `landing template not found by permissions` — шаблон не найден в текущем тенанте.
 - **`You don't have permission to edit this tenant`** / **`You don't have permission assign subscriptions`** — нет прав на редактирование тенанта / назначение подписок (действия уровня Owner/Admin).
-
-### Красный тост `Unauthorized` — отказ по Action-императиву
-
-Отказ по **Action-императиву** приходит как HTTP `403` с текстом **`Unauthorized`**: в интерфейсе выпадает красный тост со словом `Unauthorized`, **без указания, какого именно права не хватает**. Ловится и на запуске самого экшена, и на запросе данных под него (когда открывается форма экшена).
-
-Причин две, и текст ошибки их не различает: (1) в Position юзера нет нужного Action-императива (`Edit Landing`, `Archive Landing` и т.п.) — либо он есть, но выключен или перекрыт `Deny`; (2) прав достаточно, но **сама сущность юзеру не видна** (не его, не пошарена, не по команде). Поэтому проверять надо и цепочку роль → Positions → порядок императивов → `Priority`, и то, видит ли юзер этот объект вообще.
-
-Не путать с протуханием сессии: разлогин отдаёт `401`, а не `403`. Отказы чтения и редактирования в других разделах приходят своими текстами — `Read access denied` и `Edit access denied`.
+- **`Read access denied`** / **`Edit access denied`** — попытка открыть или сохранить чужой профиль юзера; свой профиль правит только сам юзер. К правам Position эти тексты отношения не имеют.
+- **`Profile editing is not allowed while impersonating`** — правка профиля, 2FA или часового пояса под `Log in as user`.
 
 ## Что НЕ делает Permissions Model
 
@@ -312,14 +484,14 @@ Grant выдаётся не только на сущность, но и на **�
 - **Не работает между тенантами.** Permissions замкнуты внутри тенанта. Если тенантов несколько — права назначаются отдельно в каждом.
 - **Не управляет billing.** Биллинг/финансы — отдельный механизм (см. *Билды, тарифы, триал и статусы тенанта*).
 
-## Как логируются действия юзеров (Show Logs)
+## Как логируются действия юзеров (Show Logs) — право `Settings: logs page`
 
-Каждое действие юзера логируется: IP, User-Agent, timestamp, что сделал. Доступно через Imperative `Show Logs: <раздел>`. Полезно при расследовании «кто это сделал».
+Каждое действие юзера логируется: IP, User-Agent, timestamp, что сделал. Пункт `Logs` / `Show Logs` на любой сущности и страница `Settings → Logs` открываются одним правом `Settings: logs page` (`settings.logs.view`); отдельных прав на логи по разделам нет. Действия, сделанные через `Log in as user`, пишутся от имени юзера с пометкой, кто их сделал. Полезно при расследовании «кто это сделал».
 
 ## Смежные темы
 
 - [context/architecture.md](../context/architecture.md) — тенант как единица, multi-tenancy
-- [how-to/permissions.md](../how-to/permissions.md) — приглашение/деактивация юзеров, Position, Team, Share, Change Ownership
+- [how-to/permissions.md](../how-to/permissions.md) — приглашение/деактивация юзеров, Position, Team, Share, папки, Change ownership
 - [models/tenant.md](tenant.md) — доптенант под другую вертикаль (мульти-тенант)
 - [models/user.md](user.md) — сущность-actor (аккаунт), чьи права описывает эта модель
 - [reference/glossary.md](../reference/glossary.md) — определения (Imperatives, Positions, Teams, etc.)
@@ -334,10 +506,16 @@ Grant выдаётся не только на сущность, но и на **�
 
 - `Analytics` (видеть статистику).
 - `Campaigns` (свои кампании создавать и запускать).
-- **НЕТ** `Tech` (сервера, домены не нужны байеру).
+- **НЕТ** `Tech` (сервера, домены не нужны байеру) — и без `Scopes` / `Editor Scopes` на `tech`.
 - **НЕТ** доступа к доменам (репойнт, чекеры, защита от DDoS — задача тимлида / администратора тенанта).
 
 Если кому-то конкретно понадобилось что-то ещё — обсуди и добавь. Не раздавай **на всякий случай**.
+
+Так и собрана позиция `Buyer` из шаблона тенанта — готовая отправная точка для «обрезать всё, потом раздавать». Каркас общий для обоих билдов: Allow на `Tracker` (с Deny на `Tracker: destinations edit` и на `Tracker: trackers`), лэнды, загруженные файлы и Content Library, `Analytics`, `Features`, `Meta`, пресеты и теги.
+
+В шаблонах ERP к этому добавлены креативы, `Google` и рассылки (`marketing.campaigns` — ряд без подписи — и `Marketing: flows page`); секции `Tech` нет вовсе.
+
+В шаблонах MTK креативов, `Google` и рассылок у `Buyer` нет, зато открыт просмотр доменов — `Tech: domains page` (`tech.domains.view`): байер видит список доменов, но не управляет ими.
 
 **Почему:**
 
@@ -349,30 +527,21 @@ Grant выдаётся не только на сущность, но и на **�
 
 **Когда:** нужен view-only доступ — «пусть баер видит статистику кампаний, но ничего не редактирует», «дать смотреть, но не трогать».
 
-**Делай:** отдельного «read-only» права в AIO **нет**. View-only собирается **Позицией**, из которой сняты edit-императивы: `Deny` на нужных **Action-императивах** (`Edit Landing`, `Archive Landing`, `Update Costs` и т.п.), оставлены только view-императивы (нужные `Section` / `Subsection` / `Page`, при необходимости `Scope: <...> Read`). Юзер с такой Position открывает разделы и видит данные, но кнопки действий ему запрещены.
+**Делай:** отдельного «read-only» права в Position **нет** — view-only собирается позицией, где у разделов оставлены view-ключи (`Tracker: campaigns page`, нужные `Section` / `Subsection` / `Page`), а edit-ключи сняты (`Deny` на `Content: landings edit`, `Content: landings archive`, `Tracker: campaigns update costs` и т.п.). Чтобы видеть на чтение и чужие объекты раздела, добавь `Scopes: <раздел>` (например, `Scopes: tracker campaigns`). Для отдельных объектов «только чтение» даёт шаринг с ролью `Viewer` или `Access type = View`; в карточке такого объекта вместо сохранения стоит `Read-only`.
 
-**Почему:** доступ в AIO складывается из императивов (см. «Как императивы применяются в UI»), а видеть сущность ≠ исполнять над ней Action — это две разные вещи. Убирая Action-императивы и оставляя view, получаешь чистое чтение.
+**Почему:** доступ в AIO складывается из ключей позиции и уровня на объект (см. «Как императивы применяются в UI» и «Какие уровни доступа к объекту бывают»), а видеть сущность ≠ исполнять над ней Action. Убирая edit-ключи и оставляя view, получаешь чистое чтение.
 
 Это же — база для **read-only API-токена**: токен наследует права своего юзера, поэтому read-only API-доступ делается тем же приёмом (отдельный юзер на view-only Position, его токеном ходят в API). Разбор со стороны API — [how-to/api.md](../how-to/api.md) → «Дайте read-only токен».
 
-### «Байеры одной группы должны видеть кампании друг друга» — как реализовать
+### «Байеры одной группы должны видеть кампании друг друга» — настройка `Peers:`
 
-**Когда:** нужно, чтобы все байеры одной команды видели кампании друг друга.
+**Когда:** нужно, чтобы байеры одной команды видели (или правили) кампании друг друга.
 
-**Делай:** **стандартная Team-логика этого НЕ даёт**.
+**Делай:** в диалоге команды у уровня байеров выставь `Peers:` — `View` (видеть и открывать на чтение) или `Edit` (ещё и править настройки). По умолчанию (`Peers: No access`) байеры одного уровня кампании друг друга не видят, а участник с более высоким уровнем владеет кампаниями всех ниже.
 
-- `Team Member` видит **только свои** кампании (плюс пошаренные).
-- `Team Leader` и `Team Head` видят кампании members своей команды.
+Альтернатива без изменения команды — шаринг кампаний на команду (`Share` / массовый `Share also` → команда): шара на команду действует на всех её участников независимо от уровня. Разница: `Peers:` работает для всех будущих кампаний сразу, а шаринг — только для выделенных.
 
-Чтобы байеры **одного уровня** (все members) видели кампании друг друга — **только через `Share` / массовую пошарку**:
-
-- Mass-select кампаний → `Mass Sharing` → Add Team (всю команду или каждого юзера).
-
-**Почему:** by design AIO даёт baseline-изоляцию members друг от друга — это нормальная корпоративная модель (junior не видит чужие тесты). Если хочется иначе — это **явный choice**, реализуется шарингом, не базовой логикой.
-
-#### Автоматический дефолтный шаринг при создании кампании (ERP)
-
-Можно настроить **дефолтный шаринг через Distribution** (`Fill Field Distribution` + триггер на создание кампании — кастомизация), чтобы новые кампании шарились на команду автоматически.
+**Почему:** by design AIO даёт baseline-изоляцию байеров одного уровня — это нормальная корпоративная модель (junior не видит чужие тесты). Если хочется иначе — это **явный choice**, включается настройкой команды, а не дефолтом.
 
 ### Байеру не нужен доступ к лэнду для смены заголовка (ERP)
 
