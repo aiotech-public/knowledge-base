@@ -4,9 +4,9 @@ title: Карта интерфейса AIO (где что лежит)
 description: Полная карта навигации app.aio.tech — топ-меню (Tracker/Content/Marketing/Finance/Tech/Automations/Meta/Analytics/Settings; Dashboard из меню убран, но остаётся стартовой страницей), подразделы каждого, меню профиля (Billing, смена тенанта, Manage tenant). Чтобы быстро находить нужный раздел.
 doc_type: reference
 builds: [erp, mtk]
-related: [postback-generator, landings, analytics, landing, sdk, remarketing-campaigns, auto-rules, meta-ads, google-ads, events-exporter, live-pulse, session-analytics, registration, architecture, source-trackers, glossary, permissions-model, debug-with-logs, custom-fields, api, ui-common, profile-settings, placeholders]
+related: [postback-generator, landings, analytics, how-to-pwa, sdk, generations, remarketing-campaigns, auto-rules, meta-ads, google-ads, events-exporter, live-pulse, session-analytics, registration, architecture, source-trackers, glossary, permissions-model, debug-with-logs, custom-fields, api, ui-common, profile-settings, placeholders]
 language: ru
-updated: 2026-09-23
+updated: 2026-10-16
 ---
 
 # Карта интерфейса AIO (где что лежит)
@@ -53,12 +53,13 @@ Content — раздел для управления лэндами, креат�
 ### Где находятся лэнды, PWA-шки и макросы — Landings, PWA и Macros
 
 - **Landings** `/landers` — лэнды в режиме `Editor`. В MTK Landings доступны как отдельная вкладка верхнего меню (`/app/mtk/landers-creatives/landers`). Слева в шапке таблицы — переключатель типов лэндов (по умолчанию `All`, в меню `All types` и список типов): выбранный тип сужает список до лэндов этого типа и переводит колонки метрик на роль-группер `LP: <Тип>` вместо позиции `#N`; выбор запоминается в браузере. Разбор — [how-to/landings.md](../how-to/landings.md), роль-групперы — [how-to/analytics.md](../how-to/analytics.md).
-- **PWA** `/pwa` — лэнды в режиме `PWA` (пункт закрыт правом `content.landings.view.pwa` — `Content: PWA page`; оно входит в `content.landings.view`, поэтому Allow на `content.landings` открывает обе страницы, а отнять PWA можно отдельным Deny; в MTK — страница `PWA` внутри одноимённой вкладки платного модуля `PWA + Push`, `/app/mtk/pwa/landers`). Разделение по режиму лэнда навязано: на `Landings` видны только лэнды режима `Editor`, на `PWA` — только режима `PWA`, переключить или снять этот фильтр в интерфейсе нельзя ([models/landing.md](../models/landing.md)).
+- **PWA** `/pwa` — PWA-лэнды: режимы `PWA` (PWA Builder) и `Custom PWA` (свой ZIP в шелле) (пункт закрыт правом `content.landings.view.pwa` — `Content: PWA page`; оно входит в `content.landings.view`, поэтому Allow на `content.landings` открывает обе страницы, а отнять PWA можно отдельным Deny; в MTK — страница `PWA` внутри одноимённой вкладки платного модуля `PWA + Push`, `/app/mtk/pwa/landers`). На `Landings` фильтр по режиму навязан: там видны только лэнды режима `Editor`, PWA туда не попадают. На `PWA` видны оба PWA-режима, а над таблицей есть переключатель `All` / `AIO PWAs` / `Custom PWAs` ([how-to/pwa.md](../how-to/pwa.md)).
 - **Macros** `/macros` — макросы (в т.ч. `AIO SDK Macros Collection`, см. [reference/sdk.md](sdk.md)). В MTK Macros перенесены в `Settings → Macros`, см. *Как устроен MTK-вид AIO: навигация, пресеты из шаблона и методы под типовые задачи*.
 
-### Где находятся креативы, Content Library и файлы — Creatives, Files, CDN
+### Где находятся креативы, генерации, Content Library и файлы — Creatives, Generations, Files, CDN
 
 - **Creatives** `/creatives` — креативы (баннеры/картинки).
+- **Generations** `/generations` — генерации лэндов и креативов (пункт закрыт правом `content.generations.view` — `Content: generations page`); разбор — [how-to/generations.md](../how-to/generations.md).
 - **Content library** `/lander-placeholders` — Content Library (плейсхолдер-группы, переменные контента).
 - **Uploaded files** `/files` — загруженные файлы.
 - **CDN files** `/cdn-files` — файлы на CDN.
@@ -168,7 +169,6 @@ Settings — настройки тенанта. Состав подраздел�
 - **Logs** `/logs` — логи (Monitor / Destination Handler, Loggable UUID). Логи по одному визиту быстрее открыть ПКМ по визиту в `Tracker → Visits` → `Visit logs` (переключи `Severity` на `Debug`, иначе таблица выглядит пустой; [how-to/debug-with-logs.md](../how-to/debug-with-logs.md)).
 - **Trackers** `/trackers` — постбэк-трекеры (в MTK перенесены сюда из Tracker).
 - **Macros** `/macros` — макросы (в MTK перенесены сюда из Content; см. *Как устроен MTK-вид AIO: навигация, пресеты из шаблона и методы под типовые задачи*).
-- **Streams** `/money-streams` — механизм периодического обмена revenue/costs с внешними системами; **фича живая, но пока не в активном использовании** (см. [reference/glossary.md](glossary.md) → Streams). Доступен в обоих билдах.
 - **Trash** `/trash` — корзина. Только в MTK: в ERP-виде отдельного пункта в `Settings` нет (отсев визитов лежит в `Tracker → Trash`).
 
 ### Какие подразделы Settings доступны только в ERP
@@ -179,7 +179,8 @@ Settings — настройки тенанта. Состав подраздел�
 - **Conversion types** `/conversion-types` — типы конверсий.
 - **Metrics** `/metrics` — метрики.
 - **Traffic filters** `/traffic-filters` — Traffic Filters (антифрод/фильтрация).
-- **Generators** `/generators` — справочник записей-интеграций «генераторов»: у каждой записи `Name` + `Integration Type` (список типов приходит с бэка) + settings-JSON под выбранный тип. Права — `settings.generators.*`. Это **не** генератор трекинг-ссылок кампании (`Link Generator`) — отдельная сущность. В MTK раздела нет.
+
+- **Generators** `/generators` — справочник интеграций-«генераторов» (в форме — `Generator name`, `Integration type` и блок `Settings` под выбранный тип); записи шарятся, передаются (`Change ownership`) и архивируются, права — `settings.generators.*`. Это **не** генератор трекинг-ссылок кампании (`Link Generator`). В MTK раздела нет.
 - **Business models** `/business-models` — бизнес-модели.
 - **External reports** `/external-reports` — внешние отчёты.
 - **Item lists** `/item-lists` — списки значений.
@@ -196,14 +197,11 @@ Settings — настройки тенанта. Состав подраздел�
 - **Profile settings** — настройки профиля пользователя.
 - **Support** / **Start chat** — связаться с поддержкой; **Need assistance?** — помощь.
 - **Cloud Files** — файловое хранилище тенанта.
-- **Switch build** — переключиться между ERP- и MTK-видом того же тенанта.
 - **Data API Docs** — спека `Data API` прямо в продукте ([how-to/api.md](../how-to/api.md)).
 - **Become affiliate** — реферальная программа AIO (пункт виден не всем тенантам).
 - **Changelog**, **Placeholders**, **Public roadmap** — справочные.
 - **Appearance** — тема интерфейса: `Light` / `Dark` / `System`.
 - **Log out** — выход.
-
----
 
 ## Смежные темы
 

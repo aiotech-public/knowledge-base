@@ -6,7 +6,7 @@ doc_type: model
 builds: [erp, mtk]
 related: [tenant, user, permissions-model, source, campaign, flow-model, visit, visit-lifecycle, visit-field, landing, sdk, form, content-library, landings, destination, advertiser, conversion-model, tracker, auto-rules, distributions-model, business-model, domain, server, architecture, marketing-flow, notifications-flow, metric, analytics, domains, glossary, placeholders, ui-map]
 language: ru
-updated: 2026-09-23
+updated: 2026-10-09
 ---
 
 # Доменная модель AIO — карта сущностей и связей
@@ -17,12 +17,12 @@ updated: 2026-09-23
 
 ## Как сущности AIO связаны — краткая схема за 30 секунд
 
-- **Tenant** — рабочее пространство клиента; внутри живёт всё остальное.
+- **Tenant** — рабочее пространство клиента, основной контейнер рабочих данных.
 - **Campaign** связывает **Flow** (путь трафика) + домен + **Source** (откуда трафик).
-- Реклама приводит **Visit** — одну браузерную сессию. Визит — «живой токен», который **проходит по шагам (Flow States) флоу** через **переходы (Transitions)**.
+- Реклама приводит **Visit** — сущность пути посетителя в кампании. Визит — «живой токен», который **проходит по шагам (Flow States) флоу** через **переходы (Transitions)**.
 - На шагах визиту показывают **Landing** (Content), фильтруют **Filter**, заполняют **поля визита**, и в конце пушат лид в **Destination**.
 - Рекламодатель присылает **постбэк** → создаётся **Conversion** (Lead/Registration/Purchase…), привязанная к визиту через `visit_uuid`.
-- Деньги (Revenue/Payout) и динамический контент назначаются **Distribution**-деревьями автоматически.
+- Для денег (Revenue/Payout) и динамического контента можно использовать правила **Distribution**-деревьев.
 
 ```
 Tenant
@@ -45,7 +45,7 @@ Tenant
 
 ### Аккаунт и организация: Tenant, User, Permissions
 
-- **Tenant** — воркспейс клиента (он же *build*/тариф: MTK/ERP). Контейнер всего. → [models/tenant.md](tenant.md)
+- **Tenant** — воркспейс клиента с выбранным *build* MTK или ERP; основной контейнер рабочих данных. → [models/tenant.md](tenant.md)
 - **User** — аккаунт-actor; **один аккаунт может состоять сразу в нескольких тенантах**. Владелец сущностей (Owner), Launcher. → [models/user.md](user.md)
 - **Permissions** (Role / Position / Team / Imperative / Sharing) — **модель доступа**: что у юзера есть в данном тенанте. → [models/permissions-model.md](permissions-model.md)
 
@@ -54,7 +54,7 @@ Tenant
 - **Source** — пресет входа: `suuid` + маппинг URL-параметров в поля визита + постбэк-трекеры. → [models/source.md](source.md)
 - **Campaign** — связывает один Flow + Link-домен + Source; запускаемая единица (инстанс Flow). → [models/campaign.md](campaign.md)
 - **Flow** — конструктор пути визита Source→Destination: граф **Flow States** + **Transitions**. Один Flow → много Campaign. → [models/flow-model.md](flow-model.md)
-- **Visit** — одна браузерная сессия в кампании (`cuuid`+`suuid`+cookie); «живой токен», идущий по флоу. Две оси: **Visit Status** (Wait/Live/Left) и **текущий Flow State**. → [models/visit.md](visit.md) *(процесс — [mechanics/visit-lifecycle.md](../mechanics/visit-lifecycle.md))*
+- **Visit** — сущность пути посетителя в кампании; агент продолжает найденную сессию из URL или cookie либо регистрирует новый вход с `cuuid`+`suuid`. «Живой токен», идущий по Flow, имеет текущий **Flow State**; в ERP есть независимый **Visit Status** (Wait/Live/Left). → [models/visit.md](visit.md) *(процесс — [mechanics/visit-lifecycle.md](../mechanics/visit-lifecycle.md))*
 - **Visit Field** — именованный слот данных на визите; субстрат всей системы. → [models/visit-field.md](visit-field.md)
 
 ### Из чего состоит Flow — Flow States и Transitions
@@ -68,22 +68,22 @@ Flow — это граф: узлы (**Flow State**, «шаг») + рёбра (**
 
 - **Landing (Lander)** + **Lander Type** (Preland/Offer/White/…) — что показывают визиту на Content-шаге. → [models/landing.md](landing.md)
 - · **SDK / Macros** — что исполняется на лэнде (формы, трекинг, fbCapi, push…). → [reference/sdk.md](../reference/sdk.md)
-- **Form** — захват лида на лэнде (SDK-форма / Non-SDK Handler); Form Builder, маппинг контрол↔поле визита. → [models/form.md](form.md)
+- **Form** — захват лида на лэнде (SDK-форма / Non-SDK Handler); Form Builder в ERP, маппинг контрол↔поле визита. → [models/form.md](form.md)
 - **Content Library** (Content Type → Content Item) · **Splits** — динамический контент (офферы, A/B-сплиты лэнда). → [models/content-library.md](content-library.md), [how-to/landings.md](../how-to/landings.md)
 
 ### Деньги и результат: Destination, Conversion, Distribution
 
 - **Destination** — канал пуша лида (выход флоу/монетизация). → [models/destination.md](destination.md)
 - **Advertiser** — компания/сеть, кому отдаём лиды (платит Revenue); контейнер Destination-ов. → [models/advertiser.md](advertiser.md)
-- **Conversion** · **Conversion Type** — событие(я) по визиту из постбэка (Lead/Registration/Purchase…); привязка через `visit_uuid`. → [models/conversion-model.md](conversion-model.md)
-- **Tracker** (`Tracker → Trackers`) — исходящая отбивка конверсии наружу (FB CAPI / TikTok / HTTP Get…); ребёнок Source, реагирует на Conversion Type. → [models/tracker.md](tracker.md)
+- **Conversion** · **Conversion Type** — события по визиту, создаваемые постбэком, SDK или шагом Flow (Lead/Registration/Purchase…); привязка через `visit_uuid`. → [models/conversion-model.md](conversion-model.md)
+- **Tracker** (ERP: `Tracker → Trackers`; MTK: `Settings → Trackers`) — исходящая отбивка конверсии наружу (FB CAPI / TikTok / HTTP Get…); может быть настроен для нескольких Sources, реагирует на Conversion Type. → [models/tracker.md](tracker.md)
 - **Distribution** (9 типов) — rule-деревья: Payout/Revenue settings (деньги), Campaign/Flow content, Fill field, Direct traffic, Remarketing, `Message Templates` (шаблоны сообщений для ремаркетинг-рассылок), `Auto Rules` (шаблон автоправил над Meta-сущностями; с визитом не работает, живёт в разделе `Automations`, только ERP → [how-to/auto-rules.md](../how-to/auto-rules.md)). → [models/distributions-model.md](distributions-model.md)
-- **Business Model** — формула расчёта Revenue/Payout (лист Finance-дерева). → [models/business-model.md](business-model.md) *(движок дерева — [models/distributions-model.md](distributions-model.md))*
+- **Business Model** — формула расчёта Revenue/Payout: выбирается в денежном дереве или используется как формула по умолчанию без него. → [models/business-model.md](business-model.md) *(движок дерева — [models/distributions-model.md](distributions-model.md))*
 
 ### Фильтрация и антифрод: Filter, Traffic Filter, AIO Antifraud
 
-- **Filter** — шаг флоу, на котором визит уходит по транзишену `Passed` или `Rejected`. → *уточните у поддержки*
-- **Traffic Filter** — сущность-интеграция фильтрации/обогащения трафика; нода Filter выбирает её как `Filter Type`. → *уточните у поддержки*
+- **Filter** — шаг флоу с результатом `Passed` или `Rejected`; если соответствующее ребро не настроено, может сработать `Handle`. → *уточните у поддержки*
+- **Traffic Filter** — сущность-интеграция фильтрации/обогащения трафика; нода Filter выбирает её в настройке `Type`. → *уточните у поддержки*
 - · **AIO Antifraud** — встроенные проверки лида перед пушем в Destination. → *уточните у поддержки*
 
 ### Инфраструктура: Domain, Server, Agent
@@ -99,7 +99,7 @@ Flow — это граф: узлы (**Flow State**, «шаг») + рёбра (**
 ### Аналитика и измерения: Metric, Grouper
 
 - **Metric** (Conversions count = штуки, Revenue/Payout count = деньги, Computable, Data feed) — числовой показатель-колонка в отчётах; ось всей аналитики, адресуется по UUID. → [models/metric.md](metric.md)
-- · **Grouper** — измерение для разбивки строк отчёта (поле визита с `Availability as grouper`). → [models/visit-field.md](visit-field.md), [how-to/analytics.md](../how-to/analytics.md)
+- · **Grouper** — измерение для разбивки строк отчёта: готовый grouper или поле, доступное через `Availability as grouper`. → [models/visit-field.md](visit-field.md), [how-to/analytics.md](../how-to/analytics.md)
 
 ---
 
@@ -107,26 +107,48 @@ Flow — это граф: узлы (**Flow State**, «шаг») + рёбра (**
 
 Это и есть «как связаны» — то, что в профильных файлах раскрыто с одной стороны, а здесь собрано как связи.
 
-- **Tenant ⊃ всё.** Кампании, флоу, сорсы, домены, лэнды, дестинейшны, дистрибуции, юзеры — всё внутри одного тенанта; между тенантами не шарится ([models/permissions-model.md](permissions-model.md)).
-- **Campaign → ровно один Flow.** Кампания наследует структуру флоу; часть настроек шагов переопределяется на уровне кампании (`Settings Availability`: Campaign Template / Flow Only / Campaign Only). → [models/campaign.md](campaign.md), [models/flow-model.md](flow-model.md)
-- **Visit входит через `cuuid`(Campaign) + `suuid`(Source).** Нет их → Direct Traffic (`Default Query` / `Direct Traffic Distribution`). → [models/visit.md](visit.md)
-- **Conversion → Visit через `visit_uuid`.** На один визит — много конверсий (single: Lead/Registration; multiple: `Sale Status Update`). Конверсия ≠ визит. → [models/conversion-model.md](conversion-model.md)
-- **Distribution → шаги флоу и деньги.** `Fields by distribution`/`Fill fields` пишут поля визита; Revenue/Payout-деревья назначают деньги конверсии; Content-дистрибуция отдаёт лэнд/оффер. → [models/distributions-model.md](distributions-model.md)
-- **Landing живёт на Content-шаге; Form живёт на Landing; SDK исполняется на Landing.** Lander Type управляет, грузятся ли макросы/события (White = нет). → [models/landing.md](landing.md)
-- **Domain-Change-шаг переключает трекинговый ↔ публичный домен** внутри пути визита. → [how-to/domains.md](../how-to/domains.md)
+### Как Tenant связан с рабочими данными и User?
+
+**Tenant организует рабочие данные:** кампании, флоу, сорсы, домены, лэнды, дестинейшны и дистрибуции. User — глобальный аккаунт, который может состоять в нескольких тенантах; доступ в каждом воркспейсе настраивается отдельно ([models/permissions-model.md](permissions-model.md)).
+
+### Как Campaign наследует Flow?
+
+**Campaign → ровно один Flow.** Кампания наследует структуру флоу; часть настроек шагов переопределяется на уровне кампании (`Settings Availability`: Campaign Template / Flow Only / Campaign Only). → [models/campaign.md](campaign.md), [models/flow-model.md](flow-model.md)
+
+### Как Visit получает Campaign и Source?
+
+**Новый вход без найденной сессии требует `cuuid`(Campaign) + `suuid`(Source).** Если их нет, атрибуцию задают `Default Query` / `Direct Traffic Distribution`. Найденная URL/cookie-сессия позволяет продолжить Visit без этих параметров. → [models/visit.md](visit.md)
+
+### Как Conversion связана с Visit?
+
+**Conversion → Visit через `visit_uuid`.** На один визит — много конверсий (single: Lead/Registration; multiple: `Sale Status Update`). Конверсия ≠ визит. → [models/conversion-model.md](conversion-model.md)
+
+### Что Distribution передаёт Flow и Conversion?
+
+**Distribution → шаги флоу и деньги.** `Fields by distribution`/`Fill fields` пишут поля визита; Revenue/Payout-деревья назначают деньги конверсии; Content-дистрибуция отдаёт лэнд/оффер. → [models/distributions-model.md](distributions-model.md)
+
+### Как Landing связана с Form, SDK и Lander Type?
+
+**Landing живёт на Content-шаге; Form живёт на Landing; SDK исполняется на Landing.** В Lander Type задаются автоматическая вставка AIO-макросов и флаг `Generate events` (White = нет). Загрузка макросов зависит также от способа показа Landing; `Generate events` влияет на роль-групперы, а не отключает все runtime-события. → [models/landing.md](landing.md)
+
+### Зачем Domain Change в пути Visit?
+
+**Domain-Change-шаг переключает трекинговый ↔ публичный домен** внутри пути визита. → [how-to/domains.md](../how-to/domains.md)
 
 ## Как связаны Flow States и текущий стейт Visit — самая частая путаница
 
 **Flow — это статичный чертёж (граф States+Transitions). Visit — живой токен, который по этому чертежу едет.**
 
 - В каждый момент визит **«стоит» на одном Flow State** — это его *текущий стейт* (позиция в графе).
-- **Transition** перекидывает визит на следующий State. Какой переход сработает — зависит от того, что произошло:
-  - кликнул `{{link}}` → **Handle-link**; засабмитил форму → **Handle-form**; прошёл фильтр → **Passed**; зарубил → **Rejected**; дестинейшн принял/отверг → **Destination-pushed/rejected**; ни один вариант шага не подошёл по правилам → **No payload**.
-  - плюс **State Rules** и цвет **Split Group** уточняют, в какой *вариант* шага визит попадёт.
+- **Transition** переводит визит по настроенному ребру для события обработчика:
+  - Для клика `{{link}}` и сабмита формы есть **Handle-link / Handle-form**, для результата фильтра — **Passed / Rejected**, для ответа Destination — **Destination-pushed/rejected**, для отсутствующего варианта — **No payload**.
+  - Конкретное событие зависит от настроенных рёбер: клик, форма или фильтр могут дать **Handle**; у Destination есть **Destination-interacted** или возврат к предыдущему Content. Если подходящего ребра нет, событие не переводит визит на следующий State.
+  - **State Rules** и цвет **Split Group** уточняют, в какой *вариант* шага визит попадёт.
 
-### Текущий Flow State и Visit Status — это две разные оси
+### Текущий Flow State и ERP Visit Status — это две разные оси
 
 - **Visit Status (Wait / Live / Left) — это другое, ортогональное измерение.** Оно про «живость» сессии, не про позицию в графе: визит может быть `Live` стоя на Offer, или `Left`, бросив на Preland. (`Wait` = визит ждёт первые ивенты от SDK / не догрузился JS и т.п.) → *уточните у поддержки*
+
 - **Практический смысл (главный дебаг-объектив):** «куда уехал визит / где застрял» = найти, **на каком State** он сейчас и **каким Transition** (или `No payload`) туда попал. Это первое, что смотрят при разборе «лиды не доходят» / «лэнд не тот».
 
 Модель Visit целиком — [models/visit.md](visit.md); ноды и переходы — [models/flow-model.md](flow-model.md); путь визита по шагам — [mechanics/visit-lifecycle.md](../mechanics/visit-lifecycle.md).

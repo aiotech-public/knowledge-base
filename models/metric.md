@@ -1,12 +1,12 @@
 ---
 id: metric
 title: Metric / Custom Metric — концепт (модель)
-description: Что такое Metric в AIO как сущность — настраиваемый числовой показатель-колонка в отчётах аналитики; 4 типа (Conversions count = штуки, Remarketing count = события рассылок, Computable = формула, Data feed = фид событий; деньги = Data feed + source Conversions By Type Revenue/Payout), адресация по UUID, ось всех отчётов; Remarketing count считает события отправок, а не визиты (Delivered/Opened только у пушей remarketing-кампании, по SMS/Email событий не бывает вовсе), четыре счётчика Sent/Delivered/Opened/Failed Pushes и формула Push Open Rate % засеяны шаблоном (кроме MTK Finance/Sweeps), остальные заводятся руками и правятся диалогом Edit data feed metric под правом settings.metrics.edit.data-feed; процент по рассылкам (CTR/open-rate) — формула над Remarketing count, и на страницах раздела Marketing (рассылки) видны только такие метрики и формулы целиком над ними; список метрик в Settings → Metrics — папками, два вида Groups / Order, колонка Definition (из чего метрика собрана), порядок перетаскиванием в Order под правом settings.metrics.edit; на вкладках Meta → Campaigns / Ad Sets / Ads колонок Meta Spend / Meta Impressions / Meta Inline Link Clicks нет — скрыты как дубли нативных Meta Insights (Total Spend / Impressions / Clicks), сами метрики считаются. Концепт; где и как используются метрики — how-to/analytics.md.
+description: Что такое Metric в AIO как сущность — настраиваемый числовой показатель-колонка в отчётах аналитики; 4 типа (Conversions count = штуки, Remarketing count = события рассылок, Computable = формула, Data feed = фид событий; деньги = Data feed + source Conversions By Type Revenue/Payout; сумма числового поля визита — источник Visit Field Sum, по дате визита, раз на визит), адресация по UUID, ось всех отчётов; Remarketing count считает события отправок, а не визиты (Delivered/Opened только у пушей remarketing-кампании, по SMS/Email событий не бывает вовсе), четыре счётчика Sent/Delivered/Opened/Failed Pushes и формула Push Open Rate % засеяны шаблоном (кроме MTK Finance/Sweeps), остальные заводятся руками и правятся диалогом Edit data feed metric под правом settings.metrics.edit.data-feed; процент по рассылкам (CTR/open-rate) — формула над Remarketing count, и на страницах раздела Marketing (рассылки) видны только такие метрики и формулы целиком над ними; список метрик в Settings → Metrics — папками, два вида Groups / Order, колонка Definition (из чего метрика собрана), порядок перетаскиванием в Order под правом settings.metrics.edit; на вкладках Meta → Campaigns / Ad Sets / Ads колонок Meta Spend / Meta Impressions / Meta Inline Link Clicks нет — скрыты как дубли нативных Meta Insights (Total Spend / Impressions / Clicks), а трекерные формулы, зависящие от Meta-метрик (ROI %, CPL $, Profit $), там показывают 0; формула превращает деление на ноль и пропавшее (архивное) слагаемое в 0; Hidden at groupers прячет только колонку и на цифры не влияет. Концепт; где и как используются метрики — how-to/analytics.md.
 doc_type: model
-builds: [erp]
+builds: [erp, mtk]
 related: [analytics, conversion-model, visit-field, custom-fields, architecture, remarketing-campaigns, debug-with-logs, permissions-model, meta-spend-allocation, permissions, glossary, api, visit-lifecycle, campaigns, conversion-ai-testing, ui-map]
 language: ru
-updated: 2026-09-23
+updated: 2026-10-16
 ---
 
 # Metric / Custom Metric — концепт (модель)
@@ -18,6 +18,8 @@ updated: 2026-09-23
 **Metric — это настраиваемый числовой показатель, который отображается колонкой в отчётах аналитики (Roll Up / Cohorts / Comparative).** Набор доступных метрик per-tenant: системные метрики + заведённые кастомные. Кастомные заводятся в `Settings → Metrics → + Metric` выбором типа (считать число конверсий / считать события рассылок / вычислять формулой / считать по фиду событий; деньги конверсий — через `Data feed metric`). Метрика — это **ось колонок** отчёта: то, что измеряется в каждой строке. Каждая метрика имеет **UUID** и адресуется по нему и в формулах, и в API.
 
 Имя метрики произвольное — в `Settings → Metrics` его свободно создают, переименовывают и редактируют. Поэтому одна и та же метрика в разных тенантах может называться по-разному (напр. earnings per lead — `EPL` или `EPL$`, разница только в приставке), и на само имя опираться нельзя: адрес метрики — её UUID, а не подпись колонки.
+
+В MTK метрики приходят из шаблона тенанта и видны колонками отчётов; создать или поменять метрику из MTK-вида нельзя — её заводит команда AIO по запросу (*Как устроен MTK-вид AIO: навигация, пресеты из шаблона и методы под типовые задачи*).
 
 ## Типы метрики (`+ Metric`) — Conversions count, Remarketing count, Computable, Data feed
 
@@ -41,6 +43,9 @@ updated: 2026-09-23
 **Колонка считает события отправки, а не уникальные визиты:** повторные отправки одному и тому же визиту не схлопываются, каждая отправка — своё событие. В строках, где рассылок не было, стоит 0; фильтры и групперы отчёта применяются к метрике как к любой другой.
 
 - **`Delivered` и `Opened` есть только у пушей remarketing-кампании** — их присылает сервис-воркер лэнда. У `Telegram` таких событий не бывает вовсе: по нему наполняются только `Sent` и `Failed` ([how-to/remarketing-campaigns.md](../how-to/remarketing-campaigns.md)).
+
+У пушей, отправленных через Sender Provider `ZM Apps Push`, `Delivered` и `Opened` присылает провайдер по ссылкам, которые AIO передаёт ему вместе с пушем; не вызвал провайдер ссылки — эти события будут пустыми ([how-to/remarketing-campaigns.md](../how-to/remarketing-campaigns.md)).
+
 - **По каналам `SMS` и `Email` колонка всегда пустая** — отправителей под эти каналы в системе нет, поэтому по ним не возникает ни `Sent`, ни `Failed`. Отказ молчаливый: нули здесь не признак сбоя доставки, отправки просто не было.
 - **`Failed` внутри метрики не разбит по причине** — в него попадают и отправки, срезанные лимитом, и мёртвые push-подписки, и обычные сбои. Разложить по причине — группировкой `Send Result` ([how-to/remarketing-campaigns.md](../how-to/remarketing-campaigns.md)); текст ошибки — в логах namespace `Remarketing` ([how-to/debug-with-logs.md](../how-to/debug-with-logs.md)).
 
@@ -66,12 +71,23 @@ updated: 2026-09-23
 
 `Data feed metric` в живой форме = **базовая системная метрика-источник + опциональный `Flag`-фильтр**, а не агрегация median/sum/average. Правило не универсально: у источника `Remarketing Count` `Flag` не предлагается вовсе (см. буллет ниже). Структура формы:
 
-- **Источник** — базовая системная метрика (дефолт `Visits`); полный список вариантов приходит с бэка — среди них `Conversions By Type Payout`, `Conversions By Type Revenue`, `Conversions By Type Count`, `Once Conversions By Type Count`, `Events By Group Count`. Денежные суммы делаются именно здесь: источник `Conversions By Type Revenue` (Revenue) / `Conversions By Type Payout` (Payout).
-- **`values`** — адрес под источник: UUID `Conversion Type` для источников `... By Type ...` либо id групп событий для `Events By Group Count`.
+- **Источник** — базовая системная метрика (дефолт `Visits`); полный список вариантов — в выпадающем списке поля, среди них `Conversions By Type Payout`, `Conversions By Type Revenue`, `Conversions By Type Count`, `Once Conversions By Type Count`, `Events By Group Count`, `Visit Field Sum`. Денежные суммы делаются именно здесь: источник `Conversions By Type Revenue` (Revenue) / `Conversions By Type Payout` (Payout).
+- **`values`** — адрес под источник: UUID `Conversion Type` для источников `... By Type ...`, id групп событий для `Events By Group Count` либо поля визита для `Visit Field Sum`.
 - **Источник `Remarketing Count`** — особый случай: при его выборе форма показывает вместо блока `Flag` те же два мультиселекта `Events` и `Channels`, что у типа `Remarketing count` (секция выше). `Flag` для этого источника не предлагается вовсе.
 - **`Flag`-фильтр** (опц.) — сужает выборку по флагу визита. Enum — **8 дискретных значений**: `Trash` / `BackFix` / `Interested` / `Qualified` / `Engaged` + три предопределённых `Interested BackFix` / `Qualified BackFix` / `Engaged BackFix`. Выбирается **один** флаг из списка (свободного комбинирования нет — комбинации существуют только как эти 3 готовых `X BackFix`); `noFlag` = без фильтра по флагу.
 
 Так строятся метрики вида «Qualified-визиты», «конверсии типа X по payout», «события группы Y» — источник задаёт что считать, `Flag` сужает по состоянию визита.
+
+### `Visit Field Sum` — сумма числового поля визита в отчёте
+
+**Источник `Visit Field Sum` суммирует значение числового поля визита по визитам строки отчёта: так любое поле формата `Money`, `Number`, `Percentage`, `Time Seconds` или `Progress Number` становится колонкой-суммой.** В `values` выбираются поля типа `Visit` без `Is Registry` и не в архиве; если выбрать несколько полей, метрика покажет сумму их сумм. Формат колонки (`Money` / `Number`) задаётся как у любой метрики.
+
+- **Один раз на визит.** Берётся текущее значение поля визита; конверсии и события визита сумму не умножают.
+- **По дате визита.** Если значение поля меняется позже (например, стрим `Visit Fields` дописал новые суммы партнёрки), меняются цифры того дня, когда был визит; в отчётах за прошлые дни новое значение видно после пересборки дня.
+- **`Flag`** — только `BackFix` или без флага; trash-визиты в сумму не входят.
+- **`Definition`** в списке метрик показывает `Visit Field Sum` и чипы выбранных полей.
+
+Как ещё спрашивают: «сумма поля в отчёте», «SUM по полю визита», «вывести числовое поле колонкой».
 
 ## Общие атрибуты формы метрики — Business value, Hidden at groupers, Categories
 
@@ -81,11 +97,23 @@ updated: 2026-09-23
 - **`Hidden at groupers`** (multi-select) — список групперов, при разбивке по которым колонка метрики **скрывается**. Объясняет практику «метрика в списке есть, а в конкретной разбивке колонки нет»: при чтении отчёта проверь `Hidden at groupers` метрики, прежде чем считать колонку пропавшей.
 - **`Categories`** (multi-select) — теги-категории метрики; справочник категорий **per-tenant**. Служит для группировки/фильтрации метрик в списке.
 
+### `Hidden at groupers` прячет только колонку — на цифры не влияет
+
+**`Hidden at groupers` убирает колонку метрики, когда разбивка страницы или первый группер отчёта — один из выбранных групперов; сама метрика при этом считается как обычно — и в других разрезах, и внутри формул, которые на неё ссылаются.** Поэтому скрытые, например, на `Destination #1…#3` и `Advertiser #1…#3` метрики `LP1 Visits` / `LP2 Visits` не меняют ни цифры на других страницах, ни итоги. Частые формулировки: «скрыл метрику на уровне Destination — поменялись цифры?», «hidden at groupers влияет на расчёт».
+
+Если `Tracker → Destinations` и разбивка кампаний по `Destination #N` показывают разное, причина в самих разрезах — позиция, архивные кампании, только дошедшие визиты ([how-to/analytics.md](../how-to/analytics.md)).
+
 ## На вкладках `Meta` нет колонки `Meta Spend` / `Meta Impressions` / `Meta Inline Link Clicks` — это не `Hidden at groupers`
 
-На страницах Meta-модуля `Meta → Campaigns`, `Ad Sets` и `Ads` трекерные метрики `Meta Spend`, `Meta Impressions` и `Meta Inline Link Clicks` в набор колонок не выводятся: они дублируют нативные инсайт-колонки группы `Meta Insights` — `Total Spend`, `Impressions` и `Clicks`. Скрыта только колонка: сами метрики на этих вкладках по-прежнему считаются, и формулы `Computable metric` (ROI, профит), которые на них ссылаются, работают. `Meta Commission` не скрывается — её колонка на вкладках Meta есть.
+На страницах Meta-модуля `Meta → Campaigns`, `Ad Sets` и `Ads` трекерные метрики `Meta Spend`, `Meta Impressions` и `Meta Inline Link Clicks` в набор колонок не выводятся: они дублируют нативные инсайт-колонки группы `Meta Insights` — `Total Spend`, `Impressions` и `Clicks`. `Meta Commission` не скрывается — её колонка на вкладках Meta есть.
 
 Симптом «на `Meta → Campaigns` в наборе колонок нет `Meta Spend`, метрика пропала» — это не `Hidden at groupers` и не потеря метрики: цифра спенда на этих вкладках читается из `Total Spend` группы `Meta Insights`. На остальных таблицах (`Tracker → Campaigns`, Roll Up) все четыре метрики `Meta` доступны колонками как обычно; что они считают и на каком уровне матчится спенд — [mechanics/meta-spend-allocation.md](../mechanics/meta-spend-allocation.md).
+
+### На вкладках `Meta` формулы с `Meta Spend` (`ROI %`, `CPL $`, `Profit $`) показывают 0
+
+**На `Meta → Campaigns`, `Ad Sets` и `Ads` трекерные формулы, которые прямо или через другие формулы зависят от Meta-метрик, не считаются: в строках у них 0.** В шаблонах от `Meta Spend` зависят `Total Costs $` и всё, что на нём построено, — `Profit $`, `ROI %`, `CPL $`, `CPM $` и другие. Обычные метрики трафика и конверсий (`Visits`, `Leads`…) на этих вкладках считаются. Частые формулировки: «на вкладке Meta ROI ноль», «CPL 0 в Meta → Campaigns».
+
+Стоимость на этих вкладках читают по родным колонкам `Meta Insights` — `Total Spend`, `CPM $`, `CPC $`, `CPL $` (расход кабинета на событие Meta `lead`); трекерные `ROI %`, `CPL $` и профит — в `Tracker`-таблицах и `Roll Up report`.
 
 ## Как устроен список метрик в `Settings → Metrics` — папки и два вида, `Groups` / `Order`
 
@@ -131,6 +159,12 @@ updated: 2026-09-23
 В UX формулы пользователь пишет не голые UUID, а **буквы-переменные**: пул из ~21 буквы (`x`, `y`, `z`, `a`..`d3`), каждая маппится дропдауном на конкретную метрику. Система при сохранении подставляет за каждой буквой UUID выбранной метрики — то есть буквы это удобный алиас, а хранится и считается всё равно по UUID.
 
 Тот же UUID — адрес метрики в API: в **Pivot Report API** метрики возвращаются в leaf-объекте как мапа placeholders — ключ вида `metric_<uuid>` → значение. То есть UUID метрики — единый адрес и в формулах Computable, и в API ([reference/glossary.md](../reference/glossary.md) → `Pivot Report API`; [how-to/api.md](../how-to/api.md)).
+
+### Формула показывает 0 — деление на ноль и пропавшие слагаемые
+
+**Деление на ноль `Computable metric` превращает в 0, а не в ошибку или пустую ячейку: `CPL $` при нуле лидов в строке покажет `$0.00`, `ROI %` при нулевом расходе — 0.** Так же нулём становится слагаемое, которого нет в расчёте: метрика, на которую ссылается формула, заархивирована или удалена — формула считается дальше, подставляя вместо неё 0 (в колонке `Definition` такая ссылка видна как `Unknown`). `N/A` в денежной ячейке — другое: значения нет совсем. Частые формулировки: «CPL 0», «ROI ноль при расходе», «формула показывает ноль».
+
+Формулы, зависящие от Meta-метрик, на вкладках `Meta` не считаются вовсе — секция «На вкладках `Meta` формулы с `Meta Spend` (`ROI %`, `CPL $`, `Profit $`) показывают 0» в этом документе. Почему `CPL $` бывает нулём при лидах и расходах и как в шаблонах считаются `CPM $` и `[Meta] CTR %` — [how-to/analytics.md](../how-to/analytics.md).
 
 ## Как завести кастомную промежуточную конверсию и метрику — паттерн оптимизации
 

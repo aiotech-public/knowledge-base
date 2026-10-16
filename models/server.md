@@ -1,12 +1,12 @@
 ---
 id: server
 title: Server / Agent — концепт (модель)
-description: Что такое Server в AIO как сущность — серверная единица в Tech → Servers, на которую раскатывается AIO-агент (finite state machine, работающий по командам AIO); агностичность (лэнды на CDN), Deploy, Repoint Group, мониторинг/2FA; влияние гео сервера на скорость открытия лендинга (слабое — динамика упирается в контрол-плейн). Концепт; инфраструктура целиком — context/architecture.md, процедуры — how-to/domains.md.
+description: Что такое Server в AIO как сущность — серверная единица в Tech → Servers, на которую раскатывается AIO-агент (finite state machine, работающий по командам AIO); агностичность (лэнды на CDN), Repoint Group, мониторинг/2FA; как подключить Server Provider (поля DigitalOcean, Vultr, BitLaunch, Hetzner, Gcore, Cherry Servers, OVHcloud, Hostinger, Test, ошибки заказа); что ставит Deploy-скрипт AIO Agent & Squid, какая ОС нужна (Ubuntu/Debian x86_64), SQUID_USER_ENV / SQUID_PASS_ENV, SSH-доступ к купленному серверу; влияние гео сервера на скорость открытия лендинга. Концепт; инфраструктура целиком — context/architecture.md, процедуры — how-to/domains.md.
 doc_type: model
 builds: [erp, mtk]
-related: [architecture, domains, glossary, sdk, visit-lifecycle, flow-model, tenant, domain, landing, domain-launch, landings, permissions-model, ui-map]
+related: [architecture, domains, glossary, sdk, visit-lifecycle, flow-model, permissions-model, tenant, domain, landing, domain-launch, landings, ui-map]
 language: ru
-updated: 2026-09-23
+updated: 2026-10-16
 ---
 
 # Server / Agent — концепт (модель)
@@ -15,82 +15,254 @@ updated: 2026-09-23
 
 ## Что такое Server и Agent в AIO
 
-**Server — это серверная единица в `Tech → Servers`, на которую AIO раскатывает свой агент через Deploy-скрипт; агент принимает запросы визитёров на доменах, смотрящих на сервер.** Формально **AIO-агент = finite state machine (конечный автомат), работающий по командам AIO**: он принимает запрос визитёра, распознаёт визит по `cuuid`/`suuid`, снимает трекинговые параметры, на каждом шаге обращается к AIO и получает команду — что отдать визитёру и куда вести визит дальше, — исполняет её и сообщает AIO о событиях флоу (submit формы, переход по ссылке-шагу). Решения флоу (переходы, фильтрация, выбор сплит-варианта) вычисляет AIO; агент исполняет их на краю. Визитёр при этом общается только с доменом/сервером клиента — на `app.aio.tech` визит не попадает. Ключевое свойство — **сервера агностичны**: на них НЕТ файлов лэндов (всё на CDN), сервер держит только агента. Из этого вытекает почти вся «магия» инфраструктуры AIO (мгновенная замена, быстрый репойнт, взаимозаменяемость).
+**Server — это серверная единица в `Tech → Servers`, на которую AIO раскатывает свой агент через Deploy-скрипт; агент принимает запросы визитёров на доменах, смотрящих на сервер.** Формально **AIO-агент = finite state machine (конечный автомат), работающий по командам AIO**: он принимает запрос визитёра, распознаёт визит по `cuuid`/`suuid`, снимает трекинговые параметры, на каждом шаге обращается к AIO и получает команду — что отдать визитёру и куда вести визит дальше, — исполняет её и сообщает AIO о событиях флоу (submit формы, переход по ссылке-шагу). Решения флоу (переходы, фильтрация, выбор сплит-варианта) вычисляет AIO; агент исполняет их на краю. Визитёр при этом общается только с доменом/сервером клиента — на `app.aio.tech` визит не попадает. Ключевое свойство — **сервера агностичны**: исходные файлы лэндов хранятся на CDN, и переносить их вручную между серверами не нужно. Агент может держать локальный кэш статики. Из этого вытекает почти вся «магия» инфраструктуры AIO (мгновенная замена, быстрый репойнт, взаимозаменяемость).
 
 ## Как работает Server и Agent — подробно
 
 ### Агент = конечный автомат, работающий по командам AIO
 
-На сервере живёт только **AIO-агент** (+ Squid Proxy, ставится по дефолту). По шагам агент: принимает входящий запрос на доменах, смотрящих на сервер; распознаёт визит по `cuuid` (UUID кампании) и `suuid` (UUID Source) в URL (сам визит идентифицируется отдельным `visit_uuid`); снимает трекинговые параметры (IP, UA, гео, `browser_language_code`, fingerprint); обращается к AIO и получает команду — что отдать визитёру (контент с CDN, редирект) и куда вести визит дальше; исполняет команду и сообщает AIO о событиях флоу (submit формы, переход по ссылке-шагу). Переходы по флоу, фильтрацию и выбор сплит-варианта вычисляет AIO — агент исполняет решения на краю, а эти события флоу уходят в аналитику. Поведение визитёра на странице (клики, скроллы для heatmap'ов и записи сессий) снимает отдельно клиентский SDK на лэнде, не агент ([reference/sdk.md](../reference/sdk.md)). Механика распознавания и пути визита — [mechanics/visit-lifecycle.md](../mechanics/visit-lifecycle.md), ноды флоу — [models/flow-model.md](flow-model.md).
+На сервере живёт только **AIO-агент** (+ Squid Proxy, ставится по дефолту). По шагам агент: принимает входящий запрос на доменах, смотрящих на сервер; распознаёт визит по `cuuid` (UUID кампании) и `suuid` (UUID Source) в URL (сам визит идентифицируется отдельным `visit_uuid`); снимает трекинговые параметры (IP, UA, гео, `browser_language_code`, fingerprint); обращается к AIO и получает команду — что отдать визитёру (HTML лэнда в самой команде, редирект) и куда вести визит дальше; исполняет команду и сообщает AIO о событиях флоу (submit формы, переход по ссылке-шагу). Переходы по флоу, фильтрацию и выбор сплит-варианта вычисляет AIO — агент исполняет решения на краю, а эти события флоу уходят в аналитику. Поведение визитёра на странице (клики, скроллы для heatmap'ов и записи сессий) снимает отдельно клиентский SDK на лэнде, не агент ([reference/sdk.md](../reference/sdk.md)). Механика распознавания и пути визита — [mechanics/visit-lifecycle.md](../mechanics/visit-lifecycle.md), ноды флоу — [models/flow-model.md](flow-model.md).
 
 **Агент не виден визиту:** юзер кликает на домен и по этому же домену идёт дальше — агента он по пути не увидит. Что показать визиту, по UUID-шникам определяет AIO — агент лишь исполняет команду; домены напрямую к кампании не привязаны (link-генератор — просто инструмент-помощник).
 
 ### Сервера агностичны — лэнды живут на CDN, а не на сервере
 
-Файлы лэндов (HTML/JS/CSS/картинки/видео) лежат на **CDN**, не на серверах клиента — сервера агностичны. Следствия: мгновенная замена (не нужно переносить файлы, как в классических трекерах), быстрый репойнт, взаимозаменяемость. Детально — [context/architecture.md](../context/architecture.md) §Лэнды на агенте.
+Исходные файлы лэндов (HTML/JS/CSS/картинки/видео) лежат на **CDN** — серверу не требуется отдельная установка лэнда. Агент может кэшировать статику локально. Следствия: мгновенная замена (не нужно переносить файлы, как в классических трекерах), быстрый репойнт, взаимозаменяемость. Детально — [context/architecture.md](../context/architecture.md) §Лэнды на агенте.
 
 ### Как добавить сервер: `Buy a server` vs `Add manually`
 
-`Tech → Servers → +Server` открывает окно выбора способа (`Choose how to add a server`) с двумя карточками:
-- **`Buy a server`** (рекомендуемый, `Order a server from a connected provider`) — AIO заказывает машину у подключённого `Server Provider` (DigitalOcean, Hetzner, Vultr, BitLaunch и др.; API-ключ провайдера задаётся в `Tech → Server providers`), ждёт, пока она поднимется и получит IP, а выбранный в поле `Deployment` скрипт передаёт провайдеру как стартовый скрипт машины — провайдер выполняет его при первом запуске. Поля модалки: `Description`, `Tags`, `Monitoring user`, `Repoint group`, `Server provider`, `Deployment`.
-- **`Add manually`** (`Add a server you already own`) — указать публичный `IP address` своего сервера; AIO на него не заходит и ничего не ставит — содержимое выбранного `Deployment script` показывается в поле `Script content` (только чтение), его выполняют на машине по SSH самостоятельно. Поля: `Name`, `Description`, `Tags`, `IP address`, `Monitoring user`, `Repoint group`, `Deployment script`, `Script content`.
+`Tech → Servers → +Server` (в MTK — `Settings → Servers`) открывает окно выбора способа (`Choose how to add a server`) с двумя карточками:
+- **`Buy a server`** (рекомендуемый, `Order a server from a connected provider`) — AIO заказывает машину у подключённого `Server Provider` (DigitalOcean, Hetzner, Vultr, BitLaunch, Gcore, Cherry Servers, OVHcloud, Hostinger; подключение — `Tech → Server providers`, в MTK — `Settings → Server providers`, поля по провайдерам — секция «Server Provider: как подключить провайдера серверов»), ждёт, пока она поднимется и получит IP, а выбранный в поле `Deployment` скрипт передаёт провайдеру как стартовый скрипт машины — провайдер выполняет его при первом запуске. Поля модалки: `Description`, `Tags`, `Monitoring user`, `Repoint group`, `Server provider`, `Deployment`.
+- **`Add manually`** (`Add a server you already own`) — указать публичный `IP address` своего сервера (только IPv4); AIO на него не заходит и ничего не ставит — содержимое выбранного `Deployment script` показывается в поле `Script content` (только чтение), его выполняют на машине по SSH самостоятельно. Поля: `Name`, `Description`, `Tags`, `IP address`, `Monitoring user`, `Repoint group`, `Deployment script`, `Script content`.
 
-Стандартный Deploy-скрипт ставит **Docker, Squid и AIO-агент**. В обоих путях установку AIO подтверждает одинаково — по ответу агента на `GET http://<ip>/ping` (до ~30 минут ожидания), после чего сервер получает `Running` / `Installed`. Что означает каждая строка статуса, почему сервер завис в `Processing` или упал в `Danger` с `All install checks failed` и что на самом деле делает `Reinstall`.
+Стандартный Deploy-скрипт `AIO Agent & Squid` ставит **Docker, AIO-агент и Squid** (что именно и на какую ОС — секция «Что ставится на сервер и как на него попасть: Deploy-скрипт, ОС, SSH»). В обоих путях установку AIO подтверждает одинаково — до 60 раз проверяет, ответил ли установленный агент; успешная проверка переводит сервер в `Running` / `Installed`. Что означает каждая строка статуса, почему сервер завис в `Processing` или упал в `Danger` с `All install checks failed` / `Creation failed` и как вернуть его в `Running`.
 
 ### Какие атрибуты у сервера и где их задать
 
 `Name`, `Description`, `Tags`; `Server Provider` (если Buy) / `IP Address` (если Manually); `Monitoring User` (только юзер с 2FA); `Repoint Group` (строка-метка для группировки под репойнт); `Deployment Script` (какой Deploy раскатать).
 
-Важно: **`Servers Region` / `Droplets Size` / `Droplet Image` задаются НЕ на сервере, а на уровне Server Provider** (в шаблоне провайдера — `Edit/Create Server Provider`). Нужны разные регионы/размеры — дублируется Server Provider под другие настройки. Значения там могут протухнуть, поэтому у BitLaunch AIO сверяет их со списком провайдера ещё до создания сервера. `Edit Server` (правый клик → Edit Server) позволяет менять только `Name`, `Description`, `Tags` и `Monitoring User`.
+Важно: **`Servers Region` / `Droplets Size` / `Droplet Image` задаются НЕ на сервере, а на уровне Server Provider** (в шаблоне провайдера — `Edit/Create Server Provider`). Нужны разные регионы/размеры — дублируется Server Provider под другие настройки. Значения там могут протухнуть. Перед заказом через BitLaunch AIO пытается сверить их со списком провайдера; если список не получен, заказ не блокируется.
 
-Экшен `Archive` (правый клик по серверу) переносит сервер в категорию Archived; архивные сервера в списке `Tech → Servers` показываются только при включённом тоггле **`With Archived?`** (в отличие от `Destroy Server`, который убивает сервер необратимо).
+`Edit server` (правый клик → `Edit server`) меняет `Name`, `Description`, `Tags`, `Monitoring user` и `Repoint group`. `IP`, провайдер и Deploy-скрипт после добавления не меняются — сервер с другим IP добавляют заново. У сервера, добавленного вручную, в этом же окне показан (только чтение) `Script content` его Deploy-скрипта — оттуда его удобно скопировать ещё раз.
 
-### Сервер не создаётся: `Droplet size ... is not available for this host anymore`
+Экшен `Archive` (правый клик по серверу) переносит сервер в категорию Archived; архивные сервера в списке `Tech → Servers` показываются только при включённом фильтре **`Archived`** (подсказка `Show archived items`; показывает архивные вместе с активными). `Destroy Server` выполняет действие у провайдера: удаляет машину либо, у Hostinger, отключает её автопродление.
 
-Симптом: покупка сервера у BitLaunch падает с текстом про недоступный размер, регион или образ. Причина — значение в шаблоне `Server Provider` устарело: BitLaunch отдаёт свой набор `Servers Region` / `Droplets Size` / `Droplet Image` под каждый `BitLaunch Host ID`, а ID образов у провайдеров ротируются с релизами. AIO сверяет выбранное с этим набором заранее и останавливает создание понятным текстом вместо глухой ошибки провайдера.
+### Repoint Group — автоматический перенос доменов при падении сервера
 
-Тексты называют поле и перечисляют доступные значения — приходят в ответе экшена `Test` на провайдере и при создании сервера:
+`Repoint Group` — атрибут сервера (строка, напр. `eu`/`us`/`tier1`): репойнт работает только внутри группы. Для резерва заранее держите в ней минимум два работающих сервера, желательно у разных провайдеров/аккаунтов: при падении нужен хотя бы один другой неархивный сервер в `Running`. Гео и вертикаль AIO не проверяет — для их разделения сами объединяйте подходящие серверы в отдельные группы. Детали — [context/architecture.md](../context/architecture.md) §Repoint Group, [how-to/domains.md](../how-to/domains.md) §Repoint при падении сервера.
+
+### Мониторинг сервера: статусы `Running` / `Danger`, строки причины и колонка `Monitoring`
+
+AIO сам следит за доступностью сервера с включённым мониторингом и IP: перестал отвечать — `Danger` со строкой причины, снова отвечает — `Running` со строкой `Fine` (механика — [context/architecture.md](../context/architecture.md) → «Мониторинг и нотификации»). Статусы сервера: `Running` (иконки нет), `Processing` (синий вращающийся значок — установка или удаление идёт), `Danger` (красный крестик; подсказка у иконки показывает `status_text` — при падении причину вроде `Unreachable: Connection refused` или `Unhealthy: Disk exhausted (free …, … inodes)`, через « · » — итог авто-репойнта доменов). Строки `Current Incident: …` / `Last Incident: …` — из прежней версии мониторинга. Колонка `Monitoring` (Yes/No) показывает, включён ли uptime-мониторинг; переключается экшенами `Place monitor` / `Delete monitor`. В колонке `Servers` списка доменов у каждого сервера тот же признак — глаз / перечёркнутый глаз. Сервер в `Processing` мониторинг не проверяет; неархивный сервер без обновлений записи больше 3 часов AIO сам переводит из `Processing` в `Danger` (`Stuck in processing for more than 3 h …`).
+
+### Алерты мониторинга сервера: Monitoring User и привязка к Telegram
+
+Алерты по серверу шлёт **AIO-tech-bot** назначенному **Monitoring User**-у — **только в Telegram**, отчётом `AIO Monitoring · Servers`: сразу после падения или восстановления; по висящему инциденту — напоминание раз в час. Сервер, пролежавший в `Danger` больше 30 дней, AIO снимает с мониторинга сам (`Monitoring paused: …`, без уведомления); вернуть — `Place monitor` ([context/architecture.md](../context/architecture.md) → «Объект в `Danger` дольше 30 дней — мониторинг выключается сам»). Частая причина «не приходят алерты» — у аккаунта нет привязки к Telegram (AIO не может связать аккаунт с TG); 2FA через Google Authenticator привязку к TG не даёт. Механика и как проверить — [context/architecture.md](../context/architecture.md) §Monitoring User + § «AIO-tech-bot и 2FA».
+
+### Что происходит с доменами упавшего сервера — авто-репойнт
+
+Неархивные домены, у которых упавший сервер указан основным и есть DNS-провайдер, AIO сам переносит на другой неархивный сервер в `Running` той же группы, **один раз при зарегистрированном мониторингом переходе сервера в `Danger`**. Без DNS-провайдера или подходящего сервера домен остаётся в `Danger`; DNS вручную AIO не меняет. Для переносимых доменов задача переезда каждого домена переживает временные ошибки DNS-провайдера (до 6 попыток), а если попытки кончились — домен остаётся в `Danger` с `All 6 repoint attempts failed: …`, и переезд запускают руками (*уточните у поддержки* → «Домен ушёл в репойнт»). Что AIO делает сам и когда — *Что AIO проставляет и делает сам — автоматические обновления и их лаг*; сам механизм репойнта — §Repoint Group выше. Мониторинг включается сразу при добавлении сервера и подхватывает его, как только тот выйдет из `Processing`: у сервера, упавшего в `Danger` на установке, остаётся строка установки, а когда агент заработает, мониторинг сам переведёт сервер в `Running` (разбор).
+
+### Масштабирование сервера: Agent Cluster и пределы нагрузки
+
+Сервер под агента лёгкий — на нём только агент (лэнды на CDN), поэтому одной недорогой машины хватает на большой объём трафика. Для запуска достаточно **4 GB RAM, 2 CPU и 50 GB SSD**. Горизонтальное масштабирование — **Agent Cluster** (домен балансится через несколько CF-рекордов / Multi A-record на несколько серверов с агентами). Нагрузки агенту добавляет работа с внешними лэндами — она разобрана отдельно. Защита от DDoS — это другое: Cloudflare Under Attack mode + блок-листы по AS-сетям ([context/architecture.md](../context/architecture.md)).
+
+> **Ограничение продукта:** Agent Cluster (Multi A-record на несколько агентов) пока **нельзя использовать на реальном трафике** — агент держит сессию визита локально у себя (на диске самого агента) и с другими агентами её не делит; при перебалансировке визит может попасть на другой агент, который о его сессии не знает, и начать развитие заново.
+
+## Server Provider: как подключить провайдера серверов и купить через него сервер
+
+**`Server Provider` — подключение к вашему аккаунту у хостинга плюс шаблон машины (регион, размер, образ ОС): по нему работает `Buy a server`.** AIO заказывает машину через API провайдера в вашем аккаунте, оплата идёт напрямую провайдеру. Регион, размер и образ задаются в шаблоне, а не на сервере: нужен другой регион или размер — заводится ещё один `Server Provider`. Подключаются `Digitalocean`, `Vultr`, `BitLaunch`, `Hetzner`, `Gcore`, `CherryServers`, `OvhCloud`, `Hostinger` — актуальный список всегда в выпадающем меню `Integration type`.
+
+Частые формулировки: «как настроить Server provider», «як налаштувати Server provider», «как подключить хостинг-провайдера к AIO», «куда вписать API-ключ провайдера», «как купить сервер через AIO».
+
+### Как создать Server Provider: `Integration type`, доступ к API и параметры машины
+
+1. `Tech → Server providers` (в MTK — `Settings → Server providers`) → `+` — окно `Create server provider`. Нужно право `tech.server-providers.edit`.
+2. `Name`, `Description`, `Tags` — для себя.
+3. `Integration type` — провайдер (по умолчанию `Digitalocean`); от него зависит набор полей в блоке `Settings`.
+4. `Settings` — доступ к API (ключ или токен из кабинета провайдера, у части провайдеров ещё ID проекта и прокси) и параметры машины. Что вписывать у каждого провайдера — секции этого раздела по имени провайдера (DigitalOcean, Vultr, BitLaunch, Hetzner, Gcore, Cherry Servers, OVHcloud, Hostinger).
+5. Сохранить и проверить доступ: правый клик по провайдеру → `Test`.
+6. Заказать сервер: `Tech → Servers → +Server → Buy a server` (в MTK — `Settings → Servers`), в полях `Server provider` и `Deployment` — этот шаблон и Deploy-скрипт.
+
+Шаблон можно поправить в любой момент (`Edit server provider`): новые значения берутся при следующем заказе. Для стандартного Deploy-скрипта образ машины должен быть Ubuntu или Debian (секция «Какая ОС нужна серверу для AIO»).
+
+### Что проверяет `Test` на провайдере — и чего не проверяет
+
+**`Test` (окно `Test server provider`) обращается к API провайдера с доступом из шаблона и показывает результат. BitLaunch может дополнительно запросить параметры выбранного хоста.** Успех выглядит по-разному: `Auth as …` с именем или email аккаунта (DigitalOcean, Vultr, BitLaunch, OVHcloud, Cherry Servers; у DigitalOcean — ещё лимит дроплетов), `Authorized successfully` (Hetzner, Hostinger), `Auth OK. Regions available: <N>` (Gcore). Ошибка — текст провайдера или строка AIO вида `There is no … at settings` (в шаблоне пусто поле доступа).
+
+Регион, размер, образ, тариф и ID проекта тестовые запросы остальных провайдеров не сверяют. BitLaunch пытается дополнительно сверить регион, размер и образ, если все три поля заданы; недоступность или пустые списки параметров могут оставить часть значений непроверенной. Поэтому успешный `Test` не гарантирует заказ: ошибка в этих полях всплывёт при `Buy a server` строкой `Creation failed: …` в статусе сервера (разбор).
+
+### DigitalOcean (`Digitalocean`) — поля шаблона и отказы аккаунта
+
+Поля: `Digitalocean API Key` (ключ вида `dop_v1_…` из панели DigitalOcean), `Servers Region`, `Droplets Size`, `Droplet Image` (`Docker Ubuntu 20.04` или `Ubuntu 22.04 (LTS) x64`). Успешный `Test` — `Auth as <email>, with <N> droplets limit`; остальные ответы `Test` — [how-to/domains.md](../how-to/domains.md) → «Проверка провайдера (Test)». При заказе AIO добавляет в аккаунт DigitalOcean SSH-ключ сервера и создаёт дроплет с тегом `aio-tech`.
+
+Частые ответы DigitalOcean в `Creation failed`:
+- `creating this/these droplet(s) will exceed your droplet limit` — исчерпан лимит дроплетов аккаунта;
+- `This size is currently restricted, please open a ticket to increase your account tier.` — выбранный размер недоступен аккаунту: другой `Droplets Size` или запрос в поддержку DigitalOcean;
+- `Unable to authenticate you` — ключ API не принят: выпустите новый и впишите в шаблон;
+- `There is currently an outstanding balance on your account…`, `There is currently a lock on the account…` — ограничения аккаунта на стороне DigitalOcean.
+
+### DigitalOcean: какие права (scopes) дать API-токену для AIO
+
+**API-токену DigitalOcean для AIO нужны пять скоупов: `account:read`, `ssh_key:create`, `droplet:create`, `droplet:read`, `droplet:delete`.** Вместе с ними выдайте `tag:create` и `tag:read`, потому что AIO создаёт дроплет с тегом `aio-tech`. Токен создаётся в панели DigitalOcean: `Account → API → Generate New Token`, в блоке `Scopes` выберите `Custom Scopes`. Токен с `Full Access` тоже подходит. С токеном `Read Only` проходит `Test`, но сервер купить не получится: у него нет права создавать дроплеты.
+
+| Скоуп | Зачем AIO |
+|---|---|
+| `account:read` | `Test`: имя аккаунта и лимит дроплетов |
+| `ssh_key:create` | `Buy a server`: загрузка SSH-ключа сервера в аккаунт |
+| `droplet:create` | `Buy a server`: создание дроплета |
+| `droplet:read` | ожидание, пока дроплет запустится и получит публичный IPv4 |
+| `droplet:delete` | удаление сервера в AIO удаляет и дроплет |
+
+Удалять SSH-ключи, читать регионы, размеры и образы AIO не нужно: эти значения берутся из шаблона. Частые формулировки: «какие пермишны дать токену DigitalOcean», «custom scopes для AIO», «ограниченный токен DO», «какие права нужны ключу `dop_v1`».
+
+### Vultr (`Vultr`) — поля шаблона и `Unauthorized IP address`
+
+Поля: `Vultr API Key`, `Servers Region`, `Droplets Size`, `Droplet Image` (`Docker on Ubuntu 24.04`) и необязательный `Proxy to communicate` — прокси, через который AIO ходит в API Vultr. Успешный `Test` — `Auth as <email>`. При заказе AIO добавляет в аккаунт Vultr SSH-ключ сервера и создаёт машину с тегом `aio-tech`.
+
+`Creation failed: Failed to create ssh key: POST failed: Unauthorized IP address: <ip>` — Vultr отклонил запрос по IP: в настройках доступа к API Vultr включён список разрешённых адресов. Снимите ограничение по IP в настройках API Vultr или укажите в `Proxy to communicate` прокси, чей адрес там разрешён.
+
+### BitLaunch (`BitLaunch`) — поля шаблона: хост, регион, размер, образ
+
+Поля: `BitLaunch API Token`, `BitLaunch Host ID` — на чьих мощностях BitLaunch создаёт машину (`DigitalOcean`, `Vultr` или сам `BitLaunch`), `Servers Region`, `Droplets Size`, `Droplet Image`. Значения в списках помечены хостом — `(BitLaunch)`, `(DO)`, `(Vultr)`: берите те, что относятся к выбранному `BitLaunch Host ID`. `Test` показывает `Auth as <email>`; если регион, размер и образ заданы, AIO пытается сверить их с полученным набором параметров хоста; ошибка приходит строкой `Failed to get account info: <код> <текст>`.
+
+Отказы аккаунта BitLaunch в `Creation failed`: `You have reached your server limit` — исчерпан лимит серверов, `Not enough balance to launch this server` — не хватает баланса. Код `429` в ответе — BitLaunch временно не принимает запросы: повторите заказ позже.
+
+### BitLaunch: значения шаблона устарели — `… is not available for this host anymore`, `500 null`
+
+**Строки `… is not available for this host anymore` значат, что значение в шаблоне `Server Provider` устарело: BitLaunch отдаёт свой набор `Servers Region` / `Droplets Size` / `Droplet Image` под каждый `BitLaunch Host ID`, а ID образов ротируются с релизами.** AIO сверяет выбранное с этим набором до заказа и останавливает создание понятным текстом — в ответе `Test` и при создании сервера:
 
 - `Droplet size '<id>' is not available for this host anymore. Available sizes: …`
 - `Region '<id>' is not available for this host anymore. Available regions: …`
 - `Droplet image '<id>' is not available for this host anymore. Available images: …`
-- `Droplet image '<id>' is not available in region '<id>'` и `Droplet size '<id>' is currently unavailable in region '<id>'` — значение существует, но не в паре с выбранным регионом.
+- `Droplet image '<id>' is not available in region '<id>'`, `Droplet size '<id>' is currently unavailable in region '<id>'` — значение есть, но не в паре с выбранным регионом.
 - `BitLaunch host <id> is currently unavailable, try again later` — недоступен сам хост, поля ни при чём.
 
-Лечится правкой этих трёх полей в шаблоне провайдера (`Tech → Server providers` → Edit) на значения из списка в тексте ошибки. Проверка мягкая: если BitLaunch не ответил на запрос набора, AIO создание не блокирует — ошибка тогда придёт уже от самого провайдера.
+Лечится правкой этих полей в шаблоне (`Edit server provider`) на значения из списка в тексте ошибки. Проверка мягкая: если BitLaunch не ответил на запрос набора, AIO заказ не блокирует — тогда при устаревших значениях BitLaunch отвечает непрозрачным `Failed to create server (host …, region …, size …, image …): 500 null`.
 
-### Repoint Group — автоматический перенос доменов при падении сервера
+### Hetzner (`Hetzner`) — поля шаблона и `unsupported location for server type`
 
-`Repoint Group` — атрибут сервера (строка, напр. `eu`/`us`/`tier1`): репойнт работает только внутри группы; минимум 2 живых сервера, желательно у разных провайдеров/аккаунтов. Группа также **держит домены/сервера одной вертикали в своей группе** и не смешивает их при автоматическом репойнте (трафик из одного региона не переезжает на сервер в другом). Детали — [context/architecture.md](../context/architecture.md) §Repoint Group, [how-to/domains.md](../how-to/domains.md) §Repoint при бане сервера.
+Поля: `API Url` — `https://api.hetzner.cloud` без `/v1` (AIO сам добавляет `/v1/…`), `API Token` — токен API Hetzner Cloud, необязательный `Proxy` — прокси для запросов к API, `Location`, `Sever Type` (так подписано поле) и `Image` (`Ubuntu 22.04`, `Ubuntu 24.04`, `Debian 12`). Успешный `Test` — `Authorized successfully`. При заказе AIO добавляет в Hetzner SSH-ключ сервера.
 
-### Мониторинг сервера: Pinging, Monitoring User и привязка к Telegram
+Отказы Hetzner в `Creation failed`:
+- `Error while creating server: {"error":{"code":"invalid_input","message":"unsupported location for server type"…}}` — выбранный тип сервера недоступен в выбранной `Location`: смените локацию;
+- `Error while creating ssh key: {…"the token you have provided is invalid"}` — токен не принят;
+- `Error while creating ssh key: {"error":{"message":"api route not found"…}}` — неверный `API Url`.
 
-Сервер пингуется раз в 5 минут с нескольких точек мониторинга, решение «упал/жив» — по кворуму, и недоступность должна продержаться ~150 секунд подряд, поэтому `Danger` наступает через 5–10 минут после реального падения, а не сразу (механика — [context/architecture.md](../context/architecture.md) → «Мониторинг и нотификации»). Статусы сервера: `Running` (иконки нет), `Processing` (синий вращающийся значок — установка или удаление идёт), `Danger` (красный крестик; подсказка у иконки показывает `status_text` — при падении `Current Incident: <причина>`, после восстановления сервер снова `Running` с `Last Incident: <причина>`). Колонка `Monitoring` (Yes/No) показывает, включён ли uptime-мониторинг; переключается экшенами `Place monitor` / `Delete monitor`. Сервер в `Processing` мониторинг не проверяет. Алерты шлёт **AIO-tech-bot** назначенному **Monitoring User**-у — **только в Telegram**. Частая причина «не приходят алерты» — у аккаунта нет привязки к Telegram (AIO не может связать аккаунт с TG); 2FA через Google Authenticator привязку к TG не даёт. Механика и как проверить — [context/architecture.md](../context/architecture.md) §Monitoring User + § «AIO-tech-bot и 2FA».
+### Gcore (`Gcore`) — поля шаблона: `Project ID`, `Region ID`, `Image ID`, `Flavor`
 
-Uptime-проверки серверов и разбор инцидентов AIO делает сам по расписанию — домены упавшего сервера переезжают на живой сервер той же группы без ручного действия, **один раз на инцидент**: если репойнт домена не удался, AIO его не повторяет, домен остаётся в `Danger` с `Repoint failed: …`, и переезд запускают руками (*уточните у поддержки* → «Домен ушёл в репойнт»). Когда и как часто идут проверки — *Что AIO проставляет и делает сам — фоновые задачи и их расписание*; сам механизм репойнта — §Repoint Group выше.
+Поля: `Gcore API Key` — постоянный API-токен из профиля Gcore; `Project ID` — ID облачного проекта; `Region ID` — числовой ID региона; `Image ID` — UUID образа ОС в этом регионе (для стандартного Deploy-скрипта — Ubuntu или Debian); `Flavor` — точное имя конфигурации, доступной в этом регионе (префиксы `g0-` / `g1-` / `g2-` в разных регионах разные, список — `GET /cloud/v1/flavors/{project_id}/{region_id}`); `Boot Volume Size (GB)` — размер диска. Успешный `Test` — `Auth OK. Regions available: <N>`.
 
-### Deploy, Squid Proxy и self-update агента — что ставится на сервер
+Отказы Gcore в `Creation failed`:
+- `Failed to create instance. HTTP 409, response: {…"Flavor … is not available in the region …"}` — `Flavor` не из этого региона;
+- `Timed out waiting for Gcore instance id from task <id>` — AIO не дождался от Gcore ID созданной машины; машина при этом может появиться в проекте — проверьте кабинет Gcore и удалите лишнюю.
 
-**Deploy / Deployment Script** (`Tech → Deployments`) — bash-скрипт сетапа сервера. Стандартный `AIO Agent & Script` ставит Squid + агент + сервис обновления. По образу можно создавать кастомные Deploys (например, чтобы любой добавляемый сервер становился ещё и Squid-прокси — user/password/port задаются в Deploy). Агенты **самообновляются** — ручного обновления серверной части не требуется (Deploy включает сервис обновления). Подробно — [reference/glossary.md](../reference/glossary.md) §Инфраструктура, [how-to/domains.md](../how-to/domains.md) §Deployments.
+### Cherry Servers (`CherryServers`) — поля шаблона и коды отказов
 
-**`Squid` — отдельная серверная технология (прокси-сервер), к external-лэндам отношения не имеет.** Это способ заставить сервер дополнительно работать прокси-сервером для своих нужд. Ставится по дефолту в Deploy на каждый сервер; в стандартном Deploy логин/пароль для него не заданы, поэтому он не задействован — если задать (user/password/port в Deploy), сервер можно параллельно использовать как прокси. Работа с внешними лэндами — это НЕ Squid, а отдельные режимы самого AIO-агента.
+Поля: `Cherry API Token` (вида `chs_…`), `Project ID` — числовой ID проекта, `Region`, `Plan (slug)` и `Image (slug)` (`Ubuntu 22.04 LTS`, `Ubuntu 24.04 LTS`, `Debian 12`). Успешный `Test` — `Auth as <имя> <email>`.
 
-### Масштабирование сервера: Agent Cluster и пределы нагрузки
+Ответы Cherry Servers в `Creation failed` приходят кодом HTTP: `401 Unauthorized` — токен не принят; `402 Payment Required` — нужна оплата или пополнение аккаунта; `403 Forbidden` — аккаунту не разрешена операция; `404 Not Found` на адресе `…/projects/<id>/servers` — проверьте `Project ID`.
 
-Сервер под агента лёгкий — на нём только агент (лэнды на CDN), поэтому одной недорогой машины хватает на большой объём трафика. Горизонтальное масштабирование — **Agent Cluster** (домен балансится через несколько CF-рекордов / Multi A-record на несколько серверов с агентами). Нагрузки агенту добавляет работа с внешними лэндами — она разобрана отдельно. Защита от DDoS — это другое: Cloudflare Under Attack mode + блок-листы по AS-сетям ([context/architecture.md](../context/architecture.md)).
+### OVHcloud (`OvhCloud`) — поля шаблона
 
-> **Ограничение продукта:** Agent Cluster (Multi A-record на несколько агентов) пока **нельзя использовать на реальном трафике** — агент держит сессию визита локально у себя (на диске самого агента) и с другими агентами её не делит; при перебалансировке визит может попасть на другой агент, который о его сессии не знает, и начать развитие заново.
+Поля: `OVH Cloud Application Key`, `OVH Cloud Application Secret`, `OVH Cloud Consumer Key` — ключи API-приложения OVHcloud; `OVH Cloud Project ID` — ID проекта Public Cloud; `OVH Cloud Endpoint` — `OVH Cloud Europe`, `OVH Cloud US`, `OVH Cloud North America / Canada` и другие; `Servers Region`, `Droplets Size`, `Droplet Image` (`Debian 12 - Docker`). В списке `Droplets Size` вариант с пометкой `(DE1)` — для региона `DE1`. Успешный `Test` — `Auth as <имя>`.
+
+Отказы OVHcloud приходят кодом HTTP на адресе `…/cloud/project/<id>/instance` (`400 Bad Request`, `404 Not Found`, `409 Conflict`) — сверьте `OVH Cloud Project ID`, регион и конфигурацию.
+
+### Hostinger (`Hostinger`) — поля шаблона: `Plan Item ID`, `Data Center ID`, `OS Template ID`
+
+Шаблон Hostinger заполняется ID из API Hostinger — подсказки у полей называют, откуда их брать:
+- `API Token` — токен из `hpanel.hostinger.com/profile/api`;
+- `Plan Item ID` — ID ценового пункта тарифа VPS из каталога (`GET /api/billing/v1/catalog?category=VPS`): у тарифа в каталоге есть массив `prices`, и нужен `id` оттуда — вида `hostingercom-vps-kvm2-usd-1m` (тариф, валюта, срок), а не ID самого тарифа; пример в поле (`e.g. hosting_vps_kvm_1`) этому формату не соответствует;
+- `Payment Method ID` — необязательно: пусто — Hostinger спишет оплату с метода по умолчанию; ID — из `GET /api/billing/v1/payment-methods`;
+- `Data Center ID` — из `GET /api/vps/v1/data-centers`;
+- `OS Template ID` — из `GET /api/vps/v1/templates`; для стандартного Deploy-скрипта — шаблон Ubuntu или Debian;
+- `Proxy` — необязательный прокси для запросов к API.
+
+`Test` проверяет только токен (`Authorized successfully`). При заказе AIO сначала создаёт в аккаунте Hostinger post-install-скрипт `bootstrap-<случайная строка>` из выбранного Deploy-скрипта, затем покупает VPS с ним и SSH-ключом сервера — покупка списывает оплату с платёжного метода Hostinger.
+
+### Hostinger: `[Billing:2004] Item price not found` и другие ошибки заказа
+
+**`Creation failed: Error purchasing VM: {"message":"[Billing:2004] Item price not found.", …}` (в `Server logs` — `Server order: provider did not provision the server: Error purchasing VM: …`) значит, что Hostinger не нашёл цену по значению `Plan Item ID`: в поле стоит не `id` ценового пункта из массива `prices` каталога.** Исправьте поле в шаблоне (`Edit server provider`), закажите сервер заново, а запись с ошибкой заархивируйте (`Archive`).
+
+Другие ответы Hostinger при заказе:
+- `[Billing:422] Payment failed: …` и `Card payment could not be completed, use other payment method or try again` — Hostinger не смог списать оплату: проверьте платёжный метод в аккаунте Hostinger или укажите `Payment Method ID`;
+- `Error creating post-install script: {"message":"[VPS:2000] Unauthorized", …}` — токен не принят: выпустите новый `API Token`;
+- `Missing required settings: api_token, item_id, data_center_id, template_id` — в шаблоне пусто одно из обязательных полей.
+
+`correlation_id` в ответе — идентификатор запроса на стороне Hostinger, он пригодится при обращении в поддержку Hostinger. Если после ошибки у записи сервера пустой IP, а VPS в кабинете Hostinger всё же есть, → «Как подключить машину, которую провайдер создал».
+
+### Hostinger: `Destroy server` отключает автопродление, а не удаляет VPS
+
+**У Hostinger `Destroy server` не удаляет VPS сразу: AIO отключает автопродление подписки машины, и она работает до конца оплаченного периода.** В AIO запись получает `Danger` со строкой `Destroyed`, а мониторинг выключается. Это не подтверждает остановку самой VPS. Немедленного удаления через API у Hostinger нет.
+
+## Что ставится на сервер и как на него попасть: Deploy-скрипт, ОС, SSH
+
+### Что ставит на сервер стандартный Deploy-скрипт `AIO Agent & Squid`
+
+**Стандартный скрипт `AIO Agent & Squid` — он есть в списках `Deployment` / `Deployment script` у всех — ставит Docker (если его ещё нет), забирает стек агента в `/opt/aio-agent`, записывает настройки в файл `.aio-env` и запускает стек как systemd-сервис `aio`: контейнеры AIO-агента, Squid-прокси и служебные.** На Ubuntu скрипт сам открывает нужные порты в `ufw`. Агенты **самообновляются** — ручного обновления серверной части не требуется: скрипт ставит для этого задачу в `cron`.
+
+Скрипты хранятся в `Tech → Deployments` (`+ Deployment`: `Name` + `Script`); по образу стандартного делают свои — например, с заполненными логином и паролем Squid, чтобы каждый купленный сервер сразу работал ещё и прокси. В MTK раздела `Deployments` нет — в списке доступен стандартный скрипт. Подробнее о разделе — [how-to/domains.md](../how-to/domains.md) → «Deployments».
+
+### `Squid` — отдельная серверная технология, к external-лэндам отношения не имеет
+
+**`Squid` — прокси-сервер, который стандартный Deploy ставит на каждый сервер, чтобы сервер мог дополнительно работать прокси для ваших нужд.** В стандартном скрипте логин и пароль для него не заданы, поэтому он не задействован; если их задать (секция «`SQUID_USER_ENV` и `SQUID_PASS_ENV` в Deploy-скрипте»), сервер можно параллельно использовать как прокси на порту `5145`. Работа с внешними лэндами — это НЕ Squid, а отдельные режимы самого AIO-агента.
+
+### `SQUID_USER_ENV` и `SQUID_PASS_ENV` в Deploy-скрипте — логин и пароль Squid-прокси, которые вы придумываете сами
+
+**`SQUID_USER_ENV` и `SQUID_PASS_ENV` в начале скрипта `AIO Agent & Squid` — логин и пароль для Squid-прокси на этом сервере.** Это не доступы к серверу (SSH, root) и не данные из AIO: значения придумываете сами, AIO их не выдаёт и не использует. Скрипт записывает их в `.aio-env` как `SQUID_USER` / `SQUID_PASS`, откуда их берёт контейнер Squid.
+
+- По комментарию в самом скрипте — только строчные латинские буквы и цифры, без спецсимволов, и в логине, и в пароле.
+- Оставить пустыми можно: агент работает без них, Squid просто не задействован.
+- С заданными значениями сервер работает прокси с этим логином и паролем на порту `5145` своего IP; на Ubuntu скрипт открывает этот порт в `ufw`.
+- `Add manually`: поле `Script content` только для чтения — впишите значения в скопированный скрипт перед запуском на машине.
+- `Buy a server`: скрипт уходит провайдеру как есть, поэтому нужен свой Deploy-скрипт с заполненными значениями (`Tech → Deployments`); в MTK для заказа доступен только стандартный скрипт с пустыми значениями.
+
+### Какая ОС нужна серверу для AIO: Ubuntu или Debian на x86_64, запуск от root
+
+**Стандартный Deploy-скрипт рассчитан на Ubuntu или Debian на 64-битной архитектуре x86 (amd64) с systemd; выполнять его нужно от root.** Что из этого следует:
+
+- систему скрипт определяет по `ID` в `/etc/os-release`: Docker ставит только для `ubuntu` и `debian`, на другой системе без Docker завершается строкой `Unknown OS: <id>`;
+- пакеты ставит через `apt-get` — нужна система с APT;
+- `docker-compose` скачивает в сборке `linux-x86_64` — на ARM-сервере стек не запустится;
+- стек запускается как systemd-сервис `aio`;
+- на Ubuntu порты открываются в `ufw` автоматически, на Debian скрипт файрвол не трогает — если он включён, порты 80 и 443 откройте сами;
+- нужен исходящий интернет: скрипт ставит пакеты, клонирует репозиторий агента с GitHub и скачивает образы контейнеров.
+
+В шаблонах провайдеров AIO предлагает Ubuntu 22.04 / 24.04 и Debian 12 (у DigitalOcean — ещё `Docker Ubuntu 20.04`); у Hostinger и Gcore образ задаётся ID — выберите Ubuntu или Debian. Частые формулировки: «какая ОС нужна для сервера», «на какой операционной системе должен быть сервер для AIO».
+
+### Как попасть на сервер, купленный через AIO: SSH-ключ вместо пароля
+
+**Сервер, купленный через `Buy a server` (его создал AIO через API провайдера), открывается SSH-ключом, который AIO сгенерировал для этого сервера при заказе: публичная часть уехала провайдеру вместе с заказом, приватная показана в списке серверов. Пароль AIO не задаёт.**
+
+- В полной версии приватный ключ — в колонке `SSH Private Key` списка `Tech → Servers`: по умолчанию колонка скрыта (включается в настройке колонок таблицы), а при включённой 2FA-защите данных показывает `Protected`, пока не подтверждена 2FA (`Unsecured Mode` — [models/permissions-model.md](permissions-model.md)). Ключ в формате OpenSSH: сохраните его в файл и подключайтесь `ssh -i <файл> <пользователь>@<IP сервера>`.
+- Имя пользователя AIO не задаёт — ключ устанавливает провайдер для пользователя по умолчанию выбранного образа.
+- В MTK колонки с ключом в списке серверов нет — доступ к машине через кабинет провайдера: машина создана в вашем аккаунте.
+- Серверу, добавленному через `Add manually`, AIO ключей не создаёт — доступ к нему ваш собственный.
+
+Частые формулировки: «сервер создан через API — как получить доступ», «логин и пароль от сервера», «где взять SSH-ключ сервера».
+
+### Можно ли менять пароль и SSH-ключ на сервере — AIO по SSH не подключается
+
+**Можно: AIO не подключается к серверам по SSH и не хранит ни пароль, ни ключ сервера, добавленного вручную.** Связь с сервером — только по HTTP: AIO проверяет, что агент отвечает, а агент сам обращается в AIO за командами. Поэтому смена пароля root, SSH-ключей или пользователей на работу сервера в AIO не влияет, и обновлять в AIO ничего не нужно.
+
+Что влияет: закрытые извне порты 80 и 443 — на них агент принимает трафик и проверки AIO; остановленный сервис `aio` или удалённый каталог `/opt/aio-agent` — агент перестанет отвечать, и сервер уйдёт в `Danger`. Смена публичного IP — тоже: IP в AIO после добавления не редактируется, сервер с новым адресом добавляют заново.
+
+У сервера, купленного через AIO, удаление сгенерированного при заказе ключа из `authorized_keys` отключит только вход по нему (колонка `SSH Private Key`); на работу агента это не влияет.
 
 ## Как Server связан с Domain, Tenant, Flow и CDN
 
-- **Server ⊂ Tenant.** Инфраструктура scoped к тенанту: свой пул серверов; сервера/домены одного тенанта работают только с кампаниями этого же тенанта. CDN и хранилище аналитики по дефолту общие (shared SaaS). → [models/tenant.md](tenant.md)
+- **Server ⊂ Tenant.** Инфраструктура scoped к тенанту: свой пул серверов; при обычном входе визита допускаются сервер и домен тенанта кампании либо его родительского тенанта. CDN и хранилище аналитики по дефолту общие (shared SaaS). → [models/tenant.md](tenant.md)
 - **Server ← Domain.** Домен указывает на IP сервера через A-record. Много доменов → один сервер в моменте; связку меняет репойнт. Рекомендация продукта — держать **не более ~50 доменов на сервер** (`Recommended below 50 per server`). → [models/domain.md](domain.md)
 - **Server ← Server Provider.** Внешний провайдер (DigitalOcean…), через которого AIO покупает сервер; `Region`/`Droplets Size`/`Image` задаются на уровне провайдера. → [reference/glossary.md](../reference/glossary.md)
-- **Server ← Deployment.** Что раскатывается на сервере: Docker + Squid + агент + сервис обновления. → [how-to/domains.md](../how-to/domains.md) §Deployments
+- **Server ← Deployment.** Скрипт, передаваемый провайдеру при заказе или выполняемый вручную. Стандартный `AIO Agent & Squid` предназначен для стека агента и Squid; содержимое собственного Deployment задаётся в поле `Script`. → [how-to/domains.md](../how-to/domains.md) §Deployments
 - **Server → Repoint Group.** Атрибут, определяющий границы автоматического репойнта при падении.
 - **Server → Monitoring User.** Кому AIO-tech-bot шлёт алерты при падении (только в Telegram — нужна привязка аккаунта к TG).
+
+### Что агент на сервере делает с визитом и файлами лэнда (CDN)
+
 - **Agent (на Server) → Visit.** Агент принимает визит, распознаёт по `cuuid`/`suuid`; по командам AIO визит идёт по Flow States через Transitions до Destination. → [mechanics/visit-lifecycle.md](../mechanics/visit-lifecycle.md), [models/flow-model.md](flow-model.md)
-- **Agent ↔ CDN.** Лэнды живут на CDN, агент их рендерит/отдаёт (видео стримит, не грузит в память).
+- **Agent ↔ CDN.** Файлы лэнда живут на CDN, агент их не рендерит: HTML лэнда приходит агенту в команде от AIO, а файлы лэнда агент проксирует с CDN через путь `/_cdn` текущего домена; видео он отдаёт потоком, не загружая в память. → [context/architecture.md](../context/architecture.md), *уточните у поддержки*.
 
 ## Влияет ли гео сервера на скорость открытия лендинга
 
@@ -101,7 +273,7 @@ Uptime-проверки серверов и разбор инцидентов AI
 Домены AIO по умолчанию стоят за Cloudflare-прокси (`Proxied: Yes` при добавлении через DNS-провайдера — [how-to/domains.md](../how-to/domains.md)), и это гасит бо́льшую часть географии:
 
 - **TCP/TLS-хендшейки — локальные.** Браузер устанавливает соединение с ближайшей точкой Cloudflare в своём регионе, а не с сервером через океан.
-- **Статика кэшируется в регионе посетителя.** Файлы лэнда лежат на CDN и раздаются через путь `/_cdn` текущего домена ([models/landing.md](landing.md)); Cloudflare кэширует их на своих точках (~10–15 минут), поэтому картинки/CSS/JS после первых визитов идут из страны юзера независимо от гео сервера.
+- **Статика кэшируется в регионе посетителя.** Файлы лэнда лежат на CDN и раздаются через путь `/_cdn` текущего домена ([models/landing.md](landing.md)); Cloudflare кэширует их на своих точках (~10–15 минут), поэтому картинки/CSS/JS после первых визитов идут из страны юзера независимо от гео сервера. Видео — исключение: агент отдаёт его с `no-store`, Cloudflare его не кэширует, и каждый просмотр идёт через сервер.
 - **Океан платят только динамические шаги** — сам клик, каждый редирект флоу (например `Domain-Change`) и HTML лэнда: запрос идёт «посетитель → точка Cloudflare → сервер → контрол-плейн AIO → обратно». Это ~0.2–0.25 с на шаг для другого континента; типичный флоу с 1–2 редиректами добавляет ~0.5–0.8 с к первому открытию против залива «в своём» регионе.
 
 Мощность сервера на эту задержку не влияет: не перегруженный агент отвечает быстро, географию железом не компенсировать. (Перегруженный агент под аномальным RPS — отдельная история: *уточните у поддержки*.)
@@ -113,14 +285,14 @@ Uptime-проверки серверов и разбор инцидентов AI
 - **Сервер в Европе:** нога до посетителя — межконтинентальная, нога до контрол-плейна — копеечная.
 - **Сервер в гео залива (например, Латам):** нога до посетителя — быстрая, но нога до контрол-плейна становится межконтинентальной. Итог тот же или хуже (если обменов с контрол-плейном на запрос больше одного — платится каждый).
 
-Поэтому «сервер под гео» в AIO — решение про отказоустойчивость и распределение трафика (`Repoint Group` держит регионы раздельно), а не про скорость открытия. Вреда от сервера в гео тоже нет — статика в стране посетителя и так кэшируется Cloudflare. Это отличает AIO от классических трекеров, где решения по визиту принимаются локально на сервере и близость сервера к трафику напрямую даёт скорость.
+Поэтому «сервер под гео» в AIO — решение про отказоустойчивость и распределение трафика (регионы разделяют разными значениями `Repoint Group`), а не про скорость открытия. Вреда от сервера в гео тоже нет — статика в стране посетителя и так кэшируется Cloudflare. Это отличает AIO от классических трекеров, где решения по визиту принимаются локально на сервере и близость сервера к трафику напрямую даёт скорость.
 
 ### Что реально ускоряет открытие лендинга на далёком гео
 
 По убыванию эффекта:
 
 1. **Меньше редирект-шагов до лэнда.** Каждый `Domain-Change` — ещё один полный «океанский» шаг (~+0.25 с) и потеря части визитов на медленных соединениях; 1–2 на флоу — норма, 3+ — пересмотреть схему ([heuristics/domain-launch.md](../heuristics/domain-launch.md)).
-2. **Вес лэнда.** Тяжёлые картинки и видео — главный тормоз мобильного трафика на дешёвых гео: статика кэшируется, но первый показ зависит от объёма. Большое видео выносить на видео-хостинг ([how-to/landings.md](../how-to/landings.md)).
+2. **Вес лэнда.** Тяжёлые картинки и видео — главный тормоз мобильного трафика на дешёвых гео: статика кэшируется (видео — нет, оно каждый раз идёт через сервер), но первый показ зависит от объёма. Большое видео выносить на видео-хостинг ([how-to/landings.md](../how-to/landings.md)).
 3. **Argo Smart Routing** — платная надстройка Cloudflare (включается на зоне в CF-дашборде клиента, тарифицируется по трафику): оптимизирует маршрут «точка Cloudflare → сервер», по данным Cloudflare до ~30% на этой ноге. Единственный рычаг, сокращающий именно межконтинентальную часть без изменения флоу.
 4. Крупные сетапы с узким пулом доменов строят гео-раутинг прямо на CDN-edge (Cloudflare Enterprise) — окупается на больших объёмах, на широком пуле доменов обычно нет.
 
@@ -148,8 +320,8 @@ Uptime-проверки серверов и разбор инцидентов AI
 
 - **По одному IP на строку.** Перечисление через запятую в одну строку не разберётся — такая строка уйдёт агенту целиком, как один «адрес». Лишние пробелы по краям строки и пустые строки отбрасываются.
 - **Формат не проверяется.** Опечатка или запись вида `ip:port` сохранятся молча, ошибки в интерфейсе не будет — такая строка просто не сработает. Диапазон в нотации CIDR (`203.0.113.0/24`) при этом валиден и работает: под него попадает весь диапазон, а одиночный IP считается как `/32` (для IPv6 — `/128`).
-- **Кто может править** — роль с правом `tenant.edit`: `Admin` и `Owner` тенанта ([models/permissions-model.md](permissions-model.md)). Демо-аккаунту пункт `Manage tenant` заблокирован.
-- **Применяется не мгновенно** — правка подхватывается с задержкой до примерно двух минут, не в тот же момент.
+- **Кто может править** — `Admin` и `Owner` тенанта ([models/permissions-model.md](permissions-model.md)). Демо-аккаунту пункт `Manage tenant` заблокирован.
+- **Применяется не мгновенно** — агент подхватывает новый список с задержкой; пока он его не перечитал, действует прежний.
 - **Это не про доступ в аккаунт.** У поля в интерфейсе нет подсказки, и по названию `IP address` назначение не считывается: вайтлист не ограничивает вход в UI и не является бан-листом — он про то, как агент обрабатывает трафик с доверенного адреса, и в первую очередь про то, чей IP запишется в визит.
 
 ## Частые путаницы: Server vs Agent, Domain vs Server, Repoint vs Rebalance
@@ -160,19 +332,19 @@ Server — инфраструктурная единица в `Tech → Servers`
 
 ### Domain vs Server — домен это не сервер
 
-Domain — доменное имя/адрес, на которое указывают tracking-ссылки. Server — машина-агент, на которую домен резолвится (A-record). Много доменов → один сервер; лэндов на сервере НЕТ (всё на CDN). → [models/domain.md](domain.md)
+Domain — доменное имя/адрес, на которое указывают tracking-ссылки. Server — машина-агент, на которую домен резолвится (A-record). Много доменов → один сервер; исходные файлы лэнда хранятся на CDN; локальный кэш агента не требует переноса при репойнте. → [models/domain.md](domain.md)
 
 ### Repoint vs Rebalance Domains — автоматическое vs ручное
 
-Repoint — АВТОМАТИЧЕСКИЙ перенос всех доменов с УПАВШЕГО сервера на живой в той же группе. Rebalance Domains — РУЧНОЙ экшен на работающем сервере: равномерно распределить его домены между серверами группы (для разгрузки).
+Repoint — АВТОМАТИЧЕСКИЙ перенос неархивных доменов, у которых упавший сервер указан основным и есть DNS Provider, на другой `Running`-сервер в той же группе. Rebalance Domains — РУЧНОЙ экшен сервера. Для каждого его неархивного домена с DNS Provider отдельно выбирается случайный неархивный `Running`-сервер той же группы; исходный сервер тоже может быть выбран. Равного числа доменов на каждом сервере экшен не гарантирует.
 
-### Repoint vs Replace Domain — когда упал сервер vs когда забанили домен
+### Repoint vs Replace Domain — упал сервер или нужно сменить сам домен
 
-Repoint — когда упал СЕРВЕР. Replace Domain — когда забанили САМ ДОМЕН (массовая замена домена во всех кампаниях). Репойнт не лечит бан домена, и наоборот. → [how-to/domains.md](../how-to/domains.md) §Replace Domain
+Repoint — когда упал **сервер**: его домены переезжают на живой сервер той же группы. Replace Domain — когда нужно сменить **сам домен**: массовый экшен заменяет выбранный домен в настройках `Domain-Change` выбранных кампаний. Репойнт не поможет, если недоступен сам домен, а замена домена не поднимет упавший сервер. → [how-to/domains.md](../how-to/domains.md) §Replace Domain
 
 ### Server Provider vs Domain Provider vs DNS Provider — три разных интеграции
 
-Server Provider — где живёт сервер (DigitalOcean…). Domain Provider — регистратор домена (Namecheap…). DNS Provider — где DNS-записи (Cloudflare). Три разных интеграции, разные ключи.
+Server Provider — где живёт сервер (DigitalOcean, Hetzner, Hostinger…; подключение — секция «Server Provider: как подключить провайдера серверов» выше). Domain Provider — регистратор домена (Namecheap…). DNS Provider — где DNS-записи (Cloudflare). Три разных интеграции, разные ключи.
 
 ### Что нужно разворачивать самому, а что нет: SaaS vs агент на серверах
 
@@ -180,7 +352,7 @@ Server Provider — где живёт сервер (DigitalOcean…). Domain Pro
 
 ### «На каком сервере мой лэнд?» — лэнды на CDN, не на сервере
 
-Файлы лэнда — на CDN (не на серверах клиента), переносить при смене сервера не нужно. Контент визиту отдаёт агент на сервере (по командам AIO), но гео сервера на скорость открытия влияет слабо: динамика упирается в контрол-плейн, статику кэширует Cloudflare — см. §«Влияет ли гео сервера на скорость открытия лендинга».
+Исходные файлы лэнда — на CDN; локальный кэш агента заполняется по запросам, переносить его при смене сервера не нужно. Контент визиту отдаёт агент на сервере (по командам AIO), но гео сервера на скорость открытия влияет слабо: динамика упирается в контрол-плейн, статику кэширует Cloudflare — см. §«Влияет ли гео сервера на скорость открытия лендинга».
 
 ## Подводные камни Server и Repoint Group
 
@@ -194,9 +366,9 @@ Server Provider — где живёт сервер (DigitalOcean…). Domain Pro
 
 - **Agent Cluster нельзя на реальном трафике** сейчас: агент держит сессию визита локально у себя и с другими агентами её не делит — при перебалансировке визит «прыгает» между агентами и стартует заново.
 
-- **`Destroy Server` необратим** — сервер перестаёт быть операционным навсегда.
+- **`Destroy Server` зависит от провайдера:** обычно машина удаляется; у Hostinger отключается автопродление. В AIO успешное действие оставляет запись в `Danger` со строкой `Destroyed` и выключенным мониторингом.
 
-- **Самостоятельно добавленные серверы** (по IP, без интеграции провайдера) менее автоматизированы — Deploy накатывается вручную, а AIO только ждёт ответа агента на `/ping` около 30 минут; не успели выполнить скрипт — сервер уйдёт в `Danger` с `All install checks failed`. `Reinstall` при этом не переустанавливает сервер, а лишь перезапускает эту проверку из `Danger` — разбор.
+- **Самостоятельно добавленные серверы** (по IP, без интеграции провайдера) менее автоматизированы — Deploy накатывается вручную, а AIO только проверяет ответ агента — до 60 попыток; не успели выполнить скрипт — сервер уйдёт в `Danger` с `All install checks failed`. `Reinstall` при этом не переустанавливает сервер, а лишь перезапускает эту проверку из `Danger` (в MTK такого экшена нет) — разбор.
 
 - **Прямой доступ к серверу без Cloudflare** — если домен не за Cloudflare, IP сервера открыт наружу, и весь сервер уязвим к DDoS. Держать домены за Cloudflare. → [context/architecture.md](../context/architecture.md)
 

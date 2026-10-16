@@ -1,17 +1,17 @@
 ---
 id: custom-pwa
 title: Custom PWA — свой лэнд из ZIP внутри готового PWA-шелла
-description: "Как собрать PWA из своего лэнда: + PWA → Custom PWA, загрузка ZIP (берётся только index.html, manifest.json префиллит манифест), выбор шелла (Shell template), манифест (App name, Short name, иконка 512×512), Shell overrides (Install button id, длительности, цвет), кнопка установки install-btn / data-aio-pwa, Replace by ZIP, конверсии через Lander Type."
+description: "Как собрать PWA из своего лэнда: + PWA → Custom PWA, загрузка ZIP (берётся только index.html, manifest.json префиллит манифест), выбор шелла (Shell template), манифест (App name, Short name, иконка 512×512, AI-описание через Description with AI), Shell overrides (Install button id, длительности, цвет), кнопка установки install-btn / data-aio-pwa, редактор страницы Code / Visual / Split (Mobile) и кнопка QA, Replace by ZIP, конверсии через Lander Type."
 doc_type: how-to
 builds: [erp, mtk]
-related: [how-to-pwa, mechanics-pwa, landings]
+related: [how-to-pwa, mechanics-pwa, pwa-ai-texts, landings, landing-qa, landing-visual-editor]
 language: ru
-updated: 2026-09-23
+updated: 2026-10-09
 ---
 
 # Custom PWA — свой лэнд из ZIP внутри готового PWA-шелла
 
-**`Custom PWA` — третий способ собрать PWA в AIO: вы загружаете свой лэнд архивом ZIP, а AIO вставляет его `index.html` в готовый PWA-шелл, который берёт на себя установку, прелоадер, режим «внутри приложения», манифест и push.** Витрину рисует ваш HTML, вся PWA-механика — шелл. Два других способа — PWA Builder (витрина из готовых скинов) и PWA-макрос на обычном лэнде — описаны в [how-to/pwa.md](pwa.md); что такое PWA в AIO — [mechanics/pwa.md](../mechanics/pwa.md).
+**`Custom PWA` — третий способ собрать PWA в AIO: вы загружаете свой лэнд архивом ZIP, а AIO вставляет его `index.html` в готовый PWA-шелл, который берёт на себя установку, прелоадер, режим «внутри приложения», манифест и push.** Витрину рисует ваш HTML, вся PWA-механика — шелл. Два других способа — PWA Builder (витрина из готовых скинов) и PWA-макрос для лэнда с готовым серверным манифестом — описаны в [how-to/pwa.md](pwa.md); что такое PWA в AIO — [mechanics/pwa.md](../mechanics/pwa.md).
 
 ## Как создать Custom PWA — `+ PWA` → `Custom PWA`
 
@@ -26,13 +26,13 @@ updated: 2026-09-23
 
 - **Общие:** `PWA name`, `Lander type`, `Countries`, `Languages`, `Description`, `Tags`. Тип лэнда обязателен, в списке — только типы с включённым `Is PWA?`: от типа PWA берёт конверсии установки, открытия и подписки.
 - **`Shell`** → **`Shell template`** — какой шелл оборачивает ваш лэнд («The shell handles install, preloader, inside-PWA mode and the SDK config. Your page is rendered inside it»), и `Language` шелла.
-- **`Manifest`** — то, что видно при установке и на домашнем экране: `App name` (имя на экране установки), `Short name` (подпись под иконкой — держите короче 12 символов), `Description`, `App icon` (512×512, PNG, SVG или WebP), `Color`.
+- **`Manifest`** — то, что видно при установке и на домашнем экране: `App name` (имя на экране установки), `Short name` (подпись под иконкой — держите короче 12 символов), `Description`, `App icon` (512×512, PNG, SVG или WebP), `Color`. При доступных AI-функциях под `Description` есть кнопка `Description with AI`: она запрашивает до трёх вариантов одной строкой с целевым ограничением 150 символов. Язык шелла передаётся как целевой язык генерации; в пожеланиях можно запросить другой. Выбранный вариант заменяет текст поля — [how-to/pwa-ai-texts.md](pwa-ai-texts.md).
 
 ## Shell overrides — что можно поменять в поведении шелла
 
 Блок **`Shell overrides`** меняет параметры выбранного шелла; пустое поле оставляет дефолт шелла (он показан подсказкой в поле).
 
-- **`Install button id`** — id кнопки установки в вашем `index.html` (дефолт `install-btn`).
+- **`Install button id`** — id кнопки установки в вашем `index.html`. Подсказка показывает значение выбранного шелла, а если оно не задано — `install-btn`.
 - **`Accent color`** — акцентный цвет шелла.
 - **`Pre-loading duration, ms`**, **`Loading duration, ms`** — длительность экранов прелоадера и загрузки.
 - **`Installed timeout, ms`** и **`Interval before Open button, ms`** — тайминги шелла вокруг установки и появления кнопки `Open`.
@@ -47,7 +47,17 @@ updated: 2026-09-23
 - **Лимиты и ошибки загрузки** — те же, что у обычного ZIP-лэнда ([how-to/landings.md](landings.md)): без `index.html` архив не обработается, размер `index.html` ограничен, статусы обработки те же.
 - **SDK-макросы** `{{aio:head}}` / `{{aio}}` при загрузке расставляются по настройке типа лэнда, как у обычного лэнда; если в итоговой странице их нет (например, ваш `index.html` — фрагмент без `<head>` / `<body>`), AIO дописывает их в шелл.
 
-**`Replace by ZIP`** в диалоге правки меняет архив; история архивов сохраняется, первый остаётся доступен. Без нового ZIP сохранение меняет только настройки, HTML лэнда не трогает.
+**`Replace by ZIP`** в диалоге правки меняет архив; история архивов сохраняется, первый остаётся доступен. Без нового ZIP архив не перезаливается: `Save` сохраняет настройки; сохранение HTML из редактора описано ниже. `Replace by ZIP` закрывает диалог без вопроса о несохранённом и открывает окно загрузки: с новым архивом уходят текущие настройки из формы, а страницу целиком заменяет `index.html` нового архива — правки из редактора не переносятся.
+
+## Как поправить страницу Custom PWA — редактор `Code` / `Visual` / `Split` и кнопка `QA`
+
+**У созданной Custom PWA, чей ZIP уже разобран, в центре диалога `Manage Custom PWA` стоит редактор страницы — тот же, что в `Manage landing`, с режимами `Code`, `Visual` и `Split`; у новой PWA на этом месте зона загрузки ZIP.** Редактор правит HTML вашей страницы (`index.html` из архива) без шелла: прелоадер и экран установки в нём не видны, отдельного превью собранной PWA в диалоге нет.
+
+- `Visual` сразу открывается в виде `Mobile`, переключатель `Mobile` / `Desktop` есть. Режима `Full preview` и поиска по страницам нет — страница одна.
+- По умолчанию диалог открывается в `Visual` в ERP и в `Code` в MTK; `Visual` доступен в обеих сборках. В `Split` колонки настроек прячутся, редактор занимает всю ширину.
+- Если AI-функции доступны, в шапке редактора есть кнопка `QA` ([how-to/landing-qa.md](landing-qa.md)) — её результат подставляется в редактор, а в панели визуального редактора есть `AI edit of the block` и `AI section`.
+
+Правки страницы, в том числе из `QA`, сохраняет `Save` диалога. Для сохранения HTML дополнительно нужно право `content.landings.edit.manually`; с одним `content.landings.edit.custom-pwa` сохраняются настройки PWA, а сохранение HTML отклоняется. Как работает сам визуальный редактор — [how-to/landing-visual-editor.md](landing-visual-editor.md).
 
 ## Кнопка установки в своём HTML — `id="install-btn"` или `data-aio-pwa="install"`
 
