@@ -6,7 +6,7 @@ doc_type: model
 builds: [erp, mtk]
 related: [flow-editor, campaign, notifications-flow, source, domain, distributions-model, forms, form, conversion-model, remarketing-campaigns, marketing-flow, user-fields, placeholders, architecture, campaigns, visit-timeline, destinations, visit-lifecycle, limits, glossary, destination, landing, visit, visit-field]
 language: ru
-updated: 2026-10-16
+updated: 2026-10-28
 ---
 
 # Flow Model AIO
@@ -396,9 +396,9 @@ SubFlow подходит для общей логики `Fill Fields`. Если 
 
 - **`301 Permanent`** — постоянный редирект, браузер его кэширует.
 - **`302 Temporary`** — временный редирект, не кэшируется.
-- **`Meta Refresh No Referer`** — вместо 30x визитёру отдаётся HTML-прослойка, которая сама уводит на целевой URL; реферер режется гарантированно во всех браузерах, включая Safari/WebKit.
+- **`Meta Refresh No Referer`** — вместо 30x визитёру отдаётся HTML-прослойка, которая сама уводит на целевой URL; на другой домен реферер не уходит гарантированно во всех браузерах, включая Safari/WebKit.
 
-Заголовок `Referrer-Policy: no-referrer` AIO ставит на ответы `301` / `302` и на HTML-прослойку `Meta Refresh`; выключить это нельзя. На 30x-ответах Safari/WebKit этот заголовок игнорирует, поэтому там, где срез реферера нужен во всех браузерах, ставится `Meta Refresh No Referer`. Если рекламодателю нужен реферер — он передаётся параметром через `{{aio.visit.fields.referer}}`; полный разбор того, что уезжает рекламодателю, — [how-to/destinations.md](../how-to/destinations.md).
+Заголовок `Referrer-Policy: same-origin` AIO ставит на ответы `301` / `302` и на HTML-прослойку `Meta Refresh`; выключить это нельзя. С `same-origin` реферер уходит только на тот же домен, на оффер или партнёрку на другом домене — нет. На 30x-ответах Safari/WebKit этот заголовок игнорирует, поэтому там, где срез реферера нужен во всех браузерах, ставится `Meta Refresh No Referer`. Если рекламодателю нужен реферер — он передаётся параметром через `{{aio.visit.fields.referer}}`; полный разбор того, что уезжает рекламодателю, — [how-to/destinations.md](../how-to/destinations.md).
 
 ### На каких узлах есть `Redirect strategy` и где она не действует
 
@@ -516,7 +516,7 @@ Content-нода работает в два независимых слоя, п�
 
 ### Field Verification (Verify field via sender provider) — настройки
 
-**`Contact`** (поле для проверки) + **`Sender provider`** (через какого провайдера верифицировать). Селектор показывает все Sender Providers тенанта, но код отправляют только `Telegram` (в чат, `Contact` = Telegram chat id) и `Prelude Bridge` (SMS на телефон через мост). Для проверки email эта нода не подходит. Это OTP-верификация контакта внутри флоу. Ветки транзишенов — `passed` / `rejected`. Тип ноды — `Field Verification`; в интерфейсе она подписана `Field verification`.
+**`Contact`** (поле для проверки) + **`Sender provider`** (через какого провайдера верифицировать). Селектор показывает все Sender Providers тенанта, но код отправляют только `Telegram` (в чат, `Contact` = Telegram chat id), `Prelude Bridge` (SMS на телефон через мост) и `Prelude Simple` (SMS напрямую через Prelude по `API Token` провайдера; номер берите в международном формате — без кода страны он уходит как есть с `+`). Для проверки email эта нода не подходит. Это OTP-верификация контакта внутри флоу. Ветки транзишенов — `passed` / `rejected`. Тип ноды — `Field Verification`; в интерфейсе она подписана `Field verification`.
 
 **Статусы верификации (Field Verification Statuses).** Семь статусов (RAW enum-значения). Ввод кода доступен при `Sent` и `Invalid Code`. При повторном открытии шага страница может показать и другой сохранённый статус; для остальных пяти статусов кнопка `Verify` выключена. Подписи локализуются по языку браузера, статус сохраняется в `visit.verifications`.
 

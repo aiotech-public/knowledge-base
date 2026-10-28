@@ -1,12 +1,12 @@
 ---
 id: server
 title: Server / Agent — концепт (модель)
-description: Что такое Server в AIO как сущность — серверная единица в Tech → Servers, на которую раскатывается AIO-агент (finite state machine, работающий по командам AIO); агностичность (лэнды на CDN), Repoint Group, мониторинг/2FA; как подключить Server Provider (поля DigitalOcean, Vultr, BitLaunch, Hetzner, Gcore, Cherry Servers, OVHcloud, Hostinger, Test, ошибки заказа); что ставит Deploy-скрипт AIO Agent & Squid, какая ОС нужна (Ubuntu/Debian x86_64), SQUID_USER_ENV / SQUID_PASS_ENV, SSH-доступ к купленному серверу; влияние гео сервера на скорость открытия лендинга. Концепт; инфраструктура целиком — context/architecture.md, процедуры — how-to/domains.md.
+description: Что такое Server в AIO как сущность — серверная единица в Tech → Servers, на которую раскатывается AIO-агент (finite state machine, работающий по командам AIO); агностичность (лэнды на CDN), Repoint Group, мониторинг/2FA; как подключить Server Provider (поля DigitalOcean, Vultr, BitLaunch, Hetzner, Gcore, Cherry Servers, OVHcloud, Hostinger, Linode, Test, ошибки заказа); что ставит Deploy-скрипт AIO Agent & Squid, какая ОС нужна (Ubuntu/Debian x86_64), SQUID_USER_ENV / SQUID_PASS_ENV, SSH-доступ к купленному серверу; влияние гео сервера на скорость открытия лендинга. Концепт; инфраструктура целиком — context/architecture.md, процедуры — how-to/domains.md.
 doc_type: model
 builds: [erp, mtk]
-related: [architecture, domains, glossary, sdk, visit-lifecycle, flow-model, permissions-model, tenant, domain, landing, domain-launch, landings, ui-map]
+related: [architecture, domains, glossary, sdk, visit-lifecycle, flow-model, domains-ipv6, permissions-model, tenant, domain, landing, domain-launch, landings, ui-map]
 language: ru
-updated: 2026-10-16
+updated: 2026-10-21
 ---
 
 # Server / Agent — концепт (модель)
@@ -32,18 +32,18 @@ updated: 2026-10-16
 ### Как добавить сервер: `Buy a server` vs `Add manually`
 
 `Tech → Servers → +Server` (в MTK — `Settings → Servers`) открывает окно выбора способа (`Choose how to add a server`) с двумя карточками:
-- **`Buy a server`** (рекомендуемый, `Order a server from a connected provider`) — AIO заказывает машину у подключённого `Server Provider` (DigitalOcean, Hetzner, Vultr, BitLaunch, Gcore, Cherry Servers, OVHcloud, Hostinger; подключение — `Tech → Server providers`, в MTK — `Settings → Server providers`, поля по провайдерам — секция «Server Provider: как подключить провайдера серверов»), ждёт, пока она поднимется и получит IP, а выбранный в поле `Deployment` скрипт передаёт провайдеру как стартовый скрипт машины — провайдер выполняет его при первом запуске. Поля модалки: `Description`, `Tags`, `Monitoring user`, `Repoint group`, `Server provider`, `Deployment`.
-- **`Add manually`** (`Add a server you already own`) — указать публичный `IP address` своего сервера (только IPv4); AIO на него не заходит и ничего не ставит — содержимое выбранного `Deployment script` показывается в поле `Script content` (только чтение), его выполняют на машине по SSH самостоятельно. Поля: `Name`, `Description`, `Tags`, `IP address`, `Monitoring user`, `Repoint group`, `Deployment script`, `Script content`.
+- **`Buy a server`** (рекомендуемый, `Order a server from a connected provider`) — AIO заказывает машину у подключённого `Server Provider` (DigitalOcean, Hetzner, Vultr, BitLaunch, Gcore, Cherry Servers, OVHcloud, Hostinger, Linode; подключение — `Tech → Server providers`, в MTK — `Settings → Server providers`, поля по провайдерам — секция «Server Provider: как подключить провайдера серверов»), ждёт, пока она поднимется и получит IP, а выбранный в поле `Deployment` скрипт передаёт провайдеру как стартовый скрипт машины — провайдер выполняет его при первом запуске. Поля модалки: `Description`, `Tags`, `Monitoring user`, `Repoint group`, `Server provider`, `Deployment`.
+- **`Add manually`** (`Add a server you already own`) — указать публичный `IP address` своего сервера (IPv4) и, если у машины есть публичный IPv6, `IPv6 address` — он нужен только доменам в режиме Cloudflare `Only IPv6` ([how-to/domains-ipv6.md](../how-to/domains-ipv6.md)); AIO на сервер не заходит и ничего не ставит — содержимое выбранного `Deployment script` показывается в поле `Script content` (только чтение), его выполняют на машине по SSH самостоятельно. Поля: `Name`, `Description`, `Tags`, `IP address`, `IPv6 address`, `Monitoring user`, `Repoint group`, `Deployment script`, `Script content`.
 
 Стандартный Deploy-скрипт `AIO Agent & Squid` ставит **Docker, AIO-агент и Squid** (что именно и на какую ОС — секция «Что ставится на сервер и как на него попасть: Deploy-скрипт, ОС, SSH»). В обоих путях установку AIO подтверждает одинаково — до 60 раз проверяет, ответил ли установленный агент; успешная проверка переводит сервер в `Running` / `Installed`. Что означает каждая строка статуса, почему сервер завис в `Processing` или упал в `Danger` с `All install checks failed` / `Creation failed` и как вернуть его в `Running`.
 
 ### Какие атрибуты у сервера и где их задать
 
-`Name`, `Description`, `Tags`; `Server Provider` (если Buy) / `IP Address` (если Manually); `Monitoring User` (только юзер с 2FA); `Repoint Group` (строка-метка для группировки под репойнт); `Deployment Script` (какой Deploy раскатать).
+`Name`, `Description`, `Tags`; `Server Provider` (если Buy) / `IP Address` (если Manually); `IPv6 address` (необязательно: вручную в `Add manually`, у Hetzner и Linode из `Buy a server` AIO записывает сам); `Monitoring User` (только юзер с 2FA); `Repoint Group` (строка-метка для группировки под репойнт); `Deployment Script` (какой Deploy раскатать).
 
 Важно: **`Servers Region` / `Droplets Size` / `Droplet Image` задаются НЕ на сервере, а на уровне Server Provider** (в шаблоне провайдера — `Edit/Create Server Provider`). Нужны разные регионы/размеры — дублируется Server Provider под другие настройки. Значения там могут протухнуть. Перед заказом через BitLaunch AIO пытается сверить их со списком провайдера; если список не получен, заказ не блокируется.
 
-`Edit server` (правый клик → `Edit server`) меняет `Name`, `Description`, `Tags`, `Monitoring user` и `Repoint group`. `IP`, провайдер и Deploy-скрипт после добавления не меняются — сервер с другим IP добавляют заново. У сервера, добавленного вручную, в этом же окне показан (только чтение) `Script content` его Deploy-скрипта — оттуда его удобно скопировать ещё раз.
+`Edit server` (правый клик → `Edit server`) меняет `Name`, `Description`, `Tags`, `Monitoring user` и `Repoint group`. `IP`, провайдер и Deploy-скрипт после добавления не меняются — сервер с другим IP добавляют заново. Поля `IPv6 address` в `Edit server` нет: у заведённого сервера IPv6 задаётся через Actions API ([how-to/domains-ipv6.md](../how-to/domains-ipv6.md)). У сервера, добавленного вручную, в этом же окне показан (только чтение) `Script content` его Deploy-скрипта — оттуда его удобно скопировать ещё раз.
 
 Экшен `Archive` (правый клик по серверу) переносит сервер в категорию Archived; архивные сервера в списке `Tech → Servers` показываются только при включённом фильтре **`Archived`** (подсказка `Show archived items`; показывает архивные вместе с активными). `Destroy Server` выполняет действие у провайдера: удаляет машину либо, у Hostinger, отключает её автопродление.
 
@@ -71,7 +71,7 @@ AIO сам следит за доступностью сервера с вклю
 
 ## Server Provider: как подключить провайдера серверов и купить через него сервер
 
-**`Server Provider` — подключение к вашему аккаунту у хостинга плюс шаблон машины (регион, размер, образ ОС): по нему работает `Buy a server`.** AIO заказывает машину через API провайдера в вашем аккаунте, оплата идёт напрямую провайдеру. Регион, размер и образ задаются в шаблоне, а не на сервере: нужен другой регион или размер — заводится ещё один `Server Provider`. Подключаются `Digitalocean`, `Vultr`, `BitLaunch`, `Hetzner`, `Gcore`, `CherryServers`, `OvhCloud`, `Hostinger` — актуальный список всегда в выпадающем меню `Integration type`.
+**`Server Provider` — подключение к вашему аккаунту у хостинга плюс шаблон машины (регион, размер, образ ОС): по нему работает `Buy a server`.** AIO заказывает машину через API провайдера в вашем аккаунте, оплата идёт напрямую провайдеру. Регион, размер и образ задаются в шаблоне, а не на сервере: нужен другой регион или размер — заводится ещё один `Server Provider`. Подключаются `Digitalocean`, `Vultr`, `BitLaunch`, `Hetzner`, `Gcore`, `CherryServers`, `OvhCloud`, `Hostinger`, `Linode` — актуальный список всегда в выпадающем меню `Integration type`.
 
 Частые формулировки: «как настроить Server provider», «як налаштувати Server provider», «как подключить хостинг-провайдера к AIO», «куда вписать API-ключ провайдера», «как купить сервер через AIO».
 
@@ -80,7 +80,7 @@ AIO сам следит за доступностью сервера с вклю
 1. `Tech → Server providers` (в MTK — `Settings → Server providers`) → `+` — окно `Create server provider`. Нужно право `tech.server-providers.edit`.
 2. `Name`, `Description`, `Tags` — для себя.
 3. `Integration type` — провайдер (по умолчанию `Digitalocean`); от него зависит набор полей в блоке `Settings`.
-4. `Settings` — доступ к API (ключ или токен из кабинета провайдера, у части провайдеров ещё ID проекта и прокси) и параметры машины. Что вписывать у каждого провайдера — секции этого раздела по имени провайдера (DigitalOcean, Vultr, BitLaunch, Hetzner, Gcore, Cherry Servers, OVHcloud, Hostinger).
+4. `Settings` — доступ к API (ключ или токен из кабинета провайдера, у части провайдеров ещё ID проекта и прокси) и параметры машины. Что вписывать у каждого провайдера — секции этого раздела по имени провайдера (DigitalOcean, Vultr, BitLaunch, Hetzner, Gcore, Cherry Servers, OVHcloud, Hostinger, Linode).
 5. Сохранить и проверить доступ: правый клик по провайдеру → `Test`.
 6. Заказать сервер: `Tech → Servers → +Server → Buy a server` (в MTK — `Settings → Servers`), в полях `Server provider` и `Deployment` — этот шаблон и Deploy-скрипт.
 
@@ -88,7 +88,7 @@ AIO сам следит за доступностью сервера с вклю
 
 ### Что проверяет `Test` на провайдере — и чего не проверяет
 
-**`Test` (окно `Test server provider`) обращается к API провайдера с доступом из шаблона и показывает результат. BitLaunch может дополнительно запросить параметры выбранного хоста.** Успех выглядит по-разному: `Auth as …` с именем или email аккаунта (DigitalOcean, Vultr, BitLaunch, OVHcloud, Cherry Servers; у DigitalOcean — ещё лимит дроплетов), `Authorized successfully` (Hetzner, Hostinger), `Auth OK. Regions available: <N>` (Gcore). Ошибка — текст провайдера или строка AIO вида `There is no … at settings` (в шаблоне пусто поле доступа).
+**`Test` (окно `Test server provider`) обращается к API провайдера с доступом из шаблона и показывает результат. BitLaunch может дополнительно запросить параметры выбранного хоста.** Успех выглядит по-разному: `Auth as …` с именем или email аккаунта (DigitalOcean, Vultr, BitLaunch, OVHcloud, Cherry Servers; у DigitalOcean — ещё лимит дроплетов), `Authorized successfully` (Hetzner, Hostinger), `Auth OK. Regions available: <N>` (Gcore), `Authorized as <email>. Balance: $<…>. Promo credit: <…>` (Linode). Ошибка — текст провайдера или строка AIO вида `There is no … at settings` (в шаблоне пусто поле доступа).
 
 Регион, размер, образ, тариф и ID проекта тестовые запросы остальных провайдеров не сверяют. BitLaunch пытается дополнительно сверить регион, размер и образ, если все три поля заданы; недоступность или пустые списки параметров могут оставить часть значений непроверенной. Поэтому успешный `Test` не гарантирует заказ: ошибка в этих полях всплывёт при `Buy a server` строкой `Creation failed: …` в статусе сервера (разбор).
 
@@ -196,6 +196,14 @@ AIO сам следит за доступностью сервера с вклю
 
 **У Hostinger `Destroy server` не удаляет VPS сразу: AIO отключает автопродление подписки машины, и она работает до конца оплаченного периода.** В AIO запись получает `Danger` со строкой `Destroyed`, а мониторинг выключается. Это не подтверждает остановку самой VPS. Немедленного удаления через API у Hostinger нет.
 
+### Linode (`Linode`, Akamai Cloud) — поля шаблона, промокод, IPv6
+
+**Шаблон Linode: `API Token`, `Proxy`, `Promo Code`, `Region`, `Server Type`, `Image`.** `API Token` — Personal Access Token Linode с правами на Linodes (чтение и запись) и Account (чтение); `Proxy` — необязательный прокси для запросов к API. `Region` — один из регионов Linode (по умолчанию `DE - Frankfurt`), `Server Type` — `2CPU-4GB-80GB`, `Image` — `Ubuntu 22.04`, `Ubuntu 24.04` (по умолчанию) или `Debian 12`. Успешный `Test` — `Authorized as <email>. Balance: $<баланс>. Promo credit: <остаток промо и срок>` (или `none`).
+
+`Promo Code` необязателен: если на аккаунте нет активного промо, AIO применяет код и при `Test`, и перед каждым заказом. Linode принимает код только у аккаунта младше 90 дней; отказ при `Test` — строка `Error while applying promo code (HTTP <код>): …`, при заказе — `Creation failed: Error while applying promo code …`. Промо на аккаунте закончилось или не нужно — очистите поле, иначе `Test` и каждый заказ будут снова применять код и падать с этой ошибкой.
+
+Скрипт из `Deployment` Linode выполняет при первом запуске машины. IPv6 у машины Linode есть всегда, и AIO записывает его в `IPv6 address` сам, когда сервер получает IP ([how-to/domains-ipv6.md](../how-to/domains-ipv6.md)). Отказ Linode при заказе — `Creation failed: Error while creating server (HTTP <код>): <поле>: <причина>`. `Destroy server` удаляет машину сразу; если её уже удалили в кабинете Linode, запись тоже считается удалённой.
+
 ## Что ставится на сервер и как на него попасть: Deploy-скрипт, ОС, SSH
 
 ### Что ставит на сервер стандартный Deploy-скрипт `AIO Agent & Squid`
@@ -229,7 +237,7 @@ AIO сам следит за доступностью сервера с вклю
 - на Ubuntu порты открываются в `ufw` автоматически, на Debian скрипт файрвол не трогает — если он включён, порты 80 и 443 откройте сами;
 - нужен исходящий интернет: скрипт ставит пакеты, клонирует репозиторий агента с GitHub и скачивает образы контейнеров.
 
-В шаблонах провайдеров AIO предлагает Ubuntu 22.04 / 24.04 и Debian 12 (у DigitalOcean — ещё `Docker Ubuntu 20.04`); у Hostinger и Gcore образ задаётся ID — выберите Ubuntu или Debian. Частые формулировки: «какая ОС нужна для сервера», «на какой операционной системе должен быть сервер для AIO».
+В шаблонах провайдеров AIO предлагает Ubuntu 22.04 / 24.04 и Debian 12 (у DigitalOcean — ещё `Docker Ubuntu 20.04`); у Hostinger и Gcore образ задаётся ID — выберите Ubuntu или Debian; у Linode — `Ubuntu 22.04`, `Ubuntu 24.04` (по умолчанию) или `Debian 12`. Частые формулировки: «какая ОС нужна для сервера», «на какой операционной системе должен быть сервер для AIO».
 
 ### Как попасть на сервер, купленный через AIO: SSH-ключ вместо пароля
 
@@ -292,7 +300,7 @@ AIO сам следит за доступностью сервера с вклю
 По убыванию эффекта:
 
 1. **Меньше редирект-шагов до лэнда.** Каждый `Domain-Change` — ещё один полный «океанский» шаг (~+0.25 с) и потеря части визитов на медленных соединениях; 1–2 на флоу — норма, 3+ — пересмотреть схему ([heuristics/domain-launch.md](../heuristics/domain-launch.md)).
-2. **Вес лэнда.** Тяжёлые картинки и видео — главный тормоз мобильного трафика на дешёвых гео: статика кэшируется (видео — нет, оно каждый раз идёт через сервер), но первый показ зависит от объёма. Большое видео выносить на видео-хостинг ([how-to/landings.md](../how-to/landings.md)).
+2. **Вес лэнда.** Тяжёлые картинки и видео — главный тормоз мобильного трафика на дешёвых гео: статика кэшируется (видео Cloudflare не кэширует — каждый просмотр идёт через сервер, хотя агент держит копию видео на диске), но первый показ зависит от объёма. Большое видео выносить на видео-хостинг ([how-to/landings.md](../how-to/landings.md)).
 3. **Argo Smart Routing** — платная надстройка Cloudflare (включается на зоне в CF-дашборде клиента, тарифицируется по трафику): оптимизирует маршрут «точка Cloudflare → сервер», по данным Cloudflare до ~30% на этой ноге. Единственный рычаг, сокращающий именно межконтинентальную часть без изменения флоу.
 4. Крупные сетапы с узким пулом доменов строят гео-раутинг прямо на CDN-edge (Cloudflare Enterprise) — окупается на больших объёмах, на широком пуле доменов обычно нет.
 

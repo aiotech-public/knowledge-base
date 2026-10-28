@@ -4,9 +4,9 @@ title: Жизнь визита в AIO
 description: Что такое визит, как он распознаётся через cuuid/suuid, окно уникальности и слепок сессии без срока (PWA, пуши, постоянные ссылки), путь от клика до конверсии, фрод-фильтрация, дубли, потеря, два поля Referer, списки пройденных лэндов/Destination и воронка funnel_*, колонки RMK и Funnel Raw, три точки пути, где визит попадает в remarketing-аудиторию.
 doc_type: mechanic
 builds: [erp, mtk]
-related: [conversion-model, source, source-trackers, placeholders, visit-timeline, visit, session-analytics, server, distributions-model, live-pulse, domains, glossary, flow-model, domain, sdk, destination, destinations, remarketing-campaigns, visit-field, user-fields, mechanics-pwa, analytics, ui-common, limits, marketing-flow, debug-with-logs, metric, architecture]
+related: [conversion-model, source, source-trackers, placeholders, visit-timeline, visit, session-analytics, server, distributions-model, live-pulse, domains, glossary, flow-model, domain, sdk, destination, destinations, remarketing-campaigns, visit-field, user-fields, mechanics-pwa, analytics, ui-common, creatives, limits, marketing-flow, debug-with-logs, metric, architecture]
 language: ru
-updated: 2026-10-16
+updated: 2026-10-28
 ---
 
 # Жизнь визита в AIO
@@ -235,7 +235,7 @@ https://tracking-domain.com/?cuuid=...&suuid=...&secret=...&ad_name=...&fb_pixel
 - **Facebook:** `field_fb_ad_name`, `field_fb_campaign_name`, `field_fb_ad_id`, `field_fb_placement`, custom fields `fb_pixel`, `fb_capi_token`, и т.д.
 - **Antifraud:** настраиваемые поля результата — например `fraud_score` и `triggered_rules`; состав зависит от фильтра.
 - **Time:** время создания визита и производные групперы по дню/времени.
-- **Web:** `domain` / `domain_uuid` (домен, на котором визит инициализировался), `initial_path`, `referer` (реферер захода, он же системное поле `Referer` — раздел «Два `Referer` у визита» этого документа), `agent_version`. В аналитике исходный домен доступен по ключу `initial_domain`.
+- **Web:** `domain` / `domain_uuid` (домен, на котором визит инициализировался), `initial_path`, `referer` (реферер захода, он же системное поле `Referer` — раздел «Два `Referer` у визита» этого документа), `agent_version`. В аналитике исходный домен доступен по ключу `initial_domain`, последний домен после шагов `Domain Change` — по ключу `last_domain` (раздел «Путь визита по доменам» этого документа).
 - **Path:** списки пройденных лэндов и Destination — `landing_uuids`, `destination_uuids`, единая воронка `funnel_uuids` (раздел «Путь визита по лэндам и Destination» этого документа).
 - **Destination:** поля результата пуша — в отдельной подсекции ниже.
 
@@ -280,9 +280,18 @@ Custom fields добавляются через `Settings → Fields`; част�
 
 **`aio.visit.query`** — сохранённые параметры визита, представленные JS-объектом. При регистрации набор может быть дополнен `Default Query` / Direct Traffic Distribution; при обработке последующих запросов значения могут обновляться. Это **и JS-объект, и шаблонный плейсхолдер**: на JS — `aio.visit.query` (весь query) и ключи через точку (`aio.visit.query.tva`); в шаблонах — `{{aio.visit.query}}` (весь query) и `{{aio.visit.query.<key>}}` (один параметр). **Не зависит от** `enableStrangeUrlParameters` — содержит исходный набор даже при скрытых параметрах. Плейсхолдер-форма — [reference/placeholders.md](../reference/placeholders.md).
 
+### Путь визита по доменам — `Initial Domain`, `Last Domain` и позиции `Domain #1`…`#3`
+
+**Визит записывает, по каким доменам прошёл: регистрация пишет начальный домен, каждый шаг `Domain Change` дописывает новый.** Повторный вход на тот же домен подряд путь не удлиняет. Разрезы аналитики по этому пути лежат в категории `Browser`:
+
+- **`Initial Domain`** (ключ `initial_domain`) — с какого домена визит зашёл изначально, до `Domain Change`; содержит исходный `domain` визита.
+- **`Last Domain`** (ключ `last_domain`) — последний домен пути; без `Domain Change` это начальный домен. Отвечает на вопрос «на каком домене визит оказался после смены домена».
+- **Позиционная серия `Domain`** (ключи `domains[1..3]`) — первые три позиции пути: `Domain #1` — начальный домен, `Domain #2` / `Domain #3` — домены после `Domain Change`.
+
+В ERP весь путь показывает колонка `Domains` в `Tracker → Visits` (категория `Domain path`, скрыта по умолчанию; включается кнопкой `Settings` над таблицей → `Table settings`). У старых визитов путь не записан.
+
 ### Новые поля визита: Launcher, Trash Reason, Split Group
 
-- **`Initial Domain`** — с какого домена визит зашёл изначально (до Domain-Change); UI-разрез, по которому разбивается нагрузка в метриках/логах. Аналитический ключ `initial_domain` содержит исходный `domain` визита.
 - **`Launcher`** — UUID юзера, который сгенерировал ссылку и запускал трафик. Отличается от `Owner` (владелец кампании). В Pivot Report — `field_launcher`. `Launcher = Unknown` — значение launcher не записано. Direct Traffic может получить launcher из `Default Query`.
 - **`Trash Reason`** — причина, по которой визиту проставлен флаг `is_trash`.
 - **`Split Group field`** — поле визита под цвет сплита. По дефолту визит приходит без сплит-группы. Цвет пишет **любая нода-выборщик** (`Content` / `Fill Fields` / `Fill form` / `Fields by distribution`) — когда визит ещё без цвета, выбранный вариант не `Rainbow` и выбор не пропущен из-за закреплённого sticky-варианта; полная семантика лока — [models/flow-model.md](../models/flow-model.md) раздел «Split Groups — маршрутизация цветами».
@@ -332,7 +341,7 @@ AIO регистрирует новый визит после успешной �
 
 Не каждый HTTP-запрос на домен становится визитом: часть запросов отсекается до его создания. Два таких класса:
 
-- **Предзагрузка и предпросмотр страницы.** Браузер или мессенджер подтягивает страницу заранее и помечает запрос заголовком `Purpose`, `Sec-Purpose`, `X-Purpose` или `X-Moz` со значением `prefetch`, `preview` или `prerender`.
+- **Предзагрузка и предпросмотр страницы.** Браузер или мессенджер подтягивает страницу заранее и помечает запрос заголовком `Purpose`, `Sec-Purpose`, `X-Purpose` или `X-Moz` со значением `prefetch`, `preview` или `prerender`. Считается и составное значение через `;` или `,` (например, `prefetch;prerender` или `prefetch;anonymous-client-ip`), регистр не важен.
 - **Подзапрос за ресурсом страницы** — шрифт или картинка (`Sec-Fetch-Dest: font` или `image`).
 
 Такой запрос отбивается ответом `404` с `no-store`, и визита по нему нет нигде — ни в `Tracker → Visits`, ни на вкладке `Trash`.
@@ -343,13 +352,21 @@ AIO регистрирует новый визит после успешной �
 
 `Tracker → Visits` — список визитов. Колонки: **State** (на каком шаге Campaign визит сейчас стоит или где закончилось его взаимодействие — имя ноды флоу; в засеянных флоу это `Preland` / `Offer` / `White` / `Thank You` / `Destination` и т.п.), `Geo`, `Owner` (владелец Campaign на момент создания визита), `Source`, `Campaign`, `Flow`, `Pushed`, `Created`, а также **`Bot`** (визит опознан как бот) и **`Trash`** (визиту проставлен `is_trash` — визит вне основной аналитики, причина в поле `Trash Reason`). **Скролл вправо** раскрывает **поля визита** колонками (Lead: Email/Phone; LP Content Variables; Showcase; интеграционные — Bridge buyer UTM, DV360 Click ID; Screen resize и т.д.) — состав настраивается кнопкой `Settings` над таблицей → `Table settings` ([reference/ui-common.md](../reference/ui-common.md)). Набор колонок не ограничен дефолтными: доступны поля типов Visit, Source, Campaign, Landing и Destination (см. [models/visit.md](../models/visit.md)).
 
+Колонка `Created` в `Tracker → Visits` показывает давность визита — например, `11m ago`; полная дата и время — в подсказке при наведении, зелёная точка перед числом — визит не старше 10 минут.
+
 В ERP есть также **Status** (On landing — **`Wait`** / **`Live`** / **`Left`**) и список **`Destinations`**.
+
+Колонка **`Conversions`** (категория `Identity`, видна по умолчанию, подсказка `Conversion types of the visit (count, last at)`) показывает, какие конверсии пришли на визит. В ячейке — тип с самой поздней конверсией, `×N` — сколько конверсий этого типа, `+N` — сколько ещё типов; наведение на `+N` раскрывает все типы визита с числом и давностью последней конверсии. Визит без конверсий — `No conversions`.
+
+Колонка **`Creatives`** (категория `Visit creative`, скрыта по умолчанию) показывает креативы визита из параметра `creative_uuid` входной ссылки в порядке из ссылки — только те, что есть в `Content → Creatives` и доступны вам; разрез по первым трём позициям — `Creative #1`…`#3` в аналитике ([how-to/creatives.md](../how-to/creatives.md)).
+
+Быстрый фильтр **`Pushed`** (подсказка `Only visits pushed to a destination`) оставляет в таблице только визиты, ушедшие в дестинейшен, — те, у которых в колонке `Pushed` (`is_destination_url_passed`) стоит отметка. Он есть в быстрых фильтрах рядом с `Campaign`, `Source` и `Owner`, в ERP и в MTK.
 
 Свежие визиты таблица `Tracker → Visits` подтягивает своим способом: новый визит появляется в ней быстро, но не обязательно мгновенно. Это касается **только этой таблицы**: у метрик и виджетов дашборда свой механизм обновления, и цифры между экранами из-за этого могут расходиться.
 
 ### Что значит `In Buffer` (`is_buffer`) у визита или конверсии — свежая запись ещё в горячем буфере
 
-`In Buffer = Yes` (поле `is_buffer`) означает, что строка визита прочитана из горячего буфера, а в основном хранилище ещё не найдена. Обычно это свежая запись; если `Yes` держится долго — напишите в чат команде AIO. Флаг не подтверждает полноту записи или её учёт во всех метриках. Если строка найдена в основном хранилище, таблица показывает `No`. У большинства трафика здесь `No` (уже сохранён). У конверсии значение определяется по её визиту. Колонка есть на обеих таблицах — `Tracker → Visits` и `Tracker → Conversions`. Как ещё об этом спрашивают: «статус In Buffer», «лид/конверсия в буфере», «что значит буфер».
+`In Buffer = Yes` (поле `is_buffer`) означает, что строка визита прочитана из горячего буфера, а в основном хранилище ещё не найдена. Обычно это свежая запись; если `Yes` держится долго — напишите в чат команде AIO. Флаг не подтверждает полноту записи или её учёт во всех метриках. Если строка найдена в основном хранилище, таблица показывает `No`. У большинства трафика здесь `No` (уже сохранён). У конверсии значение определяется по её визиту. Колонка есть на обеих таблицах — `Tracker → Visits` и `Tracker → Conversions`; в ERP она скрыта по умолчанию и включается кнопкой `Settings` над таблицей → `Table settings`, в MTK видна сразу. Как ещё об этом спрашивают: «статус In Buffer», «лид/конверсия в буфере», «что значит буфер».
 
 Свежесть записи не мешает работать с визитом: ручной экшен `Trigger Conversion` принимает и визит с `In Buffer = Yes`, и визит из trash — ошибка `The selected visit uuid is invalid` на свежем визите относится к прошлому поведению ([models/conversion-model.md](../models/conversion-model.md)).
 
@@ -367,7 +384,7 @@ AIO регистрирует новый визит после успешной �
 
 ### Колонка `Remarketing` в категории `Forced steps` — не про рассылки
 
-Колонка `Remarketing` в таблице визитов (категория `Forced steps`, соседняя с `Back Fix`) показывает флаг `is_remarketing` из параметра `remarketing` во входящей ссылке. Она не показывает состав аудитории или историю отправок. Такой параметр есть и в ссылке перехода из push-сообщения; флаг меняется при обработке перехода, а не при самой отправке.
+Колонка `Remarketing` в таблице визитов (категория `Forced steps`, соседняя с `Back Fix`) показывает флаг `is_remarketing` из параметра `remarketing` во входящей ссылке. Она не показывает состав аудитории или историю отправок. Параметр `remarketing=true` AIO добавляет и к ссылке push-сообщения; флаг ставится при обработке перехода, а не при самой отправке. Переход из пуша возвращает визит в его текущий шаг, и флаг ставится уже на входе в этот шаг — в том числе визиту на шаге `Destination`, которого сразу отправляют на оффер. Флаг только включается: проставленный один раз, он не снимается. У конверсий тот же флаг показывает колонка `Remarketing` в `Tracker → Conversions` ([models/conversion-model.md](../models/conversion-model.md)).
 
 Про рассылки говорят только колонки с префиксом `RMK` — `RMK Audience` и семь колонок пути отправок (раздел «Колонки `RMK` у визита» этого документа).
 

@@ -6,7 +6,7 @@ doc_type: how-to
 builds: [erp, mtk]
 related: [remarketing-campaigns, distributions-model, permissions, notifications-flow, placeholders, ui-common, mechanics-pwa, postback-generator, conversion-model, destinations, custom-fields, distributions, metric]
 language: ru
-updated: 2026-10-09
+updated: 2026-10-28
 ---
 
 # Тексты рассылки — дистрибуция Message Templates и наборы AIO
@@ -185,7 +185,7 @@ Telegram-нотификация баеру — отдельная история
 
 Без Sender Provider нода `Telegram` в флоу-редакторе отправить не сможет. **Путь:** `Marketing → Sender providers → + Sender provider → Integration type: Telegram`. Для простой нотификации хватает `Bot API Key` + `Bot Name`.
 
-В дропдауне `Integration type` есть ещё **ZM Apps Push** (внешний push-провайдер, выбирается в узле `Drip schedule`), а также **Mailgun** (email), **Twilio** (SMS) и **Prelude Bridge** (SMS). В Marketing Flow отправку выполняют Telegram и ZM Apps Push; узлы email/SMS сообщения не отправляют (полный список — [mechanics/notifications-flow.md](../mechanics/notifications-flow.md)). Выбор типа раскрывает поля учётки именно этого провайдера.
+В дропдауне `Integration type` есть ещё **ZM Apps Push** (внешний push-провайдер, выбирается в узле `Drip schedule`), а также **Mailgun** (email), **Twilio** (SMS), **Prelude Bridge** (SMS) и **Prelude Simple** (SMS). В Marketing Flow отправку выполняют Telegram и ZM Apps Push; узлы email/SMS сообщения не отправляют (полный список — [mechanics/notifications-flow.md](../mechanics/notifications-flow.md)). Выбор типа раскрывает поля учётки именно этого провайдера.
 
 Тот же Telegram Sender Provider обслуживает и `Telegram Destination` (трафик в TG-бот/канал, `Behaviour` `Bot -> Channel` / `Channel`) — [how-to/destinations.md](destinations.md).
 

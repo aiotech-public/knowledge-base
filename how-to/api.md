@@ -6,7 +6,7 @@ doc_type: how-to
 builds: [erp, mtk]
 related: [mcp-server, glossary, architecture, limits, meta-ads, permissions-model, permissions, registration, landings, meta-spend-allocation, analytics, flow-model, campaigns, conversion-model, events-exporter, ui-common, profile-settings, meta-data-health, domains, postback-generator, source-trackers]
 language: ru
-updated: 2026-10-16
+updated: 2026-10-28
 ---
 
 # API / External Integrations (How-to)
@@ -125,7 +125,7 @@ Uuid тенантов, доступных токену, отдаёт `GET /api/v
 - `/campaigns` — `languages` и `countries` приходят массивами (в базе лежат json-строкой, наружу уже распарсены);
 - `/sources` — `settings` распарсенный объект, набор ключей зависит от источника;
 - `/landings` — `landing_type` может быть `null`, `folders` и `shares` — пустыми массивами;
-- `/users` — `is_active` означает общую активность учётной записи юзера; отдельная активность в текущем тенанте здесь не отдаётся. Email тут нет.
+- `/users` — `is_active` означает общую активность учётной записи юзера; отдельная активность в текущем тенанте здесь не отдаётся. Email тут нет. Поле `telegram` (ник из профиля) приходит только владельцу токена с полным доступом (`Owner` / `Admin`) или с правом `api.users.telegram` (ветка прав `api` → `api.users`); без права этого поля в ответе нет.
 
 **Архивные записи приходят вместе с активными** — параметра «только активные» нет, фильтровать по `is_archived` на своей стороне.
 

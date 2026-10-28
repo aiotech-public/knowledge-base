@@ -6,7 +6,7 @@ doc_type: how-to
 builds: [erp, mtk]
 related: [flow-model, landings, visit-lifecycle, architecture, meta-spend-allocation, comments, notifications-flow, glossary, domain, user-fields, meta-ads, auto-rules, flow-editor, campaign, permissions, analytics, tracker, source, custom-fields, permissions-model, mechanics-pwa, destinations, meta-data-health, notification-center, api, ui-common, domains, distributions, distributions-model, source-trackers, campaign-defaults, placeholders]
 language: ru
-updated: 2026-10-16
+updated: 2026-10-28
 ---
 
 # Campaigns (How-to)
@@ -557,6 +557,14 @@ Toggle в `Edit Campaign` рядом с доменом в `Link source`. По д
 
 Выбери домен в `Edit Campaign → Link source` и включи `Lock campaign to this domain`. Эта настройка проверяет домен при начале нового визита. Настройки самого домена описаны в [how-to/domains.md](domains.md).
 
+### Link Generator предупреждает: «Campaign is locked to another domain»
+
+Если у кампании включён `Lock campaign to this domain`, а в `Link Generator` выбран другой домен, под полем домена появляется предупреждение `Campaign is locked to another domain`: кампания принимает трафик только со своего закреплённого домена, и ссылка на выбранном домене трафика не получит. Кнопка `Use <домен>` подставляет закреплённый домен. Генерацию предупреждение не блокирует — ссылку на чужом домене собрать можно, но новые визиты с неё кампания отклонит.
+
+Если закреплённый домен в архиве или недоступен вам, предупреждение выходит без имени домена и без кнопки. Тогда выберите домен в `Edit Campaign → Link source` заново или снимите привязку. Предупреждение одинаковое в диалоге `Link Generator` и на вкладке генератора в `Edit Campaign`.
+
+Какой домен выбран у кампании в `Link domain`, видно и в таблице `Tracker → Campaigns`: скрытая колонка `Link Domain` (группа `Settings`) показывает домен из настроек генератора ссылок кампании, включён `Lock campaign to this domain` или нет, и выгружается в CSV.
+
 ## Replace Destination (массовый)
 
 Когда рекламодатель сменился — типовая ситуация — нужно на десятках кампаний поменять Destination разом.
@@ -635,6 +643,8 @@ Right-click → `Freeze top` / `Freeze bottom`. Возврат — `UnFreeze top
 Причина: без привязки новый визит в кампанию может начаться с другого совместимого домена своего тенанта.
 
 Фикс: выбрать нужный домен в `Edit Campaign → Link source` и включить `Lock campaign to this domain`.
+
+Обратный случай — привязка включена, а ссылка собрана на другом домене: новые визиты с неё не заводятся. `Link Generator` предупреждает об этом плашкой `Campaign is locked to another domain` (секция «Link Generator предупреждает…»).
 
 ### 2. Запустили по дефолтной (нешифрованной) ссылке
 

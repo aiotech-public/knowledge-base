@@ -1,12 +1,12 @@
 ---
 id: notification-center
 title: Notification Center — нотификации и алерты о своём аккаунте (колокольчик)
-description: "In-app центр уведомлений/нотификаций (колокольчик, unread-count, Notification Rules, Notification Groups с Telegram-чатами по /bind, вкладка Tenant alerts, Preferences с проксированием в Telegram/Slack) — системные алерты юзеру о его аккаунте и кампаниях: порог метрики/спенда, порог Conversion Cap дестинейшена, отчёт по расписанию, новая конверсия, бан рекламного аккаунта FB, готовность выгрузки и генерации лэндинга или креатива, упоминание или ответ в комментарии; язык уведомлений (`notification_language`) — по получателю. НЕ push визитёру: рассылки визитёрам — это remarketing-кампании, другая подсистема."
+description: "In-app центр уведомлений/нотификаций (колокольчик, unread-count, Notification Rules, Notification Groups с Telegram-чатами по /bind, вкладка Tenant alerts, Preferences с проксированием в Telegram/Slack) — системные алерты юзеру о его аккаунте и кампаниях: порог метрики/спенда, порог Conversion Cap дестинейшена, отчёт по расписанию, новая конверсия, новый Destination, бан рекламного аккаунта FB, готовность выгрузки и генерации лэндинга или креатива, упоминание или ответ в комментарии; язык уведомлений (`notification_language`) — по получателю. НЕ push визитёру: рассылки визитёрам — это remarketing-кампании, другая подсистема."
 doc_type: mechanic
 builds: [erp, mtk]
 related: [remarketing-campaigns, marketing-flow, push-notifications, comments, meta-spend-allocation, destinations, destination, permissions-model, meta-ads, meta-data-health, auto-rules, architecture, profile-settings, events-exporter, analytics, limits, landings, generations]
 language: ru
-updated: 2026-10-16
+updated: 2026-10-28
 ---
 
 # Notification Center — нотификации и алерты о своём аккаунте (колокольчик)
@@ -41,7 +41,7 @@ Notification Center шлёт алерты **тебе-юзеру о твоём а
 
 ## Notification Rules — что алертит юзера (типы триггеров)
 
-Notification Rule — правило, которое юзер создаёт под свой алерт: тип триггера + его конфиг + аудитория (кому слать). Шесть типов триггеров, поле `trigger_type`:
+Notification Rule — правило, которое юзер создаёт под свой алерт: тип триггера + его конфиг + аудитория (кому слать). Семь типов триггеров, поле `trigger_type`:
 
 ### metric_threshold — метрика пробила порог
 
@@ -128,6 +128,14 @@ Notification Rule — правило, которое юзер создаёт п�
 
 Дословное тело — `📡 Facebook ad account «<имя>» polling stopped after <N> failed attempts`; текст последней ошибки, как и причина бана, идёт отдельной строкой `Status: <текст>`.
 
+### destination_created — создан новый Destination
+
+`trigger_type: destination_created` — уведомление о каждом Destination, созданном в форме `+ Destination` любым способом (по шаблону Advertiser, по интеграции или вручную). Правка существующего Destination его не вызывает. Фильтров у типа нет — конфиг пустой. Заголовок — `New destination created`, тело — `<имя Destination> (<uuid>)`, severity — `info`; в Telegram и Slack заголовок идёт строкой `🎯 New destination created`.
+
+При выборе этого типа в форме правила `Cooldown` сразу ставится в `Off` (подсказка у типа: `Notifies when a destination is created. Set cooldown to Off to receive a notification for every new destination.`). Поставить cooldown можно и вручную — тогда новые Destination внутри окна не уведомят. Чекбокса `Include my team members` у этого типа нет.
+
+Тип правила есть только в ERP, а AI-чат завести его не умеет — только форма `Notification settings` → `Rules`. Во вкладке Preferences тип называется `New destinations`.
+
 ### Как называются типы алертов в списке правил
 
 У каждого правила в списке показан человекочитаемый лейбл его типа триггера — по нему правило и ищут глазами. Лейбл — фиксированная строка на тип, без подстановки конфига:
@@ -136,6 +144,7 @@ Notification Rule — правило, которое юзер создаёт п�
 - `schedule` → **`Scheduled report`** («Отчёт по расписанию»);
 - `destination_cap_threshold` → **`Destination cap`** («Капа destination»);
 - `conversion_created` → **`Conversion created`** («Создана конверсия»);
+- `destination_created` → **`Destination created`**;
 - `fb_ad_account_banned` → **`FB account banned`** («Бан рк-аккаунта FB»);
 - `fb_ad_account_polling_failed` → **`FB polling failed`** («Отвал поллинга FB»).
 
@@ -155,7 +164,7 @@ Enum `timeframe` (и `period` в отчёте) — **17 окон**, в поря�
 
 ## cooldown_minutes — анти-спам для событийных триггеров
 
-`cooldown_minutes` — пол частоты для **событийных** триггеров (`conversion_created`, `fb_ad_account_banned`, `fb_ad_account_polling_failed`): не чаще одной нотификации раз в N минут на правило. `0` = на каждое событие, дефолт `30`. Правила `metric_threshold` и `schedule` его игнорируют — у них частота задаётся `interval_minutes` / `cron`.
+`cooldown_minutes` — пол частоты для **событийных** триггеров (`conversion_created`, `destination_created` (только ERP), `fb_ad_account_banned`, `fb_ad_account_polling_failed`): не чаще одной нотификации раз в N минут на правило. `0` = на каждое событие, дефолт `30` (у `destination_created` форма сразу ставит `0`). Правила `metric_threshold` и `schedule` его игнорируют — у них частота задаётся `interval_minutes` / `cron`.
 
 Событийные триггеры стреляют из точки события, а не по расписанию, поэтому `interval_minutes` и `cron` у них нет, а поле `next_run_at` в ответе всегда `null`.
 
@@ -166,7 +175,7 @@ Enum `timeframe` (и `period` в отчёте) — **17 окон**, в поря�
 - `metric_threshold` — **30 минут** (`interval_minutes >= 30`), `schedule` — cron не чаще раза в 30 минут. Эти правила выполняют полноценный запрос по аналитике, поэтому пол жёсткий;
 - `destination_cap_threshold` — **1 минута**: проверка капа читает только карточки дестинейшенов, это дёшево, а кап меняется в реальном времени.
 
-Фактическое срабатывание может опоздать на минуту-другую после назначенного времени. Событийные триггеры (`conversion_created`, `fb_ad_account_banned`, `fb_ad_account_polling_failed`) этим процессом **не** гоняются — они стреляют из точки события мгновенно. Расписание и частота этого фонового прогона — *Что AIO проставляет и делает сам — автоматические обновления и их лаг*.
+Фактическое срабатывание может опоздать на минуту-другую после назначенного времени. Событийные триггеры (`conversion_created`, `destination_created` (только ERP), `fb_ad_account_banned`, `fb_ad_account_polling_failed`) этим процессом **не** гоняются — они стреляют из точки события мгновенно. Расписание и частота этого фонового прогона — *Что AIO проставляет и делает сам — автоматические обновления и их лаг*.
 
 ## Кому уходит уведомление — аудитория правила
 

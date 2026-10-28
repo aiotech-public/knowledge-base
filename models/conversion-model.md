@@ -6,7 +6,7 @@ doc_type: model
 builds: [erp, mtk]
 related: [flow-model, visit-lifecycle, glossary, destination, tracker, architecture, postback-generator, source-trackers, business-model, debug-with-logs, ui-common, analytics, distributions-model, notifications-flow, remarketing-campaigns, destinations, conversion-ai-testing, campaigns, meta-spend-allocation, sdk, api, metric, marketing-flow]
 language: ru
-updated: 2026-10-16
+updated: 2026-10-28
 ---
 
 # Модель конверсий в AIO
@@ -403,7 +403,11 @@ https://<домен>/api/v1/trigger/conversion-by-key
 
 Зелёная кнопка в шапке таблицы — `Postback generator` (собирает ссылку постбэка для рекламодателя, ничего не сохраняет — [how-to/postback-generator.md](../how-to/postback-generator.md)). Отдельной кнопки `+ Conversion type` на странице больше нет: создание типов и бизнес-моделей уехало в шеврон-дропдаун рядом с кнопкой, пункты `Business models` и `Manage types`. В MTK кнопка та же, а дропдауна на этой странице нет вовсе. Сама таблица — список конверсий. Колонки: **Type** (configured — напр. `Lead` / `Registration` / `Sale Status Update`), `Geo` (by IP), `Visit Date` / `Conversion Date`, **`Delta`** (время визит → конверсия), `Revenue`, `Campaign`, `Source`, `Last destination`, `Currency`, `Offer name` (+ скролл вправо — поля визита/конверсии). `Offer Visit` и `Autologin` — не системные типы, а вручную созданные Conversion Types (частный кейс).
 
-Флаги визита, с которого пришла конверсия, видны колонками `Trash` и `Bot`, а в ERP ещё и `Back Fix` (категория `Forced steps`): `Yes` — визит перебросило вперёд по флоу через Backfix. Колонка `Back Fix` попадает и в CSV-выгрузку — так видно, сколько конверсий дал трафик, вернувшийся через «Назад».
+`Visit Date` и `Conversion Date` показываются давностью — например, `11m ago`; полная дата и время — в подсказке при наведении, зелёная точка перед числом — не старше 10 минут. В CSV-выгрузке обе колонки остаются полной датой.
+
+Флаги визита, с которого пришла конверсия, видны колонками `Trash` и `Bot`, а в ERP ещё и `Back Fix` и `Remarketing` (категория `Forced steps`, обе видны по умолчанию и попадают в CSV-выгрузку). `Back Fix = Yes` — визит перебросило вперёд по флоу через Backfix: так видно, сколько конверсий дал трафик, вернувшийся через «Назад». `Remarketing = Yes` — визит конверсии возвращался по ссылке ремаркетинга с параметром `remarketing=true` (его AIO добавляет к ссылке пуша); как ставится флаг — [mechanics/visit-lifecycle.md](../mechanics/visit-lifecycle.md), раздел «Колонка `Remarketing` в категории `Forced steps`».
+
+Колонка `Visit` (категория `Unique`, видна по умолчанию, подсказка `Same color = same visit`) помечает визит конверсии меткой — цвет, форма и два последних символа UUID визита. Одинаковая метка в разных строках — конверсии одного визита. Наведение показывает полный UUID визита, клик копирует его.
 
 **Экшены (правый клик по конверсии):**
 - **Show visit** — перейти к визиту, породившему конверсию.

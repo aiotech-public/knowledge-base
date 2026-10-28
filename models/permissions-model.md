@@ -4,9 +4,9 @@ title: Permissions Model AIO
 description: Модель доступа AIO — уровни доступа к объекту Use / View / Edit / Own и откуда они берутся (владение, команды с числовыми уровнями, Peers / Below, шаринг, Access type, Scopes / Editor Scopes, роли Owner / Admin / Employee), права Positions и Imperatives с серверной проверкой ключей, Your access, Change ownership, копирование, Log in as user и дословные тексты отказов.
 doc_type: model
 builds: [erp, mtk]
-related: [architecture, generations, analytics, limits, postback-generator, session-analytics, comments, remarketing-campaigns, permissions, auto-rules, meta-ads, auto-rules-engine, notification-center, api, campaigns, registration, custom-fields, tenant, user, glossary, how-to-pwa]
+related: [architecture, meta-data-health, meta-business-managers, generations, analytics, limits, postback-generator, session-analytics, comments, remarketing-campaigns, permissions, auto-rules, meta-ads, auto-rules-engine, notification-center, api, campaigns, creatives, registration, custom-fields, tenant, user, glossary, how-to-pwa]
 language: ru
-updated: 2026-10-16
+updated: 2026-10-28
 ---
 
 # Permissions Model AIO
@@ -87,7 +87,7 @@ updated: 2026-10-16
 
 ### У каких сущностей есть `Access type` и какое значение по умолчанию
 
-**`Access type` есть у всех сущностей, которые шарятся, и правило для всех одно: `Use` и `View` значат одно и то же, исключений по сущностям нет.** Это кампании, флоу, источники, дестинейшены, лэнды, Content Library, пресеты, поля, метрики, дистрибуции, Money Streams, внешние отчёты, списки, шаблоны сообщений, Meta-профили, Meta-шаблоны, Google-аккаунты, ассайны автоправил, домены, сервера, прокси, провайдеры доменов, серверов и DNS, а также папки, макросы, формы и адвертайзеры, а в ERP — ещё генерации и генераторы.
+**`Access type` есть у всех сущностей, которые шарятся, и правило для всех одно: `Use` и `View` значат одно и то же, исключений по сущностям нет.** Это кампании, флоу, источники, дестинейшены, лэнды, Content Library, пресеты, поля, метрики, дистрибуции, Money Streams, внешние отчёты, списки, шаблоны сообщений, Meta-профили, Meta-шаблоны, поставщики кабинетов Meta (`Supplier`), Google-аккаунты, TikTok-аккаунты, ассайны автоправил, домены, сервера, прокси, провайдеры доменов, серверов и DNS, а также папки, макросы, формы и адвертайзеры, а в ERP — ещё генерации и генераторы.
 
 Значение по умолчанию у большинства — `Private`; у папок, макросов, форм, адвертайзеров и списков (`Item lists`) — `Use`, поэтому их видят в списках и селектах все. `Use` получают и поля, которые создаются сами, когда источник создают из шаблона. Генераторы, заведённые до того, как у них появились владелец и `Access type`, принадлежат Owner-у тенанта и открыты всем с `Use`; новые генераторы и генерации создаются `Private`. У элемента Content Library `Access type` выбирают ещё в форме создания (по умолчанию `Private`). У кампаний (трафиковых и remarketing), источников, лэндов, макросов, форм, адвертайзеров, прокси, Meta-профилей, Meta-шаблонов и Google-аккаунтов колонка `Access type` в таблице по умолчанию скрыта и включается в настройках колонок.
 
@@ -145,13 +145,19 @@ Imperative — это «единица разрешения» внутри Posit
 
 - `content.landings.view.pwa` (`Content: PWA page`) — страница `Content → PWA` (в MTK — `PWA → PWA`). Ключ вложен в `content.landings.view`, поэтому открывается вместе с лэндами, но отнимается отдельно (`Deny content.landings.view.pwa`) или выдаётся без `Landings`.
 - `content.landings.edit.custom-pwa` (`Content: landings custom PWA`) — создание PWA из ZIP (`Custom PWA`); конструктор PWA — `content.landings.edit.pwa`.
-- `meta.suppliers.view` / `meta.suppliers.edit` (`Meta: suppliers page` / `Meta: suppliers edit`) — поставщики рекламных аккаунтов (`Manage suppliers`).
+- `meta.suppliers.view` / `meta.suppliers.edit` (`Meta: suppliers page` / `Meta: suppliers edit`) — поставщики рекламных аккаунтов (`Manage suppliers`); их шаринг — секция ниже.
 - `tech.servers.edit.place-monitor` (`Tech: servers place monitor`) — размещение мониторинга на сервере.
 - `settings.forms.share` / `settings.forms.share.ownership` и `settings.advertisers.share` / `settings.advertisers.share.ownership` — шаринг и смена владельца форм и адвертайзеров (только ERP).
 - `features.notes` (`Features: notes`) — теперь комментарии к кампаниям и лэндам, в ERP и MTK; `features.notes.edit` (`Features: notes edit`) остался от заметок и на комментарии не влияет.
 - `content.generations.*` и новые `settings.generators.*` — генерации и генераторы (секции «Какими ключами закрыты генерации» и «Какими ключами закрыты генераторы»); ключ `content.landings.edit.generate` удалён.
 
 Позиция с Allow на раздел получает новые ключи этого раздела автоматически, по префиксу.
+
+### Ключи шаринга поставщиков Meta и вкладки Business Managers — `meta.suppliers.share`, `meta.businesses.view`
+
+**Шаринг поставщиков рекламных кабинетов (`Supplier`) закрыт ключами `meta.suppliers.share` (`Meta: suppliers share`) и `meta.suppliers.share.ownership` (`Meta: suppliers ownership change`), в ERP и MTK.** Ветки `scopes.meta.suppliers` / `edit-scopes.meta.suppliers` дают уровень на всех поставщиков без шаринга; как поставщики шарятся — [how-to/meta-data-health.md](../how-to/meta-data-health.md).
+
+Вкладку `Meta → Business Managers` и фильтр `Business Manager` на вкладках Meta открывает ключ `meta.businesses.view` (только ERP) — [how-to/meta-business-managers.md](../how-to/meta-business-managers.md).
 
 ### Какими ключами закрыты генерации — `content.generations.*`
 
@@ -277,12 +283,12 @@ Feature-императивов восемь, каждый закрывает с�
 
 ### Для каких разделов есть `Scopes` и `Editor Scopes`
 
-**Обе ветки заведены для одних и тех же 29 разделов: 10 есть в обоих билдах, 19 — только в ERP.**
+**Обе ветки заведены для одних и тех же разделов: часть есть в обоих билдах, остальные — только в ERP.**
 
-- ERP и MTK: `tracker.campaigns`, `tracker.sources`, `tracker.destinations`, `content.landings`, `settings.presets`, `settings.streams`, `settings.teams`, `meta.social-profiles`, `tech.domains`, `tech.proxies`.
-- Только ERP: `tracker.flows`, `content.content-library`, `content.macros`, `content.generations`, `settings.fields`, `settings.metrics`, `settings.distributions` (включая шаблоны автоправил `Rule Templates`), `settings.external-reports`, `settings.item-lists`, `settings.forms`, `settings.advertisers`, `settings.generators`, `marketing.message-templates`, `google.accounts`, `automation.assignments`, `tech.servers`, `tech.domain-providers`, `tech.dns-providers`, `tech.server-providers`.
+- ERP и MTK: `tracker.campaigns`, `tracker.sources`, `tracker.destinations`, `content.landings`, `settings.presets`, `settings.streams`, `settings.teams`, `meta.social-profiles`, `meta.suppliers`, `tech.domains`, `tech.proxies`.
+- Только ERP: `tracker.flows`, `content.content-library`, `content.macros`, `content.generations`, `settings.fields`, `settings.metrics`, `settings.distributions` (включая шаблоны автоправил `Rule Templates`), `settings.external-reports`, `settings.item-lists`, `settings.forms`, `settings.advertisers`, `settings.generators`, `marketing.message-templates`, `google.accounts`, `tiktok.accounts`, `automation.assignments`, `tech.servers`, `tech.domain-providers`, `tech.dns-providers`, `tech.server-providers`.
 
-Групповые узлы по префиксу включают все разделы внутри: `Scopes section` / `Editor Scopes section` (ключи `scopes` / `edit-scopes`) — все разделы, `Scopes: tech`, `Editor Scopes: tracker` и т.п. — разделы своей секции. Каждый раздел подписан в матрице: `Scopes: tracker campaigns`, `Editor Scopes: content landings`, `Scopes: automation assignments`, `Editor Scopes: generations` и т.п. У папок и Meta-шаблонов таких веток нет — их открывают только владение, команда, шаринг, `Access type` и полный доступ; у трекеров и креативов объектного доступа нет вовсе — их видят все, у кого есть право раздела.
+Групповые узлы по префиксу включают все разделы внутри: `Scopes section` / `Editor Scopes section` (ключи `scopes` / `edit-scopes`) — все разделы, `Scopes: tech`, `Editor Scopes: tracker` и т.п. — разделы своей секции. Каждый раздел подписан в матрице: `Scopes: tracker campaigns`, `Editor Scopes: content landings`, `Scopes: automation assignments`, `Editor Scopes: generations` и т.п. У папок, Meta-шаблонов и креативов таких веток нет — их открывают только владение, команда, шаринг, `Access type` и полный доступ (список креативов при этом видят все с правом раздела); у трекеров объектного доступа нет вовсе — их видят все, у кого есть право раздела.
 
 ## Как Teams дают доступ к объектам — числовые уровни участников
 
@@ -371,7 +377,7 @@ AIO намеренно не скрывает юзеров друг от друг
 
 ### Шаринг папки — что получает её содержимое (ERP)
 
-**Шаринг папки выдаёт доступ её содержимому: каждый объект в папке получает у получателя роль папки (прежняя шара этого получателя на объект перезаписывается), но без `Can share further`; зависимости этих объектов (лэнды и дестинейшены кампаний) — роль `Use`.** Объект, положенный в уже пошаренную папку позже, получает у каждого получателя роль, `Can share further` и срок его шары на папку. Шарить папки могут Owner и Admin тенанта, а также те, кому они пошарили папку с `Can share further`. У трекеров и креативов объектного доступа нет — шаринг их папки на видимость не влияет. Путь к меню папки, изъятие из папки и что при этом снимается — [how-to/permissions.md](../how-to/permissions.md). Создавать и шарить папки можно только в ERP: в MTK списка папок в таблицах нет.
+**Шаринг папки выдаёт доступ её содержимому: каждый объект в папке получает у получателя роль папки (прежняя шара этого получателя на объект перезаписывается), но без `Can share further`; зависимости этих объектов (лэнды и дестинейшены кампаний) — роль `Use`.** Объект, положенный в уже пошаренную папку позже, получает у каждого получателя роль, `Can share further` и срок его шары на папку. Шарить папки могут Owner и Admin тенанта, а также те, кому они пошарили папку с `Can share further`. У трекеров объектного доступа нет — шаринг их папки на видимость не влияет. У креативов список видят все с правом раздела, а шаринг папки раздаёт доступ к открытию и правке самих креативов ([how-to/creatives.md](../how-to/creatives.md)). Путь к меню папки, изъятие из папки и что при этом снимается — [how-to/permissions.md](../how-to/permissions.md). Создавать и шарить папки можно только в ERP: в MTK списка папок в таблицах нет.
 
 ### Массовые действия шаринга — `Share also`, `Force share`, `Unshare`, `Mass change ownership`
 

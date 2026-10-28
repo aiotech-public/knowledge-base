@@ -4,9 +4,9 @@ title: Metric / Custom Metric — концепт (модель)
 description: Что такое Metric в AIO как сущность — настраиваемый числовой показатель-колонка в отчётах аналитики; 4 типа (Conversions count = штуки, Remarketing count = события рассылок, Computable = формула, Data feed = фид событий; деньги = Data feed + source Conversions By Type Revenue/Payout; сумма числового поля визита — источник Visit Field Sum, по дате визита, раз на визит), адресация по UUID, ось всех отчётов; Remarketing count считает события отправок, а не визиты (Delivered/Opened только у пушей remarketing-кампании, по SMS/Email событий не бывает вовсе), четыре счётчика Sent/Delivered/Opened/Failed Pushes и формула Push Open Rate % засеяны шаблоном (кроме MTK Finance/Sweeps), остальные заводятся руками и правятся диалогом Edit data feed metric под правом settings.metrics.edit.data-feed; процент по рассылкам (CTR/open-rate) — формула над Remarketing count, и на страницах раздела Marketing (рассылки) видны только такие метрики и формулы целиком над ними; список метрик в Settings → Metrics — папками, два вида Groups / Order, колонка Definition (из чего метрика собрана), порядок перетаскиванием в Order под правом settings.metrics.edit; на вкладках Meta → Campaigns / Ad Sets / Ads колонок Meta Spend / Meta Impressions / Meta Inline Link Clicks нет — скрыты как дубли нативных Meta Insights (Total Spend / Impressions / Clicks), а трекерные формулы, зависящие от Meta-метрик (ROI %, CPL $, Profit $), там показывают 0; формула превращает деление на ноль и пропавшее (архивное) слагаемое в 0; Hidden at groupers прячет только колонку и на цифры не влияет. Концепт; где и как используются метрики — how-to/analytics.md.
 doc_type: model
 builds: [erp, mtk]
-related: [analytics, conversion-model, visit-field, custom-fields, architecture, remarketing-campaigns, debug-with-logs, permissions-model, meta-spend-allocation, permissions, glossary, api, visit-lifecycle, campaigns, conversion-ai-testing, ui-map]
+related: [analytics, conversion-model, visit-field, custom-fields, architecture, remarketing-campaigns, debug-with-logs, permissions-model, how-to-pwa, meta-spend-allocation, permissions, glossary, api, visit-lifecycle, campaigns, conversion-ai-testing, ui-map]
 language: ru
-updated: 2026-10-16
+updated: 2026-10-28
 ---
 
 # Metric / Custom Metric — концепт (модель)
@@ -71,7 +71,7 @@ updated: 2026-10-16
 
 `Data feed metric` в живой форме = **базовая системная метрика-источник + опциональный `Flag`-фильтр**, а не агрегация median/sum/average. Правило не универсально: у источника `Remarketing Count` `Flag` не предлагается вовсе (см. буллет ниже). Структура формы:
 
-- **Источник** — базовая системная метрика (дефолт `Visits`); полный список вариантов — в выпадающем списке поля, среди них `Conversions By Type Payout`, `Conversions By Type Revenue`, `Conversions By Type Count`, `Once Conversions By Type Count`, `Events By Group Count`, `Visit Field Sum`. Денежные суммы делаются именно здесь: источник `Conversions By Type Revenue` (Revenue) / `Conversions By Type Payout` (Payout).
+- **Источник** — базовая системная метрика (дефолт `Visits`); полный список вариантов — в выпадающем списке поля, среди них `Conversions By Type Payout`, `Conversions By Type Revenue`, `Conversions By Type Count`, `Once Conversions By Type Count`, `Events By Group Count`, `Visit Field Sum`, `PWA Installs Count`, `PWA Opens Count`, `PWA Push Subscribed Count`. Денежные суммы делаются именно здесь: источник `Conversions By Type Revenue` (Revenue) / `Conversions By Type Payout` (Payout).
 - **`values`** — адрес под источник: UUID `Conversion Type` для источников `... By Type ...`, id групп событий для `Events By Group Count` либо поля визита для `Visit Field Sum`.
 - **Источник `Remarketing Count`** — особый случай: при его выборе форма показывает вместо блока `Flag` те же два мультиселекта `Events` и `Channels`, что у типа `Remarketing count` (секция выше). `Flag` для этого источника не предлагается вовсе.
 - **`Flag`-фильтр** (опц.) — сужает выборку по флагу визита. Enum — **8 дискретных значений**: `Trash` / `BackFix` / `Interested` / `Qualified` / `Engaged` + три предопределённых `Interested BackFix` / `Qualified BackFix` / `Engaged BackFix`. Выбирается **один** флаг из списка (свободного комбинирования нет — комбинации существуют только как эти 3 готовых `X BackFix`); `noFlag` = без фильтра по флагу.
@@ -88,6 +88,15 @@ updated: 2026-10-16
 - **`Definition`** в списке метрик показывает `Visit Field Sum` и чипы выбранных полей.
 
 Как ещё спрашивают: «сумма поля в отчёте», «SUM по полю визита», «вывести числовое поле колонкой».
+
+### `PWA Installs Count`, `PWA Opens Count`, `PWA Push Subscribed Count` — сколько визитов поставили PWA, открыли её, подписались на push
+
+**Эти три источника считают визиты с флагом PWA, а не конверсии: `PWA Installs Count` — визиты с флагом `Installed`, `PWA Opens Count` — с `Opened`, `PWA Push Subscribed Count` — с `Push subscribed`.** Флаги ставит PWA-макрос SDK на установке, запуске приложения и подписке на push; визит считается один раз, сколько бы раз событие ни повторилось. От `Conversion Types` тенанта и их `Uniqueness Strategy` число не зависит — в отличие от метрик `Conversions By Type Count` по типам `Install` / `Open PWA` / `Push Subscribe`.
+
+- **`values`** не нужны — адресовать нечего.
+- **`Flag`** — только `BackFix`, `Qualified` или `Qualified BackFix` либо без флага; trash-визиты в счёт не входят.
+
+Когда ставится каждый флаг — [how-to/pwa.md](../how-to/pwa.md). Как ещё спрашивают: «сколько установок PWA», «install rate без конверсий», «сколько подписались на пуши с PWA».
 
 ## Общие атрибуты формы метрики — Business value, Hidden at groupers, Categories
 

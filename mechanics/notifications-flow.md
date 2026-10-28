@@ -4,9 +4,9 @@ title: Notifications Flow / Push / Marketing
 description: "Механика узлов флоу рассылки: узел Drip schedule (Plan Drip) держит всю серию push-отправок в одном узле, стоп-конверсия — его поле; какие каналы реально отправляются (push — да, Telegram — с оговоркой, email/SMS — нет, и отказ молчаливый); подписка, лимиты, срок жизни пуша; старый путь через ноды Notifications flow и Push — только как кастомный."
 doc_type: mechanic
 builds: [erp, mtk]
-related: [remarketing-campaigns, marketing-flow, distributions-model, debug-with-logs, sdk, push-notifications, conversion-model, metric, notification-center, visit-lifecycle, flow-model, placeholders, mechanics-pwa, glossary]
+related: [remarketing-campaigns, marketing-flow, distributions-model, debug-with-logs, sdk, flow-model, push-notifications, conversion-model, metric, notification-center, visit-lifecycle, placeholders, mechanics-pwa, glossary]
 language: ru
-updated: 2026-10-16
+updated: 2026-10-28
 ---
 
 # Notifications Flow / Push / Marketing
@@ -150,11 +150,11 @@ Push отправляется по-настоящему: узел `Drip schedule
 
 По умолчанию push уходит нативно: AIO шлёт его через Service Worker на браузерную подписку визита (VAPID-ключи тенанта, `pushManager.subscribe`) — [reference/sdk.md](../reference/sdk.md) §II.15. При нативной отправке у визита должна быть подписка на push: нет подписки — сообщение всё равно создаётся, доходит до отправки и падает с `Push Subscription Not Found`.
 
-Исключение — внешний push-провайдер `ZM Apps Push`, выбранный в поле `Sender provider` узла `Drip schedule`: тогда пуш отдаётся сервису ZM Apps, а нативная подписка визита не проверяется (раздел «Как уходит пуш через внешний провайдер `ZM Apps Push`» в этом доке).
+Исключение — внешний push-провайдер `ZM Apps Push`, выбранный в поле `Sender provider` узла `Drip schedule` или старого узла `Push`: тогда пуш отдаётся сервису ZM Apps, а нативная подписка визита не проверяется (раздел «Как уходит пуш через внешний провайдер `ZM Apps Push`» в этом доке).
 
 ### Как уходит пуш через внешний провайдер `ZM Apps Push` (подписчики ZM Apps)
 
-`ZM Apps Push` — Sender provider канала Push: подписка визита живёт у сервиса ZM Apps, AIO передаёт ему готовый пуш (заголовок, текст, иконку), а доставляет ZM. Провайдер заводят в `Marketing → Sender providers` (поля `API URL` — только `https://`, `API Key`, `Click UUID`) и выбирают в необязательном поле `Sender provider` узла `Drip schedule`; поле пустое — отправка нативная. В форме remarketing-кампании такого поля нет, и перекрытие узла кампанией провайдера не меняет: выбор действует на все кампании этого флоу.
+`ZM Apps Push` — Sender provider канала Push: подписка визита живёт у сервиса ZM Apps, AIO передаёт ему готовый пуш (заголовок, текст, иконку), а доставляет ZM. Провайдер заводят в `Marketing → Sender providers` (поля `API URL` — только `https://`, `API Key`, `Click UUID`) и выбирают в необязательном поле `Sender provider` узла `Drip schedule` или старого узла `Push` (placeholder `Select sender provider`, в списке только push-провайдеры); поле пустое — отправка нативная. В форме remarketing-кампании такого поля нет, и перекрытие узла кампанией провайдера не меняет: выбор действует на все кампании этого флоу.
 
 `Click UUID` — плейсхолдер поля визита с id подписчика ZM (подсказка `ZM subscriber id of the visit: a placeholder filled from the visit on every send`), рендерится на каждую отправку; пустое или неподставленное значение — отказ `No ZM click_uuid for this visit`. Ответ ZM `2xx` засчитывается как `Sent` — «провайдер принял пуш», а не «доставлено». Спинтакс и лимиты remarketing-кампании действуют как у нативного пуша; срок жизни, срочность, схлопывание по кампании и ссылку перехода с `remarketing=true` AIO провайдеру не передаёт.
 
@@ -168,7 +168,7 @@ Telegram — единственный не-push канал с замкнутой
 
 ### Email и SMS не отправляются, и отказ молчаливый
 
-`Email` и `SMS` доведены до продукта только на уровне интерфейса: ноды в палитре есть, шаблоны заводятся, провайдеры `Mailgun` / `Twilio` / `Prelude Bridge` выбираются — но отправки за ними нет. Тумблера, которым это включается, тоже нет: конфигом канал не поднять.
+`Email` и `SMS` доведены до продукта только на уровне интерфейса: ноды в палитре есть, шаблоны заводятся, провайдеры `Mailgun` / `Twilio` / `Prelude Bridge` / `Prelude Simple` выбираются — но отправки за ними нет. Тумблера, которым это включается, тоже нет: конфигом канал не поднять.
 
 Отказ **молчаливый и следа не оставляет**: узел не пишет ни одной записи в логи рассылки и не публикует ни `Sent`, ни `Failed` — в статистике отправок по такому визиту пусто. При этом сообщение существует и переходом `handle` уходит по графу дальше, поэтому в `Marketing → Messages` визит выглядит прошедшим узел. Симптом: узел «отработал», сообщение поехало дальше, а отправок по визиту нет вообще.
 
@@ -176,13 +176,14 @@ Telegram — единственный не-push канал с замкнутой
 
 ### Какие Sender Providers поддерживаются
 
-`Marketing → Sender providers → + Sender provider`: `Name` / `Description` + `Integration type` (дропдаун). В дропдауне пять типов:
+`Marketing → Sender providers → + Sender provider`: `Name` / `Description` + `Integration type` (дропдаун). В дропдауне шесть типов:
 
 - **Telegram** — Telegram-бот (API-ключ бота + имя бота). Рабочий; один и тот же провайдер обслуживает и рассылки, и `Telegram Destination`.
 - **Mailgun** — email. Отправки нет.
 - **Twilio** — SMS (поле учётки `Twilio Api Key`). Отправки нет.
 - **Prelude Bridge** — SMS. Отправки нет.
-- **ZM Apps Push** — внешний web-push: подписчики у сервиса ZM Apps (поля `API URL`, `API Key`, `Click UUID`). Рабочий; выбирается в поле `Sender provider` узла `Drip schedule` (раздел «Как уходит пуш через внешний провайдер `ZM Apps Push`»).
+- **Prelude Simple** — SMS через Prelude напрямую по своему `API Token` (поле `Proxy to communicate` — необязательное). Рассылок не отправляет: работает только на коды шага `Field Verification` ([models/flow-model.md](../models/flow-model.md)).
+- **ZM Apps Push** — внешний web-push: подписчики у сервиса ZM Apps (поля `API URL`, `API Key`, `Click UUID`). Рабочий; выбирается в поле `Sender provider` узла `Drip schedule` или старого узла `Push` (раздел «Как уходит пуш через внешний провайдер `ZM Apps Push`»).
 
 Тип провайдера определяет, где его можно выбрать: селектор узла показывает только провайдеров своего канала — подставить Mailgun в Telegram-узел из интерфейса нельзя.
 
@@ -323,7 +324,7 @@ JS-макрос `AIO Push Subscription` (slug `aio_push_subscription`, `Content 
 
 ### Что задаётся в конфиге ноды-канала
 
-**Конфиг ноды-канала** (пример `Push`): `Name` / `Description`; `Settings availability` (скоуп настройки); стратегия выбора варианта **First / Weights**; строки вариантов (аудитория `All` + **`Select distribution`** + вес) + `+ Add another variant` + `Compact`/`Control`; **`Visual settings`** (`State color` / `Collapsed by default` / `Archive state` — только оформление ноды). **Тело сообщения в ноде не задаётся** — нода выбирает дистрибуцию или шаблон, контент живёт отдельно.
+**Конфиг ноды-канала** (пример `Push`): `Name` / `Description`; `Settings availability` (скоуп настройки); стратегия выбора варианта **First / Weights**; строки вариантов (аудитория `All` + **`Select distribution`** + вес) + `+ Add another variant` + `Compact`/`Control`; **`Visual settings`** (`State color` / `Collapsed by default` / `Archive state` — только оформление ноды). **Тело сообщения в ноде не задаётся** — нода выбирает дистрибуцию или шаблон, контент живёт отдельно. У старого узла `Push` под вариантами есть ещё необязательное поле `Sender provider` — как у `Drip schedule` (только push-провайдеры; пусто — нативный web-push).
 
 Открывается конфиг **модалкой** по клику на ноду — по шестерёнке или любой другой точке ноды (не открывают её только клики по портам переходов и по drag-хендлу). Кнопка `Apply settings` внизу модалки ничего не применяет — форма пишет в узел живьём, кнопка только закрывает окно, а флоу всё равно надо сохранить своей кнопкой сохранения. Тумблер `Collapsed by default` на вид карточки шага в `Edit Campaign` не влияет: свёрнутость там определяется только ручным кликом. Общая механика редактора — [models/flow-model.md](../models/flow-model.md).
 

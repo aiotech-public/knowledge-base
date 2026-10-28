@@ -6,7 +6,7 @@ doc_type: how-to
 builds: [erp, mtk]
 related: [source, tracker, glossary, conversion-model, ui-map, custom-fields, campaigns, sdk, placeholders, permissions-model, ui-common, visit-lifecycle, test-campaign, debug-with-logs]
 language: ru
-updated: 2026-10-16
+updated: 2026-10-28
 ---
 
 # Sources / Trackers / Postbacks (How-to)
@@ -225,6 +225,43 @@ Source настраивается **JSON-конфигом** (поле `Source co
 **Событию нужен хотя бы один идентификатор, по которому X его сопоставит: `twclid`, email или телефон.** Нет ни одного — событие не уходит, в `Tracker logs` ошибка `There is no twclid, email or phone for the conversion - X can not match it`. IP и User-Agent визита AIO добавляет дополнительным идентификатором — только парой и только если IP в формате IPv4.
 
 Email AIO хеширует SHA-256 после обрезки пробелов по краям и перевода в нижний регистр (строка без `@` не отправляется); телефон — только цифры с `+` в начале, короче 7 цифр не отправляется. UUID конверсии уходит как `conversion_id`, время — время создания конверсии. Сумма уходит всегда, с двумя знаками после точки (в том числе `0.00`). Что видно в логах — [models/tracker.md](../models/tracker.md), секция «Что пишет Tracker logs».
+
+### Поля payload `Seznam Conversion API` — `S2S SEM ID` и событие Sklik
+
+Трекер `Seznam Conversion API` (Seznam Sklik) шлёт событие в Sklik собственным запросом AIO — постбэк-URL никуда вставлять не нужно. Обязательное поле одно — **`S2S SEM ID`** (подсказка `S2S SEM ID from Sklik (not the script SEM ID)`): серверный SEM ID из Sklik, а не ID скрипта. Пустое поле — событие не уходит, в `Tracker logs` ошибка `There is no S2S SEM ID at settings`.
+
+Необязательные поля:
+
+- `Event` — событие Sklik, по умолчанию `Lead`. Принимается одно из 17 имён без учёта регистра: `PageView`, `ViewContent`, `AddToCart`, `AddToWishlist`, `InitiateCheckout`, `AddPaymentInfo`, `Purchase`, `Search`, `Lead`, `CompleteRegistration`, `Subscribe`, `StartTrial`, `Contact`, `Schedule`, `Donate`, `CustomizeProduct`, `SubmitApplication`. Другое имя — ошибка `Seznam Event "<имя>" is not supported, use one of: …`.
+- `SZNAIID Field` — плейсхолдер поля визита с клик-id Sklik `sznaiid` (подсказка `Ex: {{aio.visit.fields.sznaiid}}`). Готового Source, который пишет `sznaiid` в поле визита, нет: параметр маппят в своём Source ([models/source.md](../models/source.md)).
+- `Email Field`, `Phone Field` — откуда брать email и телефон.
+- `Value (CZK)` — сумма в чешских кронах. Пусто — revenue конверсии, пересчитанный в CZK; если курс получить не удалось — ошибка `Can not convert <сумма> <валюта> to CZK: …`, событие не уходит.
+
+### Что `Seznam Conversion API` отправляет — хеши email, телефона и страны, IP, сумма в CZK
+
+UUID конверсии уходит как `event_id`, у события `Purchase` — ещё как `order_id`. Время события — время создания конверсии; если оно в будущем, уходит текущее. AIO добавляет IP и User-Agent визита, а также хеши SHA-256: email (в нижнем регистре; строка без `@` не отправляется), телефон (`+` и цифры; короче 7 цифр не отправляется) и код страны визита.
+
+Сумма и валюта `CZK` уходят у `Purchase` всегда, у остальных событий — только если сумма больше нуля. Неподставленный плейсхолдер в любом поле AIO считает пустым значением. Успехом считается только ответ `200`; иначе в `Tracker logs` — `Error - <код> , Response - <ответ> , Payload - <тело>`.
+
+### Поля `RoopyApps` — постбэк регистрации или покупки
+
+Трекер `RoopyApps` отправляет постбэк GET-запросом. Обязательные поля:
+
+- **`Postback URL`** — постбэк регистрации или покупки из RoopyApps целиком или только ключ из него (подсказки `Ex: https://roopyapps.site/your-key/postback` и `Copy the registration or purchase postback from RoopyApps, or paste just the key`). Параметры `status`, `subid`, `transaction_id`, `amount`, `currency` и макросы в фигурных скобках из вставленного URL AIO отбрасывает и ставит свои; адрес без схемы получает `https://`.
+- **`Status`** — `Registration` или `Purchase`.
+
+Необязательные: `Subid` (пусто — `{{aio.visit.query.external_id}}`, параметр `external_id` из ссылки визита), `Amount` (только для покупки; пусто — revenue конверсии) и `Currency` (только для покупки; пусто — `USD`). Регистрация и покупка — два отдельных трекера: один трекер — один Conversion Type.
+
+### Что `RoopyApps` отправляет и какие ошибки пишет в `Tracker logs`
+
+В постбэк уходят `status` и `subid`; у покупки ещё `transaction_id` (UUID конверсии), `amount` (два знака после точки) и `currency`. В `Tracker logs` — URL запроса и ответ RoopyApps.
+
+Ошибки, при которых постбэк не уходит:
+
+- `There is no subid (external_id) for the conversion - RoopyApps can not match it` — пуст `Subid`, и в ссылке визита нет `external_id`;
+- `There is no Postback URL at settings`, `There is no Status at settings`, `Invalid Postback URL at settings: …` — поля трекера;
+- `Amount "<значение>" at settings is not a number` — в `Amount` не число;
+- `Error - <ошибка> , Response - <ответ> , Url - <URL>` — RoopyApps ответил ошибкой.
 
 ### Когда нужен отдельный трекер на каждое событие
 

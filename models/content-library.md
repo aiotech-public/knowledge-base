@@ -4,9 +4,9 @@ title: Content Library — концепт (модель)
 description: Что такое Content Library в AIO — хранилище типизированных объектов (Content Type → Content Item), значения которых динамически подставляются на лэнды/в кампании через {{aio.visit.fields.<field>.<key>}}; связь с полем визита формата Placeholder, Fill Fields и Distribution. В MTK — только с платным модулем Distribution (вкладка Distributions). Концепт; процедуры — how-to/landings.md.
 doc_type: model
 builds: [erp, mtk]
-related: [landings, custom-fields, placeholders, visit-field, flow-model, distributions-model, limits, landing, permissions, ui-map, destination, advertiser, campaign-defaults, glossary]
+related: [landings, custom-fields, placeholders, visit-field, flow-model, distributions-model, limits, landing, permissions, ui-map, destination, advertiser, creatives, campaign-defaults, glossary]
 language: ru
-updated: 2026-10-16
+updated: 2026-10-19
 ---
 
 # Content Library — концепт (модель)
@@ -110,7 +110,7 @@ Content Library — это хранилище; **выбор конкретног
 
 ### Content Library vs Creatives — в чём разница
 
-Creatives — статичное файловое хранилище креативов (баннеры/картинки). Content Library — типизированные объекты, значения которых динамически подставляются через поля визита. Обе — вкладки Content.
+Creatives — медиатека рекламных креативов (картинки и видео, кадрирование, видеоредактор — [how-to/creatives.md](../how-to/creatives.md)); на лэнд креатив не подставляется. Content Library — типизированные объекты, значения которых динамически подставляются через поля визита. Обе — вкладки Content.
 
 ### Content Library vs Uploaded Files / CDN files — в чём разница
 

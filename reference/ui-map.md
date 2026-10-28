@@ -1,12 +1,12 @@
 ---
 id: ui-map
 title: Карта интерфейса AIO (где что лежит)
-description: Полная карта навигации app.aio.tech — топ-меню (Tracker/Content/Marketing/Finance/Tech/Automations/Meta/Analytics/Settings; Dashboard из меню убран, но остаётся стартовой страницей), подразделы каждого, меню профиля (Billing, смена тенанта, Manage tenant). Чтобы быстро находить нужный раздел.
+description: Полная карта навигации app.aio.tech — топ-меню (Tracker/Content/Marketing/Finance/Tech/Automations/Analytics, иконками Meta/Google/TikTok, Settings; Dashboard из меню убран, но остаётся стартовой страницей), подразделы каждого, меню профиля (Billing, смена тенанта, Manage tenant). Чтобы быстро находить нужный раздел.
 doc_type: reference
 builds: [erp, mtk]
-related: [postback-generator, landings, analytics, how-to-pwa, sdk, generations, remarketing-campaigns, auto-rules, meta-ads, google-ads, events-exporter, live-pulse, session-analytics, registration, architecture, source-trackers, glossary, permissions-model, debug-with-logs, custom-fields, api, ui-common, profile-settings, placeholders]
+related: [postback-generator, landings, analytics, how-to-pwa, sdk, creatives, generations, remarketing-campaigns, auto-rules, meta-ads, meta-business-managers, google-ads, tiktok-ads, source-trackers, events-exporter, live-pulse, session-analytics, registration, architecture, glossary, permissions-model, debug-with-logs, custom-fields, api, ui-common, profile-settings, placeholders]
 language: ru
-updated: 2026-10-16
+updated: 2026-10-28
 ---
 
 # Карта интерфейса AIO (где что лежит)
@@ -58,7 +58,7 @@ Content — раздел для управления лэндами, креат�
 
 ### Где находятся креативы, генерации, Content Library и файлы — Creatives, Generations, Files, CDN
 
-- **Creatives** `/creatives` — креативы (баннеры/картинки).
+- **Creatives** `/creatives` — креативы: картинки и видео, кадрирование и видеоредактор; разбор — [how-to/creatives.md](../how-to/creatives.md).
 - **Generations** `/generations` — генерации лэндов и креативов (пункт закрыт правом `content.generations.view` — `Content: generations page`); разбор — [how-to/generations.md](../how-to/generations.md).
 - **Content library** `/lander-placeholders` — Content Library (плейсхолдер-группы, переменные контента).
 - **Uploaded files** `/files` — загруженные файлы.
@@ -122,8 +122,9 @@ Meta — Facebook/Meta: соцпрофили, рекламные аккаунт�
 - **Social profiles** `/social-profiles` — Meta Social Profiles.
 - **Ad accounts** `/ad-accounts` — рекламные аккаунты.
 - **Campaigns** `/campaigns`, **Ad sets** `/ad-sets`, **Ads** `/ads` — структура FB-рекламы. Управление Meta-модулем целиком — [how-to/meta-ads.md](../how-to/meta-ads.md).
+- **Business Managers** `/businesses` — бизнес-менеджеры Meta ваших соцпрофилей (ERP, право `meta.businesses.view`) — [how-to/meta-business-managers.md](../how-to/meta-business-managers.md).
 - **Pages** `/pages` — FB-страницы, привязанные к соцпрофилю; пункт закрыт правом `meta.pages.view`.
-- **Pixels** `/pixels` — пиксели рекламных аккаунтов.
+- **Pixels** `/pixels` — пиксели рекламных аккаунтов и бизнес-менеджеров ваших соцпрофилей.
 
 ## Где лежит рекламный кабинет Google — `/app/google`
 
@@ -135,6 +136,17 @@ Google — второй рекламный модуль рядом с Meta: по
 - **Other** `/other` — прочие сущности модуля.
 
 Разбор модуля целиком (подключение через OAuth, что тянется и как часто) — [how-to/google-ads.md](../how-to/google-ads.md).
+
+## Где лежит рекламный кабинет TikTok — `/app/tiktok`
+
+TikTok — третий рекламный модуль (только ERP): подключённые TikTok-аккаунты и подтянутые из TikTok Ads кабинеты и кампании со статистикой.
+
+- **Accounts** `/accounts` — подключённые TikTok-аккаунты.
+- **Ad Accounts** `/ad-accounts` — рекламные кабинеты TikTok.
+- **Campaigns** `/campaigns` — кампании TikTok.
+- **Other** `/other` — сводная вкладка модуля.
+
+Разбор модуля целиком — [how-to/tiktok-ads.md](../how-to/tiktok-ads.md). Модуль не путать с трекером `TikTok Events API`, который отправляет конверсии в TikTok ([how-to/source-trackers.md](../how-to/source-trackers.md)).
 
 ## Где смотреть когорты, Roll Up и сравнение — Analytics `/app/analytics`
 

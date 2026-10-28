@@ -1,5 +1,55 @@
 # Изменения
 
+## v2026.10.28 — 2026-10-28
+
+**Добавлено:**
+
+- `creatives` — Creatives — креативы с картинками и видео, обложка, кадрирование и видеоредактор
+- `domains-ipv6` — IPv6 у сервера и режим Cloudflare `Only IPv6` — домен на AAAA-записи
+- `meta-ad-account-activity` — История рекламного кабинета Meta — кто и что поменял (Show activity)
+- `meta-business-managers` — Business Managers в Meta-модуле — бизнес-менеджеры, их кабинеты, страницы, пиксели и люди
+- `tiktok-ads` — Модуль TikTok Ads в AIO — подключение TikTok-аккаунта, кабинеты, кампании и расход TikTok
+
+**Изменено:**
+
+- `ai-chat` — AIO Chat — ассистент по трафику в интерфейсе
+- `analytics` — Analytics / Reports (How-to)
+- `api` — API / External Integrations (How-to)
+- `campaigns` — Campaigns (How-to)
+- `content-library` — Content Library — концепт (модель)
+- `conversion-model` — Модель конверсий в AIO
+- `custom-pwa` — Custom PWA — свой лэнд из ZIP внутри готового PWA-шелла
+- `destinations` — Destinations / Advertisers / Caps (How-to)
+- `domains` — Domains (How-to)
+- `flow-model` — Flow Model AIO
+- `form` — Form (захват лида) — концепт (модель)
+- `forms` — Forms (How-to)
+- `general` — FAQ — частые вопросы
+- `generations` — Генерации — как сгенерировать лэндинг или креатив через AI-провайдера (страница Generations)
+- `glossary` — AIO Glossary
+- `google-ads` — Как в AIO смотрят рекламу Google Ads — модуль Google (кабинет Google Ads внутри платформы)
+- `how-to-pwa` — Как создать и настроить AIO PWA (внутреннюю)
+- `landing` — Landing — концепт
+- `landings` — Landings (How-to)
+- `mechanics-pwa` — PWA в AIO
+- `meta-ads` — Как в AIO управляют рекламой Meta/Facebook — модуль Meta (Ad-Manager внутри платформы)
+- `meta-data-health` — Как часто AIO обновляет данные Meta и где проверить свежесть — страница Meta Data Health
+- `metric` — Metric / Custom Metric — концепт (модель)
+- `notification-center` — Notification Center — нотификации и алерты о своём аккаунте (колокольчик)
+- `notifications-flow` — Notifications Flow / Push / Marketing
+- `permissions` — Permissions / Users / Sharing (How-to)
+- `permissions-model` — Permissions Model AIO
+- `placeholders` — Placeholders в AIO
+- `push-notifications` — Тексты рассылки — дистрибуция Message Templates и наборы AIO
+- `sdk` — AIO SDK — устройство, встроенные макросы и работа с ним
+- `server` — Server / Agent — концепт (модель)
+- `source-trackers` — Sources / Trackers / Postbacks (How-to)
+- `tracker` — Tracker — исходящая отбивка событий/конверсий — концепт (модель)
+- `ui-common` — Общий UI таблиц и экшенов AIO
+- `ui-map` — Карта интерфейса AIO (где что лежит)
+- `user-fields` — User fields — поля визита прямо в карточках Source, Campaign, лендинга и Destination
+- `visit-lifecycle` — Жизнь визита в AIO
+
 ## v2026.10.16 — 2026-10-16
 
 **Добавлено:**

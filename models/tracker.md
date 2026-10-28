@@ -6,7 +6,7 @@ doc_type: model
 builds: [erp, mtk]
 related: [source-trackers, source, conversion-model, ui-map, destination, campaigns, architecture, ui-common, placeholders, distributions-model, sdk, glossary]
 language: ru
-updated: 2026-10-16
+updated: 2026-10-28
 ---
 
 # Tracker — исходящая отбивка событий/конверсий — концепт (модель)
@@ -48,7 +48,7 @@ Conversion Types и их семантика — [models/conversion-model.md](con
 
 ### Какие бывают Tracker type — механизмы отправки
 
-При создании (`+ Tracker` → модалка `Create tracker` с подсказкой `Select or search an integration by name.`) выбирается механизм отправки — сетка карточек типов с поиском по имени: **Facebook Conversion API, TikTok Events API, SnapChat Conversion API, Quora Conversion API, ChatGPT Conversion API, Bing Conversion API, Reddit Conversion API, X Conversion API, AppsFlyer, Affise, AIO Push, HTTP Get** (generic постбэк-URL). Клик по карточке открывает форму трекера (заголовок тот же — `Create tracker`), где выбранный тип уже стоит в поле `Tracker type`: **набор обязательных полей зависит от выбранного типа**. От типа зависят и поля payload — они разобраны для **Facebook Conversion API** (секция «Что в payload FB CAPI-трекера» в этом доке), а для `ChatGPT Conversion API`, `Bing Conversion API`, `Reddit Conversion API`, `X Conversion API`, `TikTok Events API` и `HTTP Get` — в [how-to/source-trackers.md](../how-to/source-trackers.md).
+При создании (`+ Tracker` → модалка `Create tracker` с подсказкой `Select or search an integration by name.`) выбирается механизм отправки — сетка карточек типов с поиском по имени: **Facebook Conversion API, TikTok Events API, SnapChat Conversion API, Quora Conversion API, ChatGPT Conversion API, Bing Conversion API, Reddit Conversion API, X Conversion API, Seznam Conversion API, AppsFlyer, Affise, RoopyApps, AIO Push, HTTP Get** (generic постбэк-URL). Клик по карточке открывает форму трекера (заголовок тот же — `Create tracker`), где выбранный тип уже стоит в поле `Tracker type`: **набор обязательных полей зависит от выбранного типа**. От типа зависят и поля payload — они разобраны для **Facebook Conversion API** (секция «Что в payload FB CAPI-трекера» в этом доке), а для `ChatGPT Conversion API`, `Bing Conversion API`, `Reddit Conversion API`, `X Conversion API`, `Seznam Conversion API`, `RoopyApps`, `TikTok Events API` и `HTTP Get` — в [how-to/source-trackers.md](../how-to/source-trackers.md).
 
 ### `ChatGPT Conversion API`, `Bing Conversion API`, `Reddit Conversion API` и `X Conversion API` — серверные CAPI, а не постбэк-URL
 
@@ -107,6 +107,8 @@ Conversion Types и их семантика — [models/conversion-model.md](con
 
 `X Conversion API` пишет отправленное тело события и ответ X (`<код> : <тело>`). При отказе X — `Error - <текст ошибки> , Response - <ответ X> , Payload - <тело>`; если X ответил `200`, но событие не засчитал, — `X did not process the conversion , Response - <ответ> , Payload - <тело>`. Пустое обязательное поле даёт запись вида `There is no Pixel ID at settings`; нет ни `twclid`, ни email, ни телефона — `There is no twclid, email or phone for the conversion - X can not match it`. Ключи приложения X в запись не попадают, email и телефон в теле — хешами SHA-256.
 
+`Seznam Conversion API` пишет отправленное тело события и ответ Sklik (`<код> : <тело>`); любой ответ, кроме `200`, — ошибка `Error - <код> , Response - <ответ> , Payload - <тело>`. `RoopyApps` пишет URL постбэка и ответ (`<код> : <тело>`); при ошибке — `Error - <ошибка> , Response - <ответ> , Url - <URL>`. Ошибки настроек обоих трекеров — [how-to/source-trackers.md](../how-to/source-trackers.md).
+
 ### Как переотбить уже пришедшие конверсии — Re trigger trackers (retrigger)
 
 `Re trigger trackers` — это экшен на **конверсии**, не на трекере. ERP: `Tracker → Conversions`; MTK: верхняя вкладка `Conversions` → ПКМ по конверсии → `Re trigger trackers` (открывает pop-up). Он заново выбирает подходящие **активные** трекеры и запускает повторную отправку с их задержкой (`Delay in seconds`). При выполнении используются актуальные настройки трекера и значения плейсхолдеров визита/конверсии.
@@ -117,7 +119,7 @@ Conversion Types и их семантика — [models/conversion-model.md](con
 
 У типов `ChatGPT Conversion API`, `Bing Conversion API` и `Reddit Conversion API` есть нюанс с датой: площадки не принимают события старше 7 суток. AIO ограничивает отправляемую метку: у ChatGPT и Reddit — не ранее 7 суток минус 60 секунд до отправки, у Bing — не ранее 6 суток. Метки из будущего ограничиваются текущим временем.
 
-У старой конверсии метка может измениться; повторная отправка сама по себе не гарантирует приём события площадкой. Результат проверяется в `Tracker logs`. `X Conversion API` сохраняет исходное время конверсии из прошлого, а метку из будущего ограничивает текущим временем.
+У старой конверсии метка может измениться; повторная отправка сама по себе не гарантирует приём события площадкой. Результат проверяется в `Tracker logs`. `X Conversion API` и `Seznam Conversion API` сохраняют исходное время конверсии из прошлого, а метку из будущего ограничивают текущим временем.
 
 ### Где найти Re trigger trackers в MTK
 

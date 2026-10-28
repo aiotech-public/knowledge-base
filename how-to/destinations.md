@@ -1,12 +1,12 @@
 ---
 id: destinations
 title: Destinations / Advertisers / Caps (How-to)
-description: Создание Advertiser-ов, Destination через By Advertiser / By Integration / Simple Redirect / Telegram, своей CRM нет в списке интеграций (`Search by parameters`, запрос новой), поле `Proxy to communicate`, капы, PWA-destinations; реферер (Referrer-Policy no-referrer), `#` и списковые плейсхолдеры в URL Parameters; колонки списка Destinations (`Rate` и другие метрики тенанта, `Destination logs`, позиция `#1`).
+description: Создание Advertiser-ов, Destination через By Advertiser / By Integration / Simple Redirect / Telegram, своей CRM нет в списке интеграций (`Search by parameters`, запрос новой), поле `Proxy to communicate`, капы, PWA-destinations; реферер (Referrer-Policy same-origin), `#` и списковые плейсхолдеры в URL Parameters; колонки списка Destinations (`Rate` и другие метрики тенанта, `Destination logs`, позиция `#1`).
 doc_type: how-to
 builds: [erp, mtk]
 related: [conversion-model, placeholders, flow-model, visit-lifecycle, how-to-pwa, push-notifications, glossary, architecture, permissions-model, ui-common, destination, metric, user-fields, virtual-metrics, distributions-model, api, mcp-server, flow-editor, notification-center, landings, user, mechanics-pwa, source-trackers, custom-pwa, advertiser]
 language: ru
-updated: 2026-10-16
+updated: 2026-10-28
 ---
 
 # Destinations / Advertisers / Caps (How-to)
@@ -121,9 +121,9 @@ Advertiser Types — группировка Advertiser-ов под одной к
 
 Для редирект-оффера рекомендуется `By Advertiser`, для прямой API-интеграции — `By Integration` (см. эвристику в [models/conversion-model.md](../models/conversion-model.md)). Для `Offer Visits` у Advertiser-а нужен тип с `Metrics Event Group` = `Offer`.
 
-## Какой реферер уезжает рекламодателю — `Referrer-Policy: no-referrer` на редиректах и лэндах AIO
+## Какой реферер уезжает рекламодателю — `Referrer-Policy: same-origin` на редиректах и лэндах AIO
 
-**AIO ставит `Referrer-Policy: no-referrer` на редиректах через Destination (`301` по умолчанию и `302`) и на HTML лэнда, прослойки и `Field verification`.** Это относится к редиректам `Simple Redirect`, `By Advertiser` и `By Integration`. На обычном лэнде политику задаёт документ, включая переходы по `{{link}}` и `location.href`; настройки отключения заголовка нет. Ограничение Safari на прямых 30x-редиректах описано ниже. Для внешнего лэнда через `Reflect` / `Proxy Reflect` политика зависит от отражаемого сайта.
+**AIO ставит `Referrer-Policy: same-origin` на редиректах через Destination (`301` по умолчанию и `302`) и на HTML лэнда, прослойки и `Field verification`: на другой домен — оффер, партнёрку, рекламодателя — реферер не уходит, а запросы в пределах того же домена (подстраницы, файлы лэнда, SDK) идут с реферером.** Прежнее значение заголовка — `no-referrer`: тогда реферер не уходил и внутри домена, для рекламодателя на другом домене смена ничего не поменяла. Это относится к редиректам `Simple Redirect`, `By Advertiser` и `By Integration`. На обычном лэнде политику задаёт документ, включая переходы по `{{link}}` и `location.href`; настройки отключения заголовка нет. Ограничение Safari на прямых 30x-редиректах описано ниже. Для внешнего лэнда через `Reflect` / `Proxy Reflect` политика зависит от отражаемого сайта.
 
 На sub-параметры это не влияет: они уезжают параметрами URL / полями payload, и если передавать их не нужно — убираются из ссылки или из настроек Destination.
 
@@ -195,6 +195,8 @@ UUID в `start` позволяет сопоставить визит, но бо�
 | **Cryptahl** | `Token`, `First Name`, `Phone`, `Email`, `Country Code`, `Sub ID` |
 
 У **`AlterCpa`** и **`AlterCpa Moe`** есть необязательное поле `Item` (плейсхолдер `Ex: 3`) — незаполненным оно в запрос к платформе не уходит.
+
+У **`IREV Lite`** и **`IREV Lite (Mapped)`** страна лида передаётся только из необязательного поля `Country Code` (ISO2, плейсхолдер `Ex: DE`, поддерживает плейсхолдеры — например `{{aio.visit.country_code}}` — страна визита, [reference/placeholders.md](../reference/placeholders.md)): незаполненным поле `country_code` в запрос к IREV не уходит вовсе. Если партнёр ждёт страну лида — заполните поле.
 
 (Полный каталог интеграций постоянно расширяется — [reference/glossary.md](../reference/glossary.md) → «Destination Integrations».)
 

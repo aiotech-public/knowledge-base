@@ -4,9 +4,9 @@ title: Как в AIO управляют рекламой Meta/Facebook — мо�
 description: "Meta-модуль AIO — рекламный кабинет Facebook внутри платформы: подсекции (Ad Accounts, Social Profiles, Campaigns/Ad Sets/Ads, Pages), управление иерархией (Start/Stop на кампании, ad set и объявлении, Budget Manager с CBO/ABO, Fetch Targeting, Pull Data), статус и enum причин бана рекламного аккаунта, поля кабинета, статус соцпрофиля, колонки вкладок Campaigns/Ad Sets/Ads (родные Meta Insights — Total Spend/Impressions/Clicks; трекерной колонки Meta Spend там нет), быстрый фильтр Ad account по рекламному кабинету, кнопка уровня матчинга Meta Spend и почему она не меняет числа Meta Insights, Meta Ad Preview (переключатель View — живое превью или сохранённая картинка объявления), автоправила со страниц Meta (Apply Auto Rules, Backtest Rules, колонка Auto Rules). ERP /app/facebook, MTK /app/mtk/meta (Meta+ платный)."
 doc_type: how-to
 builds: [erp, mtk]
-related: [meta-spend-allocation, notification-center, google-ads, permissions, meta-data-health, analytics, auto-rules-engine, auto-rules, ui-common]
+related: [meta-spend-allocation, notification-center, google-ads, permissions, meta-data-health, meta-business-managers, analytics, meta-ad-account-activity, auto-rules-engine, auto-rules, ui-common]
 language: ru
-updated: 2026-10-16
+updated: 2026-10-28
 ---
 
 # Как в AIO управляют рекламой Meta/Facebook — модуль Meta (Ad-Manager внутри платформы)
@@ -21,14 +21,25 @@ updated: 2026-10-16
 
 ## Подсекции Meta-модуля: соцпрофили, кабинеты, иерархия рекламы, страницы
 
-**Модуль разбит на подсекции по уровням Meta-иерархии — каждая своя вкладка со своей таблицей и своим permission на просмотр.** Порядок в навигации: Data health → Social Profiles → Ad Accounts → Campaigns → Ad Sets → Ads. Права на просмотр раздают отдельно на каждый уровень (`meta.social-profiles.view`, `meta.ad-accounts.view`, `meta.campaigns.view`, `meta.ad-sets.view`, `meta.ads.view`) — см. [permissions.md](permissions.md).
+**Модуль разбит на подсекции по уровням Meta-иерархии — каждая своя вкладка со своей таблицей и своим permission на просмотр.** Порядок в навигации: Data health → Social Profiles → Ad Accounts → Campaigns → Ad Sets → Ads → Business Managers → Pages → Pixels → Other. Права на просмотр раздают отдельно на каждый уровень (`meta.social-profiles.view`, `meta.ad-accounts.view`, `meta.campaigns.view`, `meta.ad-sets.view`, `meta.ads.view`) — см. [permissions.md](permissions.md).
 
 - **Data health** (`meta.social-profiles.view`) — страница `Meta Data Health`: насколько свежие данные по каждому кабинету, какие кабинеты и профили требуют действий, лимиты Meta и расписание подтяжки — [meta-data-health.md](meta-data-health.md).
 - **Social Profiles** (`meta.social-profiles.view`) — подключённые FB-аккаунты, через которые AIO ходит в Meta API. Отсюда тянется всё остальное. Детали ниже в секции «Social Profile».
 - **Ad Accounts** (`meta.ad-accounts.view`) — рекламные кабинеты, привязанные к соцпрофилю: статус, баланс, платёжные поля, метрики. Детали в секции «Ad Account».
 - **Campaigns / Ad Sets / Ads** (`meta.campaigns.view` / `meta.ad-sets.view` / `meta.ads.view`) — три уровня рекламной иерархии Meta, каждый своей вкладкой. Управление (Start/Stop, бюджеты, таргетинг) — в секции «Управление кампаниями, адсетами и объявлениями».
 
+- **Business Managers** (`meta.businesses.view`, ERP) — бизнес-менеджеры Meta, доступные подключённым соцпрофилям: роль профиля, кабинеты, страницы, пиксели и люди BM — [meta-business-managers.md](meta-business-managers.md).
 - **Pages** (`meta.pages.view`) — FB-страницы, привязанные к соцпрофилю (то, от чьего имени крутится реклама). Вкладка полного Meta-модуля доступна с правом `meta.pages.view`.
+- **Pixels** (`meta.ad-accounts.view`) — пиксели рекламных кабинетов и бизнес-менеджеров ваших соцпрофилей.
+
+### Страница на вкладке `Pages` в статусе `Issues` — что значит текст
+
+**`Issues` у страницы значит, что AIO не смог прочитать её данные из Meta; на подтяжку рекламы это не влияет.** Текст причины виден в колонке `Pull Status` (полностью — в скрытой колонке `Status Text`):
+
+- `Page metadata unavailable (needs pages_read_engagement / Page Public Metadata Access).` — Meta отказала по правам: у токенов привязанных профилей нет права на чтение страницы. Это право приложению выдаёт сама Meta; без него такой статус у страницы штатный и на подтяжку рекламы не влияет.
+- `Page not accessible: deleted, unpublished or age/country restricted (Graph 100/33).` — страница удалена, не опубликована или закрыта ограничением по возрасту или стране; переподключение профиля не поможет.
+- `Page metadata unavailable: tokens of linked profiles are invalid (190) — reconnect.` — токены всех привязанных профилей недействительны: переподключите профиль (`Connect`).
+- `Page metadata unavailable (Graph errors: <коды>).` — прочие ошибки Meta; вместо кодов `no usable profile` — у страницы не нашлось живого профиля, через который её можно прочитать.
 
 ### Переход между уровнями иерархии (`Show ...`)
 
@@ -40,7 +51,7 @@ Right-click на строке (или на нескольких выделенн
 
 ### Служебная вкладка `Other`
 
-В навигации после Pages есть служебная вкладка `Other` (`/app/facebook/other`, permission `meta.ad-accounts.view`) — сводная таблица Meta-данных. Как самостоятельный рабочий инструмент не документируется: назначение из фронта однозначно не читается.
+В навигации последней идёт служебная вкладка `Other` (`/app/facebook/other`, permission `meta.ad-accounts.view`) — сводная таблица Meta-данных.
 
 ## Social Profile: подключённый FB-аккаунт и его статус
 
@@ -103,6 +114,12 @@ Right-click на строке (или на нескольких выделенн
 - **`Pull data`** (`meta.social-profiles.edit.pull-data`) — подтянуть данные из Meta сразу, вне расписания: список кабинетов профиля, а затем полностью каждый кабинет. Пункт есть только у подключённого профиля. Глубина и ограничения — секции «Диалог `Pull data`» и «`Pull data` отбивается…» ниже.
 - **`Disconnect`** (`meta.social-profiles.edit.disconnect`) — отвязать соцку.
 - **`Logs`** (`settings.logs.view` — общее право на логи всех сущностей, в матрице `Settings: logs page`) — лог активности соцпрофиля (что тянулось, какие ошибки).
+
+### Какие права Meta выданы токену профиля — колонка `Meta Permissions`
+
+**Скрытая колонка `Meta Permissions` на вкладке `Social Profiles` (ERP и MTK) показывает, какие права Meta выдала токену профиля** (подсказка `Permissions granted to the token by Meta (empty — not checked yet)`). В ячейке — значок с числом выданных прав, по наведению — их список (`Read ads`, `Manage ads`, `Manage business`, `List Pages` и другие). `Not checked` — права ещё не проверялись, `No permissions` — проверены, прав нет. Красная метка `−N` значит, что профиль не получил N прав, которые запрашивает его приложение Meta; по наведению в списке прав выданные отмечены зелёной галочкой, недостающие — красным крестиком.
+
+`Connect` заново спрашивает у Facebook права, от которых раньше отказались: при переподключении Facebook снова показывает запрос недостающих прав. Выдаст ли он их, решает Meta. От прав зависит, что AIO может прочитать: без `business_management` не подтягиваются бизнес-менеджеры ([how-to/meta-business-managers.md](meta-business-managers.md)).
 
 ### Диалог `Pull data`: глубина `Backward for data` и `Backward for insights`
 
@@ -183,10 +200,11 @@ Right-click на строке (или на нескольких выделенн
 
 Метрики кабинета: `spend`, `impressions`, `inline_link_clicks`; конверсионные события приходят отдельно — в поле `actions`.
 
-### Экшены кабинета: Edit, Pull Data
+### Экшены кабинета: Edit, Pull Data, Show activity
 
 - **`Edit ad account`** (`meta.ad-accounts.edit`) — меняет `pull_strategy` (стратегию подтягивания данных), выбранную из справочника `pull-strategies`.
-- **`Pull data`** (`meta.ad-accounts.edit.pull-data`) — сразу подтянуть структуру и статистику только этого кабинета, с той же глубиной, что у соцпрофиля (`Backward for data` / `Backward for insights`, секция «Диалог `Pull data`» выше).
+- **`Pull data`** (`meta.ad-accounts.edit.pull-data`) — сразу подтянуть структуру и статистику только этого кабинета, с той же глубиной, что у соцпрофиля (`Backward for data` / `Backward for insights`, секция «Диалог `Pull data`» выше); заодно ставится подтяжка истории изменений (`Show activity`) — от момента, до которого она уже загружена.
+- **`Show activity`** (`meta.ad-accounts.view.activities`, только ERP) — история кабинета из Meta: кто, каким приложением и что поменял (статусы и модерация, бюджеты, таргетинг, креативы, списания, доступы), лентой по дням или таблицей — [how-to/meta-ad-account-activity.md](meta-ad-account-activity.md).
 
 ## Управление кампаниями, адсетами и объявлениями
 

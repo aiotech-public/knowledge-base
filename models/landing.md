@@ -4,9 +4,9 @@ title: Landing — концепт
 description: "Что такое лэнд в AIO как сущность — страница, которую агент отдаёт визиту на Content-шаге; роль Lander Type: автоматические макросы, роль-группер аналитики и CDN, пайплайн обработки ZIP→CDN, processed vs original. Концепт; процедуры — how-to/landings.md."
 doc_type: model
 builds: [erp, mtk]
-related: [landings, sdk, ui-map, how-to-pwa, mechanics-pwa, analytics, limits, placeholders, user-fields, content-library, forms]
+related: [landings, sdk, ui-map, how-to-pwa, mechanics-pwa, analytics, limits, placeholders, user-fields, content-library, forms, creatives]
 language: ru
-updated: 2026-10-16
+updated: 2026-10-19
 ---
 
 # Landing — концепт
@@ -103,7 +103,7 @@ AIO добавляет файлы в `_assets`, когда находит data-U
 | **Landing vs Content-шаг** | Шаг `Content` — **узел флоу** (с правилами выбора варианта). Landing — **что** этот узел показывает. Один шаг может выбирать из нескольких лэндов. |
 | **Landing vs Lander Type** | Lander Type задаёт автоматические макросы, доступность роль-группера в аналитике и Temp CDN. Landing — конкретная страница *этого* типа. |
 | **processed vs original index.html** | Визит открывает **processed**-версию; `Download → Original` возвращает исходный ZIP без изменений процессинга. |
-| **Landing vs Creative** | Creative — именованная **коллекция картинок/баннеров** (в ERP — `Content → Creatives`), не страница. |
+| **Landing vs Creative** | Creative — рекламный креатив из картинок и видео (в ERP — `Content → Creatives`, [how-to/creatives.md](../how-to/creatives.md)), не страница; на лэнд не подставляется. |
 
 ## Что часто ломается с лэндами (подводные камни)
 

@@ -6,7 +6,7 @@ doc_type: model
 builds: [erp, mtk]
 related: [sdk, forms, architecture, landing, placeholders, flow-model, visit-field, destination, conversion-model, custom-fields, glossary, ui-map]
 language: ru
-updated: 2026-10-09
+updated: 2026-10-28
 ---
 
 # Form (захват лида) — концепт (модель)
@@ -61,7 +61,7 @@ updated: 2026-10-09
 
 Наборы языков — два разных, их легко перепутать:
 
-- **Form Builder** предлагает 53 языка с готовым авто-переводом (сегмент `Auto-translated`) из полного справочника в 185 языков (сегмент `All languages` — приходит **пустым**).
+- **Form Builder** предлагает 55 языков с готовым авто-переводом (сегмент `Auto-translated`) из полного справочника в 186 языков (сегмент `All languages` — приходит **пустым**).
 - **У SDK есть свой встроенный пак на 33 языка.** Когда к лэнду привязана форма из ERP, её словарь заменяет пак SDK целиком; сам пак остаётся крайним фолбэком только для четырёх строк `SUBMIT*`.
 
 При добавлении языка из `Auto-translated` авто-переводятся непустые label и placeholder базового языка у контролов `first_name` / `last_name` / `email` / `phone` с выбранным Field, а также непустые Submit-строки; кастомные контролы и опции `Drop list` остаются пустыми. Кастомные переводы **не** копируются из SDK defaults автоматически.

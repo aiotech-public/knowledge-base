@@ -1,6 +1,6 @@
 {
-  "release": "v2026.10.16",
-  "generated": "2026-10-16",
+  "release": "v2026.10.28",
+  "generated": "2026-10-28",
   "docs": [
     {
       "id": "architecture",
@@ -23,8 +23,8 @@
         "erp",
         "mtk"
       ],
-      "updated": "2026-10-16",
-      "sha256": "0f25f8bc41e4598551fcbd46eb8a6c481dc04b86e185142f59dd6fcad1fde9bc"
+      "updated": "2026-10-28",
+      "sha256": "3d65efecdafb07a0461c9b5b78c32e9d72b7d089cd3588e278576c5f6b6ddaf4"
     },
     {
       "id": "campaign-defaults",
@@ -83,8 +83,8 @@
         "erp",
         "mtk"
       ],
-      "updated": "2026-10-16",
-      "sha256": "0c0997b915902af673f13ed129e28fccfb7d5dd14182554c2c4a4936630d8d16"
+      "updated": "2026-10-28",
+      "sha256": "bbd6a6bf60b70d3077e2e839ef88de3bc1ecfcdcc8fc02237ae0a8038f78f611"
     },
     {
       "id": "analytics",
@@ -95,8 +95,8 @@
         "erp",
         "mtk"
       ],
-      "updated": "2026-10-16",
-      "sha256": "fea9b9b732485f0f99ec95d5d44a8c16adf9111e2142651a36656bebd0eb5fe3"
+      "updated": "2026-10-28",
+      "sha256": "064abc4141a9e366680a95c3cae7a8e162cb490db597446bbec9e8ddbf093199"
     },
     {
       "id": "api",
@@ -107,8 +107,8 @@
         "erp",
         "mtk"
       ],
-      "updated": "2026-10-16",
-      "sha256": "a2115fc317054cbd1c3ff54fb7395eabd9cc50552515218e665acb45659e152f"
+      "updated": "2026-10-28",
+      "sha256": "4ca16e0d85047deb133baf2169825a29b36f54f9ff84ac076bb675eef0a4650a"
     },
     {
       "id": "auto-rules",
@@ -141,8 +141,8 @@
         "erp",
         "mtk"
       ],
-      "updated": "2026-10-16",
-      "sha256": "71004f8b6c64e5136c9a28175a245c2938241304d0ab99a78c76bdcfbc527df2"
+      "updated": "2026-10-28",
+      "sha256": "6f613681a73f79428c2149615e7c002440992f8d0d14c55fcc9d563c510c5b96"
     },
     {
       "id": "comments",
@@ -155,6 +155,17 @@
       ],
       "updated": "2026-10-16",
       "sha256": "01e235b548b7e77ce73d2446929073fa40bf8da3577b985f188be9ce13d50122"
+    },
+    {
+      "id": "creatives",
+      "path": "how-to/creatives.md",
+      "title": "Creatives — креативы с картинками и видео, обложка, кадрирование и видеоредактор",
+      "doc_type": "how-to",
+      "builds": [
+        "erp"
+      ],
+      "updated": "2026-10-28",
+      "sha256": "fdcf65357fd02a7abcdeae2e7046a3c3464754bdfb239bc5d6c16be88f42057b"
     },
     {
       "id": "custom-fields",
@@ -177,8 +188,8 @@
         "erp",
         "mtk"
       ],
-      "updated": "2026-10-09",
-      "sha256": "bfa9adac73adf88d0eb31c5d0438e84648dd793a7e429451ac80952ca033a09c"
+      "updated": "2026-10-28",
+      "sha256": "55464c2898ff697ab87d4ff6b53235121d8348e7deeb91a03b963ab4cae8cc43"
     },
     {
       "id": "debug-with-logs",
@@ -201,8 +212,8 @@
         "erp",
         "mtk"
       ],
-      "updated": "2026-10-16",
-      "sha256": "c298852460b15e5797383bc5b46512b9886b5b49714d7a4e3d6ea5282ae1a1a1"
+      "updated": "2026-10-28",
+      "sha256": "7cc028f05337fa92ebf7ad7a271019b4a084487c86a50c707c40754cbe3fab1c"
     },
     {
       "id": "distributions",
@@ -217,6 +228,18 @@
       "sha256": "2fedb8ec3d6a419fdc0ee3ebfb54043071b0f0ce7d32341eab7bce1801ac7c77"
     },
     {
+      "id": "domains-ipv6",
+      "path": "how-to/domains-ipv6.md",
+      "title": "IPv6 у сервера и режим Cloudflare `Only IPv6` — домен на AAAA-записи",
+      "doc_type": "how-to",
+      "builds": [
+        "erp",
+        "mtk"
+      ],
+      "updated": "2026-10-28",
+      "sha256": "1c7bb27daf5c197d67dd1ad9c5d71d7ca500a4651372ae597ee0ea21fc65ae48"
+    },
+    {
       "id": "domains",
       "path": "how-to/domains.md",
       "title": "Domains (How-to)",
@@ -225,8 +248,8 @@
         "erp",
         "mtk"
       ],
-      "updated": "2026-10-16",
-      "sha256": "41c2bc6a1b615bb240c6b9029315c99ae226bf8a4b6560a205d1cee68430f46a"
+      "updated": "2026-10-20",
+      "sha256": "6492fe36434bfa06faf0d810265d261bfff24cefb617909991df9b2f44ff34f2"
     },
     {
       "id": "events-exporter",
@@ -259,8 +282,8 @@
         "erp",
         "mtk"
       ],
-      "updated": "2026-10-16",
-      "sha256": "6a3a77c84e82dd89477db72e2b24ace1d87b207347d64d0533da3f8079013eb5"
+      "updated": "2026-10-28",
+      "sha256": "ea84cfc2f0bcc738ef25799191ce5f0f65e951001268e714cc77567843b1fd34"
     },
     {
       "id": "generations",
@@ -270,8 +293,8 @@
       "builds": [
         "erp"
       ],
-      "updated": "2026-10-16",
-      "sha256": "61d6bc97f23e83abd6eec5b34ee390aa86e362e903d50065ca0894e02ab88207"
+      "updated": "2026-10-28",
+      "sha256": "e3d3561c50f238be2d7ebb50e69a5a9f11b3a4403de81eb8c8a824310af058ec"
     },
     {
       "id": "google-ads",
@@ -281,8 +304,8 @@
       "builds": [
         "erp"
       ],
-      "updated": "2026-10-16",
-      "sha256": "d4b3986d44f43b30bf600678ee73090fbb798aae0fd2e8ed14d591908bbedaa0"
+      "updated": "2026-10-28",
+      "sha256": "2c2bde79917a9a0b809b70fda7e2b777e40b685836373ce6ca308b4ef8ca9e91"
     },
     {
       "id": "landing-qa",
@@ -317,8 +340,8 @@
         "erp",
         "mtk"
       ],
-      "updated": "2026-10-16",
-      "sha256": "27022e6b04cd3a0018e060c3e5bafe512d2b20d27e71df2194768d3052f664b8"
+      "updated": "2026-10-21",
+      "sha256": "6ba93b4fd2d86044a7c806a88ba766e1699564b44ad66e55c497b9a80af4c4d4"
     },
     {
       "id": "live-pulse",
@@ -356,6 +379,17 @@
       "sha256": "ec2aa966659bcbe45d3186e3b1252d37509405c408f18afc21797fdc14390a3d"
     },
     {
+      "id": "meta-ad-account-activity",
+      "path": "how-to/meta-ad-account-activity.md",
+      "title": "История рекламного кабинета Meta — кто и что поменял (Show activity)",
+      "doc_type": "how-to",
+      "builds": [
+        "erp"
+      ],
+      "updated": "2026-10-19",
+      "sha256": "79981ef18581af8d41ed4bb2991863805b817e2b697bdd99a52e92c6ce8c9102"
+    },
+    {
       "id": "meta-ads",
       "path": "how-to/meta-ads.md",
       "title": "Как в AIO управляют рекламой Meta/Facebook — модуль Meta (Ad-Manager внутри платформы)",
@@ -364,8 +398,19 @@
         "erp",
         "mtk"
       ],
-      "updated": "2026-10-16",
-      "sha256": "e28e72915c3f32a4a3f8cf1a229c5c85c2dfe147d9a8257b70038b3718f3312a"
+      "updated": "2026-10-28",
+      "sha256": "604729ab90da219ab45e711f785c2c6cbcf33c4bf28d254f35e287313719f413"
+    },
+    {
+      "id": "meta-business-managers",
+      "path": "how-to/meta-business-managers.md",
+      "title": "Business Managers в Meta-модуле — бизнес-менеджеры, их кабинеты, страницы, пиксели и люди",
+      "doc_type": "how-to",
+      "builds": [
+        "erp"
+      ],
+      "updated": "2026-10-28",
+      "sha256": "be8230e25ce3fafcc3248f2471a940d01ab48a438be96a919d8ad5ae28f9b78c"
     },
     {
       "id": "meta-data-health",
@@ -376,8 +421,8 @@
         "erp",
         "mtk"
       ],
-      "updated": "2026-10-16",
-      "sha256": "6d24444d798982d15cac8c7ed23e7764c6bb1b9dbb059869b93adb3769b33d94"
+      "updated": "2026-10-28",
+      "sha256": "f2c6c5b1c5e14503ea9f3f6431cbc048d6212f025099a83c04b955411128cf4a"
     },
     {
       "id": "onboarding-tours",
@@ -400,8 +445,8 @@
         "erp",
         "mtk"
       ],
-      "updated": "2026-10-16",
-      "sha256": "ca6499d5629d0771686f8b2fd32c35408da996286f1eea8ca3d79def28022285"
+      "updated": "2026-10-28",
+      "sha256": "e3931efe2e650087eae9e26c15e93e9a8fb1ad00997ed6be39b4d1a3b953baca"
     },
     {
       "id": "postback-generator",
@@ -424,8 +469,8 @@
         "erp",
         "mtk"
       ],
-      "updated": "2026-10-09",
-      "sha256": "489b9b717cd083ee7318a40258bd7f8478b80a8383862bef404e6feb54e32dab"
+      "updated": "2026-10-28",
+      "sha256": "184cef32baa1bd5408e8a4de81fdf93589eb8417b2580a6721dea56e3431213e"
     },
     {
       "id": "pwa-ai-texts",
@@ -448,8 +493,8 @@
         "erp",
         "mtk"
       ],
-      "updated": "2026-10-16",
-      "sha256": "bfc81906f7a735a4fdbc2f058b7444c3ae504aa92cc3ba41599a28fd023b79fd"
+      "updated": "2026-10-28",
+      "sha256": "8811e8e8aa75572091ff0cdc97f11d18b1bfb861e43164208f059bc5177bb3af"
     },
     {
       "id": "registration",
@@ -495,8 +540,8 @@
         "erp",
         "mtk"
       ],
-      "updated": "2026-10-16",
-      "sha256": "f2921af5b0a77b62b26aa474c79df30c2f210036956cb2447c460cafa36a2168"
+      "updated": "2026-10-28",
+      "sha256": "7fe83f4e804d49bdd8c2b79f22d219f238306f31c3e4850c93ad17f88fdf9cd4"
     },
     {
       "id": "test-campaign",
@@ -511,6 +556,17 @@
       "sha256": "a2d1566e7c5462a3430d0a4af5bdfb56a3e6fb6807348a606c2507f82f7a05e4"
     },
     {
+      "id": "tiktok-ads",
+      "path": "how-to/tiktok-ads.md",
+      "title": "Модуль TikTok Ads в AIO — подключение TikTok-аккаунта, кабинеты, кампании и расход TikTok",
+      "doc_type": "how-to",
+      "builds": [
+        "erp"
+      ],
+      "updated": "2026-10-28",
+      "sha256": "b8c7c9a96ba218ad4a71a66f53ee79782712902ee062344f2d73817fb54d9740"
+    },
+    {
       "id": "user-fields",
       "path": "how-to/user-fields.md",
       "title": "User fields — поля визита прямо в карточках Source, Campaign, лендинга и Destination",
@@ -519,8 +575,8 @@
         "erp",
         "mtk"
       ],
-      "updated": "2026-10-16",
-      "sha256": "aea2193257578a97d017dff48265b556e2486f72b0b166c9d675c12c2d1afbbc"
+      "updated": "2026-10-28",
+      "sha256": "b7abe29e328ef5ef06e09b5365982a46f3c95cd0d14923903d978a0f85c19afe"
     },
     {
       "id": "virtual-metrics",
@@ -577,8 +633,8 @@
         "erp",
         "mtk"
       ],
-      "updated": "2026-10-16",
-      "sha256": "dd2b0b54ef0016cde04cf5d7fc748b5fd7ee0280963576b87d6df06e7083e8c7"
+      "updated": "2026-10-28",
+      "sha256": "ad9d663a0a25a362935a950219feda7a07e1df97399edcdcd2c294f3488cf2b5"
     },
     {
       "id": "notifications-flow",
@@ -589,8 +645,8 @@
         "erp",
         "mtk"
       ],
-      "updated": "2026-10-16",
-      "sha256": "c39f0f245370437a2917aad13eede3f81ae27abc091496325eacbd88825d3cee"
+      "updated": "2026-10-28",
+      "sha256": "aee19bcc8cc50a7eab68eaa61435db703e75b421071ce96965178619d6870850"
     },
     {
       "id": "mechanics-pwa",
@@ -601,8 +657,8 @@
         "erp",
         "mtk"
       ],
-      "updated": "2026-10-07",
-      "sha256": "fb7eb38d857d6efc49a9448d5b1aa7beb2dcbe97c28418ce11bf6a9040f88342"
+      "updated": "2026-10-28",
+      "sha256": "ac892563f48e8142bdeedc6f3f68e7bbe3e936f6d1acca80069a22a65662632f"
     },
     {
       "id": "visit-lifecycle",
@@ -613,8 +669,8 @@
         "erp",
         "mtk"
       ],
-      "updated": "2026-10-16",
-      "sha256": "2ada6d7fef5a07754877da928d9563b181c821a149404023cd6f41a95e88d231"
+      "updated": "2026-10-28",
+      "sha256": "c398238f7d22b68d68cee412d64fc8e64a1d481882ed4508517c710e74393b4f"
     },
     {
       "id": "advertiser",
@@ -661,8 +717,8 @@
         "erp",
         "mtk"
       ],
-      "updated": "2026-10-16",
-      "sha256": "65ec1427f6a9191987feffb62fca64ec4f0db13559f522ad2713c0d51c2c4ed7"
+      "updated": "2026-10-19",
+      "sha256": "685c57dd1072f11735b9ce6bb4ebe4181d6e8828b7c8e824b598855065f57b9d"
     },
     {
       "id": "conversion-model",
@@ -673,8 +729,8 @@
         "erp",
         "mtk"
       ],
-      "updated": "2026-10-16",
-      "sha256": "5636b87a4756c777b0ac66ff01cd448fd5a8150614d2963c17d93528f877d266"
+      "updated": "2026-10-28",
+      "sha256": "a6fcf887ea0c5f1a22bad7957877535d95ad39a4b4926f0d6bd2bf40e183e748"
     },
     {
       "id": "destination",
@@ -733,8 +789,8 @@
         "erp",
         "mtk"
       ],
-      "updated": "2026-10-16",
-      "sha256": "4c691003a431f614ad0667bd0027f2c4de0052c191631ab4ec0833e3f46b05f0"
+      "updated": "2026-10-28",
+      "sha256": "0975c41af7402d450317c434795b24796b913d78a9b5adf3b662a20476b49e7b"
     },
     {
       "id": "form",
@@ -745,8 +801,8 @@
         "erp",
         "mtk"
       ],
-      "updated": "2026-10-09",
-      "sha256": "80b281181aceee153cd67f00380482d5d42dfb69053375bb1a1626bc93bef6bb"
+      "updated": "2026-10-28",
+      "sha256": "e7e59c861e8414aa5ed08ef0c1dabd7d5b299f1ed15b53e9c60992a95aa16683"
     },
     {
       "id": "landing",
@@ -757,8 +813,8 @@
         "erp",
         "mtk"
       ],
-      "updated": "2026-10-16",
-      "sha256": "0da71862d7e308681e23fbfae814974bcb53c45e272879f3467f99ecd094ad3d"
+      "updated": "2026-10-19",
+      "sha256": "2b1a886039a29daa077a42b2cbf0af52fb83eafdd0628cba1ee4e74e306e34c2"
     },
     {
       "id": "marketing-flow",
@@ -781,8 +837,8 @@
         "erp",
         "mtk"
       ],
-      "updated": "2026-10-16",
-      "sha256": "821553b496ab7ceb844da7dfc24e46343127b5fb1ddcce2041a8a47124d1ce9e"
+      "updated": "2026-10-28",
+      "sha256": "9b958ebb4e0fd057c301a1b1eb15adae63fe8c9c0a340637467e1a37e19f5f1f"
     },
     {
       "id": "permissions-model",
@@ -793,8 +849,8 @@
         "erp",
         "mtk"
       ],
-      "updated": "2026-10-16",
-      "sha256": "ba00a5f14fa875c06f7b60afb093355356fbeb4926404c22af6d96d53b35038b"
+      "updated": "2026-10-28",
+      "sha256": "f44649463b88d48122cfd35eb190ca0264bebddfc4ba22655a1b396b0b726442"
     },
     {
       "id": "server",
@@ -805,8 +861,8 @@
         "erp",
         "mtk"
       ],
-      "updated": "2026-10-16",
-      "sha256": "495c7ec8649f579d4b3f5976993cb76cad75e3d33e93ddfead87a86e6df255ad"
+      "updated": "2026-10-21",
+      "sha256": "b1c0af2a67572d4ef46a8c91ad787411268a181ff5ee602742c07e8b943754b0"
     },
     {
       "id": "source",
@@ -841,8 +897,8 @@
         "erp",
         "mtk"
       ],
-      "updated": "2026-10-16",
-      "sha256": "78f7d682229b892484f300a4bfad7f59c971ed682754c898a13c6958a241bd0a"
+      "updated": "2026-10-28",
+      "sha256": "7878dee93e3b8fc2c3ce6710645fe30dc34cf67bac4a0f37d254da9f911474e8"
     },
     {
       "id": "user",
@@ -889,8 +945,8 @@
         "erp",
         "mtk"
       ],
-      "updated": "2026-10-16",
-      "sha256": "273b7edcb70156bfa32f2453f507c140419492124d16baa6addf95d6cfad0e9a"
+      "updated": "2026-10-28",
+      "sha256": "997716f2ebc0883652e5036a8a6d26ef439eeb836e8b75b4ebae9ae7c212dc89"
     },
     {
       "id": "limits",
@@ -913,8 +969,8 @@
         "erp",
         "mtk"
       ],
-      "updated": "2026-10-16",
-      "sha256": "67f1628c3cd88e97f64a15e0e98d1d7db57995e65e2b202b150d3ef308f57aae"
+      "updated": "2026-10-28",
+      "sha256": "38341301fc1cb718aa58cedf665d693e1666a5070fde2ebb5b7d5bbf74ccaeb5"
     },
     {
       "id": "profile-settings",
@@ -937,8 +993,8 @@
         "erp",
         "mtk"
       ],
-      "updated": "2026-10-16",
-      "sha256": "f5a61b52f4ff051ca17bbed8ce5f7a8c65e8cb925bec7c4583248a06cd8bce88"
+      "updated": "2026-10-28",
+      "sha256": "a5c73fac98638c5542e66531deb4e4724284f6ec894bc513fe28508d876a6c09"
     },
     {
       "id": "ui-common",
@@ -949,8 +1005,8 @@
         "erp",
         "mtk"
       ],
-      "updated": "2026-10-07",
-      "sha256": "29b3a0c5cee40f4e7c500399e4eea48b7869c39b623e1c3b68dc92dfac8db533"
+      "updated": "2026-10-28",
+      "sha256": "8353c68ea4c837101cbbc903e4ab73de4d99e6762b4e624f9f95afe2fefb0a6a"
     },
     {
       "id": "ui-map",
@@ -961,8 +1017,8 @@
         "erp",
         "mtk"
       ],
-      "updated": "2026-10-16",
-      "sha256": "d9cb7c6b2585ac1e02004c1bf42c0cefa41b9788af75b245b8d788936b4bade6"
+      "updated": "2026-10-28",
+      "sha256": "deb0316559c30bfbfd43fbbf6d7026250e20785413ed03df9e50d0b4f616d673"
     }
   ]
 }
