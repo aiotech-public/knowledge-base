@@ -6,7 +6,7 @@ doc_type: how-to
 builds: [erp, mtk]
 related: [how-to-pwa, custom-pwa, comments, ai-chat, limits, generations, landing-qa]
 language: ru
-updated: 2026-10-16
+updated: 2026-11-09
 ---
 
 # AI-тексты PWA — описание приложения и описание при установке (`Description with AI`)

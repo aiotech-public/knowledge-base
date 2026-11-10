@@ -4,18 +4,18 @@ title: Tracker — исходящая отбивка событий/конвер
 description: Что такое Tracker в AIO — конфиг отправки события/конверсии ИЗ AIO наружу (FB CAPI / TikTok / Reddit CAPI / HTTP Get…); связан с Source, один трекер = один Conversion Type, типы Tracker type, Tracker logs vs Re trigger trackers. Концепт; процедуры — how-to/source-trackers.md.
 doc_type: model
 builds: [erp, mtk]
-related: [source-trackers, source, conversion-model, ui-map, destination, campaigns, architecture, ui-common, placeholders, distributions-model, sdk, glossary]
+related: [source-trackers, source, conversion-model, glossary, ui-map, destination, campaigns, architecture, ui-common, placeholders, distributions-model, sdk]
 language: ru
-updated: 2026-10-28
+updated: 2026-11-09
 ---
 
 # Tracker — исходящая отбивка событий/конверсий — концепт (модель)
 
-> Модель сущности **Tracker** — исходящая отбивка событий/конверсий наружу. ERP: `Tracker → Trackers`; MTK: `Settings → Trackers`. Процедуры (создать трекер, FB CAPI Custom Key/Value, чтение Tracker logs) — [how-to/source-trackers.md](../how-to/source-trackers.md). Связь с Source — [models/source.md](source.md). Conversion Types, входящий постбэк-URL, Dynamic Actions, дубликаты FB — [models/conversion-model.md](conversion-model.md). UI — [reference/ui-map.md](../reference/ui-map.md): ERP `Tracker → Trackers`, MTK `Settings → Trackers`.
+> Модель сущности **Tracker** — исходящая отбивка событий/конверсий наружу. ERP: `Tracker → Trackers`; MTK: `Settings → Trackers`. Процедуры (создать трекер, FB CAPI Custom Key/Value, чтение Tracker logs) — [how-to/source-trackers.md](../how-to/source-trackers.md). Связь с Source — [models/source.md](source.md). Conversion Types, входящий постбэк-URL, дубликаты FB — [models/conversion-model.md](conversion-model.md); выбор события FB CAPI полями ссылки (`Lead Action` / событие покупки) — [reference/glossary.md](../reference/glossary.md) → `Lead Action / Purchase Action`. UI — [reference/ui-map.md](../reference/ui-map.md): ERP `Tracker → Trackers`, MTK `Settings → Trackers`.
 
 ## Что такое Tracker и зачем он нужен
 
-**Tracker — это конфиг отправки события/конверсии ИЗ AIO НАРУЖУ в стороннюю систему (FB CAPI, Taboola, другой Source, партнёрку).** Трекеры «видят», что в системе AIO появилась конверсия, и передают её по прописанному в трекере пути — для оптимизации рекламной платформы или для отчёта партнёрке. Чаще всего это постбэк, но уже постбэк **Source** (его вам выдаёт сторона Source, вы ставите его у себя) — в отличие от постбэков Destination, которые ваши и которые ставит у себя получатель. Поэтому ключевая ось понимания трекера — **направление потока: трекер всегда исходящий**, это «отбивка от вас — им».
+**Tracker — это конфиг отправки события/конверсии ИЗ AIO НАРУЖУ в стороннюю систему (FB CAPI, другой Source, партнёрку).** Трекеры «видят», что в системе AIO появилась конверсия, и передают её по прописанному в трекере пути — для оптимизации рекламной платформы или для отчёта партнёрке. Это API-отправка (например, `Facebook Conversion API`) или постбэк — но уже постбэк **Source** (его вам выдаёт сторона Source, вы ставите его у себя) — в отличие от постбэков Destination, которые ваши и которые ставит у себя получатель. Поэтому ключевая ось понимания трекера — **направление потока: трекер всегда исходящий**, это «отбивка от вас — им».
 
 ## Как это работает на самом деле
 
@@ -25,7 +25,7 @@ updated: 2026-10-28
 1. визит приходит по ссылке из Source → пролетает через AIO → уходит в Destination;
 2. на стороне Destination/получателя происходит конверсия → получатель вызывает **постбэк-URL AIO** (это **вход**, см. [models/destination.md](destination.md), [models/conversion-model.md](conversion-model.md));
 3. у нас появляется **Conversion**, привязанная к визиту через `visit_uuid`;
-4. **Trackers отбивают эту инфу ОБРАТНО в Source** — в FB/Snapchat через API (не постбэк), в Taboola иначе; суть одна — «от нас отдаём им».
+4. **Trackers отбивают эту инфу ОБРАТНО в Source** — в FB/Snapchat через API (не постбэк), другим площадкам (например, Taboola) — постбэком `HTTP Get`; суть одна — «от нас отдаём им».
 
 То есть трекер реагирует не на трафик, а на **уже созданную конверсию** заданного типа и шлёт сигнал наружу. Конверсия фиксируется только при известном `visit_uuid` — без визита трекеру нечего отбивать.
 
@@ -40,8 +40,9 @@ updated: 2026-10-28
 - **Sources** — мульти-селект, для каких Source срабатывает (обязательно);
 - **Conversion type** — тип конверсии, на который реагирует (в ERP набор редактируется в `Settings → Conversion types`; засеянный набор зависит от вертикали шаблона — `Lead`, `Registration`, `Approved`, `Install`, `Push Subscribe` …);
 - **Tracker type** — механизм отправки (карточки в `Create tracker`);
-- **Delay in seconds** — задержка перед отправкой (`No delay` / N секунд);
+- **Delay in seconds** — задержка перед отправкой, выбор из списка: `No delay`, `1 Minute`, `5 Minutes`, `10 Minutes`, `30 Minutes`, `1 Hour`;
 - **поля payload** — зависят от выбранного Tracker type;
+- **Switch activity** — включён ли трекер; у нового трекера тоггл выключен, и пока его не включить, трекер ничего не отправляет;
 - **Confirm**.
 
 Conversion Types и их семантика — [models/conversion-model.md](conversion-model.md).
@@ -56,7 +57,7 @@ Conversion Types и их семантика — [models/conversion-model.md](con
 
 ### 4a. Какие трекеры заведены из коробки — FB CAPI под основные конверсии вертикали
 
-Из коробки в тенанте заведены трекеры типа **`Facebook Conversion API`**: все привязаны к источнику **`FB w/ CAPI`**, включены, по одному трекеру на тип конверсии (один трекер = один Conversion Type); покрыты только основные шаги воронки вертикали, а не все её типы конверсий (например, `Push Subscribe` трекера не имеет). Кроме FB CAPI, шаблоны включают **ChatGPT Conversion API** под те же основные типы конверсий. В iGaming также есть выключенный `HTTP Get`-пример. Набор FB CAPI зависит от вертикали шаблона (в ERP и MTK одной вертикали он одинаков):
+Из коробки в тенанте заведены трекеры типа **`Facebook Conversion API`**: все привязаны к источнику **`FB w/ CAPI`**, включены, по одному трекеру на тип конверсии (один трекер = один Conversion Type); покрыты только основные шаги воронки вертикали, а не все её типы конверсий (например, `Push Subscribe` трекера не имеет). Трекеров других типов шаблоны не заводят, кроме выключенного `HTTP Get`-примера в iGaming. Набор FB CAPI зависит от вертикали шаблона (в ERP и MTK одной вертикали он одинаков):
 
 - **Finance** — `FB Lead` (`Lead`) и трекер под целевое действие вертикали.
 - **Nutra** — `FB Lead` (`Lead`) и `FB Approved` (`Approved`).
@@ -123,7 +124,7 @@ Conversion Types и их семантика — [models/conversion-model.md](con
 
 ### Где найти Re trigger trackers в MTK
 
-В MTK групп `Tracker` и `Analytics` в верхнем меню нет: вкладка `Conversions` — плоский таб верхнего меню. Путь к экшену: `Conversions` (топ-нав) → ПКМ по конверсии → `Re trigger trackers`. Сам экшен и его семантика те же. Навигация MTK — *Как устроен MTK-вид AIO: навигация, пресеты из шаблона и методы под типовые задачи*.
+В MTK группы `Tracker` в верхнем меню нет: вкладка `Conversions` — плоский таб верхнего меню. Путь к экшену: `Conversions` (топ-нав) → ПКМ по конверсии → `Re trigger trackers`. Сам экшен и его семантика те же. Навигация MTK — *Как устроен MTK-вид AIO: навигация, пресеты из шаблона и методы под типовые задачи*.
 
 ## Как Tracker связан с остальными сущностями
 
@@ -136,12 +137,12 @@ Conversion Types и их семантика — [models/conversion-model.md](con
 
 - **COUNTERPART — Destination.** Destination = **вход** конверсий (ваши постбэки, их ставит у себя получатель; визит уходит туда). Tracker = **выход** (постбэки/API стороны Source, их вам выдают, вы ставите у себя). Зеркальные направления постбэков. → [models/destination.md](destination.md)
 - **READS поля визита/конверсии.** Payload трекера берёт значения через плейсхолдеры полей визита/конверсии (`{{aio.visit.fields.*}}`; точный синтаксис — [reference/placeholders.md](../reference/placeholders.md)). На входе FB-поля могут заполняться из Source и URL: существующие поля захватываются по совпадению slug, а rewrites переименовывает входные параметры; FBP/FBC может записывать SDK. → [models/source.md](source.md), [reference/placeholders.md](../reference/placeholders.md)
-- **FEEDS — FB Meta optimization.** FB CAPI трекер шлёт event-сигнал (`Lead` / `Purchase` / …) обратно в FB pixel для оптимизации. Имя события берётся из поля `Event` трекера — это статика или плейсхолдер. При настройке через поля Source выбор события задают Dynamic Actions ([models/conversion-model.md](conversion-model.md)) и селекты в Link Generator (`Lead Action` и парное событие целевого действия, [how-to/campaigns.md](../how-to/campaigns.md)).
+- **FEEDS — FB Meta optimization.** FB CAPI трекер шлёт event-сигнал (`Lead` / `Purchase` / …) обратно в FB pixel для оптимизации. Имя события берётся из поля `Event` трекера — это статика или плейсхолдер. При настройке через поля Source выбор события задают поля ссылки `fb_lead_action` / `fb_ftd_action` — селекты в Link Generator (`Lead Action` и парное событие целевого действия, [how-to/campaigns.md](../how-to/campaigns.md); термин — [reference/glossary.md](../reference/glossary.md) → `Lead Action / Purchase Action`).
 - **FLOW и SDK тоже могут создать Conversion.** Помимо внешнего постбэка конверсию вызывают шаг `Spawn Conversion` во Flow или SDK. Созданная конверсия попадает в ту же цепочку подбора Trackers.
 
 ### Соседи Tracker в топ-меню (ERP)
 
-Sibling в группе `Tracker` верхнего меню — Campaigns, Sources, Destinations, Flows, Visits, Conversions, Trash ([reference/ui-map.md](../reference/ui-map.md)).
+Sibling в группе `Tracker` верхнего меню — Campaigns, Sources, Destinations, Flows, Visits, Conversions, Trash, Countries ([reference/ui-map.md](../reference/ui-map.md)).
 
 ### Соседи Tracker в топ-меню (MTK)
 
@@ -167,7 +168,7 @@ Sibling в группе `Tracker` верхнего меню — Campaigns, Sourc
 
 - **Процедуры** (создать трекер, FB CAPI `Event` и `custom_data`, Tracker logs) → [how-to/source-trackers.md](../how-to/source-trackers.md).
 - **Связь с Source** (suuid, rewrites, двунаправленность) → [models/source.md](source.md).
-- **Conversion Types, входящий постбэк-URL, Dynamic Actions, дубликаты FB** → [models/conversion-model.md](conversion-model.md).
+- **Conversion Types, входящий постбэк-URL, дубликаты FB** → [models/conversion-model.md](conversion-model.md); выбор события FB CAPI полями ссылки → [reference/glossary.md](../reference/glossary.md) → `Lead Action / Purchase Action`.
 - **Диагностика FB CAPI** (токен / атрибуция / двойной пиксель) → *уточните у поддержки*.
 - **SDK-фичи `fbCapi` / `fbPixel` на лэнде** → [reference/sdk.md](../reference/sdk.md).
 - **Re trigger trackers ≠ Distribution** (не меняет payout/revenue) → [models/distributions-model.md](distributions-model.md).

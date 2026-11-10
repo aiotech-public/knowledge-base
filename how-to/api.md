@@ -4,14 +4,14 @@ title: API / External Integrations (How-to)
 description: Data API (/api/v1/data/*, спека в интерфейсе), MCP-сервер (POST /api/v1/mcp), Tables Data и Pivot Report через F12, Actions API на запись (лендинги Lander\Upload, правка кампании и вайта, режим фильтра, косты), заголовок X-Tenant-Id и выбор тенанта, стандартные лимиты по токену (60 в минуту, 3 параллельно, бюджет тяжёлых запросов, статистика не длиннее 31 дня), выгрузка конверсий, External Report CSV, API-токен.
 doc_type: how-to
 builds: [erp, mtk]
-related: [mcp-server, glossary, architecture, limits, meta-ads, permissions-model, permissions, registration, landings, meta-spend-allocation, analytics, flow-model, campaigns, conversion-model, events-exporter, ui-common, profile-settings, meta-data-health, domains, postback-generator, source-trackers]
+related: [mcp-server, glossary, architecture, limits, meta-ads, permissions-model, permissions, registration, landings, meta-spend-allocation, analytics, domains, flow-model, campaigns, conversion-model, events-exporter, ui-common, profile-settings, meta-data-health, postback-generator, source-trackers]
 language: ru
-updated: 2026-10-28
+updated: 2026-11-09
 ---
 
 # API / External Integrations (How-to)
 
-Всё, что есть в UI AIO, доступно и через API — интерфейс сам общается с бэкендом через этот же API, поэтому теми же запросами можно и читать данные, и выполнять действия: загрузить лендинг, поправить кампанию, залить косты. Своя документация прямо в продукте есть у **Data API** (справочники сущностей — меню профиля → `Data API`) и у **MCP-сервера** для внешних AI-агентов (кнопка `MCP` в окне `AIO Chat`, разбор — [how-to/mcp-server.md](mcp-server.md)). Для всего остального публичной документации нет, и основной путь — снять запрос в UI через F12 и переиспользовать. Концепт-уровень (Compact API, broad API, лимиты, Heavy query limit) — в [reference/glossary.md](../reference/glossary.md) и [context/architecture.md](../context/architecture.md).
+Всё, что есть в UI AIO, доступно и через API — интерфейс сам общается с бэкендом через этот же API, поэтому теми же запросами можно и читать данные, и выполнять действия: загрузить лендинг, поправить кампанию, залить косты. Своя документация прямо в продукте есть у **Data API** (справочники сущностей — меню профиля → `Data API Docs`) и у **MCP-сервера** для внешних AI-агентов (кнопка `MCP` в окне `AIO Chat`, разбор — [how-to/mcp-server.md](mcp-server.md)). Для всего остального публичной документации нет, и основной путь — снять запрос в UI через F12 и переиспользовать. Концепт-уровень (Compact API, broad API, лимиты, Heavy query limit) — в [reference/glossary.md](../reference/glossary.md) и [context/architecture.md](../context/architecture.md).
 
 ---
 
@@ -20,7 +20,7 @@ updated: 2026-10-28
 ### Какие API использовать для данных и действий?
 
 - **API = всё, что есть в UI.** Документации мало, путь — F12 → Network → скопировать запрос → подменить параметры.
-- **Data API** (`/api/v1/data/*`) — плоские справочники сущностей (кампании, домены, лендинги, юзеры…) со спекой прямо в интерфейсе (профиль → `Data API`). Не аналитика — метрик там нет.
+- **Data API** (`/api/v1/data/*`) — плоские справочники сущностей (кампании, домены, лендинги, юзеры…) со спекой прямо в интерфейсе (меню профиля → `Data API Docs`). Не аналитика — метрик там нет.
 - **MCP-сервер** (`POST /api/v1/mcp`) — подключить внешнего AI-агента (Claude Code и другие MCP-клиенты) к данным трекера на чтение; ссылка и инструкция собираются кнопкой `MCP` в окне `AIO Chat` ([how-to/mcp-server.md](mcp-server.md)).
 - **Tables Data / Pivot Report** — метрики и отчёты: `Tables Data` — единый endpoint для большинства таблиц (Visits / Campaigns / Meta / Adsets), передаются имя `table` (`Namespace\Entity`) и параметры выбранной таблицы. По токену статистика отдаётся за период не длиннее 31 дня.
 - **Actions API** (`/actions/process`) — запись: загрузить лендинг, поправить кампанию и её вайт, сменить режим фильтра, купить домен, залить косты.
@@ -81,13 +81,13 @@ updated: 2026-10-28
 
 Uuid тенантов, доступных токену, отдаёт `GET /api/v1/auth/user?token=<api_token>`: в списке `available_tenants` у каждого тенанта есть `tenant.uuid`, `tenant.name`, `tenant.build` и `is_selected`, а `request.tenant` показывает uuid тенанта, в который попал сам этот запрос. Если вызвать его без `X-Tenant-Id`, `request.tenant` и тенант с `is_selected: true` — ровно тот, куда уходят все запросы без заголовка.
 
-В интерфейсе uuid текущего тенанта подставлен прямо в примеры диалога `Data API` (меню профиля → `Data API`, вкладка `Overview`, строка `X-Tenant-Id` в блоке про заголовки) — его можно скопировать оттуда.
+В интерфейсе uuid текущего тенанта подставлен прямо в примеры диалога `Data API` (меню профиля → `Data API Docs`, вкладка `Overview`, строка `X-Tenant-Id` в блоке про заголовки) — его можно скопировать оттуда.
 
 ---
 
 ## Data API — документированные справочники сущностей (`/api/v1/data/*`)
 
-Справочники сущностей — часть API с **собственной документацией прямо в интерфейсе**: меню профиля → **`Data API`** (`Data API docs`). Отдельно ходить за спекой и снимать запросы через F12 для этих данных не нужно — в диалоге пять вкладок: `Overview`, `Parameters`, `Endpoints`, `Access`, `Errors`.
+Справочники сущностей — часть API с **собственной документацией прямо в интерфейсе**: меню профиля → **`Data API Docs`** (диалог `Data API`). Отдельно ходить за спекой и снимать запросы через F12 для этих данных не нужно — в диалоге пять вкладок: `Overview`, `Parameters`, `Endpoints`, `Access`, `Errors`.
 
 Что отдаёт: **плоские списки сущностей тенанта** — кампании, домены, источники, дестинейшены, лендинги, юзеры, метрики, рекламодатели, типы лендингов. Это **не аналитика**: метрик, футеров и группировок здесь нет, только атрибуты объектов. За цифрами — `Tables Data` / `Pivot Report` ниже.
 
@@ -127,13 +127,13 @@ Uuid тенантов, доступных токену, отдаёт `GET /api/v
 - `/landings` — `landing_type` может быть `null`, `folders` и `shares` — пустыми массивами;
 - `/users` — `is_active` означает общую активность учётной записи юзера; отдельная активность в текущем тенанте здесь не отдаётся. Email тут нет. Поле `telegram` (ник из профиля) приходит только владельцу токена с полным доступом (`Owner` / `Admin`) или с правом `api.users.telegram` (ветка прав `api` → `api.users`); без права этого поля в ответе нет.
 
-**Архивные записи приходят вместе с активными** — параметра «только активные» нет, фильтровать по `is_archived` на своей стороне.
+**Архивные записи приходят вместе с активными** — параметра «только активные» нет, фильтровать по `is_archived` на своей стороне. Поле `is_archived` есть у кампаний, источников, лендингов, доменов, дестинейшенов и рекламодателей; у `/metrics`, `/landing-types`, `/advertiser-types` и `/users` его в ответе нет.
 
 ### В каких командах юзер — поле `teams` в `GET /data/users`
 
 Команды юзера отдаёт Data API: у каждой строки `GET /api/v1/data/users` есть `teams` — список `{uuid, name, access_type}` — и `positions` (`{uuid, name}`). Так по API проверяют, в какой команде баер, и переводят uuid владельца кампании из аналитики (`campaign_owner_uuid`) в имя.
 
-`access_type` в `teams` — огрублённый уровень участника в команде: `Team Member` (уровень 0), `Team Leader` (1), `Team Head` (2 и выше). Точного числового уровня Data API не отдаёт — он виден в `Settings → Teams`, а как уровни дают доступ к объектам — [models/permissions-model.md](../models/permissions-model.md). Список не скоуплен (все юзеры тенанта), email в нём нет; нужен просмотр таблицы юзеров (`settings.users.view`), иначе `500` `Table access denied`.
+`access_type` в `teams` — огрублённый уровень участника в команде: `Team Member` (уровень 0), `Team Leader` (1), `Team Head` (2 и выше). Точного числового уровня Data API не отдаёт — он виден в `Settings → Teams`, а как уровни дают доступ к объектам — [models/permissions-model.md](../models/permissions-model.md). Список не скоуплен (все юзеры тенанта), email в нём нет; нужен просмотр таблицы юзеров (`settings.users.view`), иначе `403` `Table access denied`.
 
 ### Data API — кто что видит (скоупы)
 
@@ -152,7 +152,7 @@ Uuid тенантов, доступных токену, отдаёт `GET /api/v
 | `/campaigns`, `/landings`, `/sources`, `/destinations`, `/domains`, `/metrics`, `/advertisers` | по уровню доступа — не ниже `Use` |
 | `/landing-types`, `/users`, `/advertiser-types` | без скоупа — весь тенант |
 
-Поверх скоупа работают права на таблицу. Права нет → **500** с телом `{"error": "Table access denied"}` (да, именно 500, а не 403). Отдельный `403` отдаётся только на нехватку read-доступа к колонкам.
+Поверх скоупа работают права на таблицу. Права нет → **403** с телом `{"message": "Table access denied"}`.
 
 ### `GET /data/shared` — что видит конкретный юзер
 
@@ -179,7 +179,7 @@ Uuid тенантов, доступных токену, отдаёт `GET /api/v
 
 Параллельно слать можно; при стандартном лимите **3 запроса** четвёртый получает `429` с телом `{"message":"Too many concurrent requests ( 3 of 3 ). Try later."}`. Стандартные значения двух других лимитов — **60 запросов в минуту** и бюджет «тяжёлых» запросов: после **20 секунд** обработки завершённых запросов, начатых за последние **60 секунд**, новые запросы отклоняются. Значения настраиваются отдельно для юзера (дальше `429` `Heavy-usage limit reached ( 20s last 60s ). Try later.`).
 
-Счётчики считаются на юзера, а не на эндпоинт: Data API, `Tables Data`, `Pivot Report`, Actions API и MCP-сервер делят настроенные слоты и бюджет тяжёлых запросов, кроме загрузки через `actions/file`; поминутный счётчик у MCP свой. Безопасная схема для выгрузки — очередь на 2–3 параллельных запроса, пауза, чтобы не выйти за 60 в минуту, и повтор на любой из этих отказов через столько секунд, сколько указано в заголовке `Retry-After` ответа `429`; тяжёлые отчёты — длинный период, много группировок — лучше слать по одному. Остаток видно в заголовках ответа `X-Concurrency-Limit-Used` / `X-Heavy-Limit-Used`. Числа, что именно считается и какие значения ставит команда AIO — [reference/limits.md](../reference/limits.md).
+Счётчики считаются на юзера, а не на эндпоинт: Data API, `Tables Data`, `Pivot Report`, Actions API и MCP-сервер делят настроенные слоты и бюджет тяжёлых запросов, кроме загрузки через `actions/file`; поминутный счётчик у MCP свой. Безопасная схема для выгрузки — очередь на 2–3 параллельных запроса, пауза, чтобы не выйти за 60 в минуту, и повтор на любой из этих отказов через столько секунд, сколько указано в заголовке `Retry-After` ответа `429`; тяжёлые отчёты — длинный период, много группировок — лучше слать по одному. Сколько уже занято, видно в заголовках ответа `X-Concurrency-Limit-Used` / `X-Heavy-Limit-Used`, потолки — в `X-Concurrency-Limit-Max` / `X-Heavy-Limit-Budget`. Числа, что именно считается и какие значения ставит команда AIO — [reference/limits.md](../reference/limits.md).
 
 ## Найти payload для пуллинга через F12
 
@@ -189,7 +189,7 @@ Uuid тенантов, доступных токену, отдаёт `GET /api/v
 
 1. Открыть в UI нужную таблицу (например, `Analytics → Visits` / `Tracker → Campaigns`).
 2. Открыть **DevTools (`F12`) → Network**.
-3. Найти запрос с именем `Tables Data` (это единый endpoint для большинства таблиц).
+3. Найти запрос к `/api/v1/tables/data` (в списке `Network` он называется `data`) — это `Tables Data`, единый endpoint для большинства таблиц.
 4. Скопировать **payload** (Request body).
 5. Использовать как шаблон в скрипте:
    - Поле `table` — определяет, какую таблицу запрашиваем. Меняй значение для других таблиц (например, `Tracker\Visits` → `Facebook\AdSets` / `Facebook\Ads` для Meta-таблиц).
@@ -197,7 +197,7 @@ Uuid тенантов, доступных токену, отдаёт `GET /api/v
    - Ключ `metrics` из скопированного тела **убрать**, если нужны все метрики: интерфейс может сузить расчёт видимыми метриками и их зависимостями (разбор — «`metrics` — считать только перечисленные метрики» ниже).
 6. Запрос делать на тот же endpoint от своего токена.
 
-Запросы инспектируются в `DevTools → Network → Data` и переиспользуются добавлением своего токена через query-параметр `?token=xxx`. Это **не публичный API** и может меняться без предупреждения — на стабильность полагаться нельзя.
+Запросы инспектируются в `DevTools → Network` и переиспользуются добавлением своего токена через query-параметр `?token=xxx`. Это **не публичный API** и может меняться без предупреждения — на стабильность полагаться нельзя.
 
 ### Tables Data — как устроен payload и что менять для разных таблиц
 
@@ -214,7 +214,7 @@ Endpoint: `POST /api/v1/tables/data?token=xxx`. Тело — объект `reque
 | `Tracker\Visits` | визиты |
 | `Tracker\Conversions` | конверсии (в MTK — `MTK\Conversions`) |
 
-Поля payload: `page`, `limit`, `search`, `sort_key`, `sort_direction`, `analytics_position`, `filters`, `dates` (`from` / `to`, опц. таймзона третьим элементом массива), `hide_empty_metrics`, `hide_bots`, `unwrap_tree`, `hide_trash`, `event_time_attribution`, `back_fix_attribution`, `metric_filters`, `metric_definition(s)`, и два необязательных ключа — `metrics` и `meta_spend_attribution_engine_level` (разобраны в двух секциях ниже). Без `dates` таблица считает текущие сутки в таймзоне запроса или профиля, а не всю историю тенанта. `limit` — не больше 100 строк на страницу (по умолчанию 25; у части справочников настроек — до 1000), дальше листают `page`.
+Поля payload: `page`, `limit`, `search`, `sort_key`, `sort_direction`, `analytics_position`, `filters`, `dates` (`from` / `to`, опц. таймзона третьим элементом массива), `hide_empty_metrics`, `hide_bots`, `unwrap_tree`, `hide_trash`, `event_time_attribution`, `back_fix_attribution`, `metric_filters`, `metric_definition(s)`, и два необязательных ключа — `metrics` и `meta_spend_attribution_engine_level` (разобраны в двух секциях ниже). Ключи `filters`, `dates`, `metric_filters` и `metric_definition` в запросе таблицы нужны всегда, хотя бы пустыми (`[]` / `null`): без ключа сервер отвечает `500` `Error while processing request`. С пустым `dates` метрики считаются за текущие сутки в таймзоне запроса или профиля, а не за всю историю тенанта. `limit` — не больше 100 строк на страницу (по умолчанию 25; у части справочников настроек — до 1000), дальше листают `page`.
 
 `analytics_position` — номер позиции в воронке, за которую списки `Funnel\Landers` и `Tracker\Destinations` считают метрики: строка лэнда или Destination получает цифры только по визитам, где эта сущность стояла на позиции `#N`. Интерфейс шлёт `1` по умолчанию и переключает между `1` и `2` кнопкой `#1` / `#2` в тулбаре этих списков; лэнд, живущий на второй позиции, при `1` покажет нули. Разбор позиционной аналитики — [how-to/landings.md](landings.md).
 
@@ -232,7 +232,7 @@ Endpoint: `POST /api/v1/tables/data?token=xxx`. Тело — объект `reque
 
 ### Pivot Report — какой payload слать
 
-Endpoint: `POST /api/v1/pivot-report/data?token=xxx`. Обязательны пять булевых флагов. Также передают `dates`, `conditions`, `definitions`: без дат используются дата создания тенанта, текущее время и таймзона юзера, а для условий и группировок дефолт — пустой массив. Но из пяти флагов в Pivot фактически влияют только два — `event_time_attribution` и `hide_empty_metrics`; остальные три (`back_fix_attribution`, `hide_bots`, `hide_trash`) в Pivot-пути **no-op** (тело их требует, но отчёт их не читает; см. ниже «полярность»). Постраничности у Pivot нет: ответ — всё дерево комбинаций за период сразу.
+Endpoint: `POST /api/v1/pivot-report/data?token=xxx`. Обязательны пять булевых флагов. Также передают `dates`, `conditions`, `definitions`: без дат используются дата создания тенанта, текущее время и таймзона юзера (по токену такой запрос упрётся в потолок 31 день, если тенант создан раньше), а для условий и группировок дефолт — пустой массив. Но из пяти флагов в Pivot фактически влияют только два — `event_time_attribution` и `hide_empty_metrics`; остальные три (`back_fix_attribution`, `hide_bots`, `hide_trash`) в Pivot-пути **no-op** (тело их требует, но отчёт их не читает; см. ниже «полярность»). Постраничности у Pivot нет: ответ — всё дерево комбинаций за период сразу.
 
 - `dates` — `[from, to, timezone]`. Формат datetime — `YYYY-MM-DD HH:mm:ss`, начало диапазона включается, конец исключается: `[from, to)` (для полного дня конец — `00:00:00` следующего дня). Третий элемент — **IANA-таймзона** (напр. `Asia/Bangkok`, `Europe/Berlin`); всегда указывай, чтобы избежать неоднозначности. По токену между `from` и `to` — не больше 31 суток (разбор отказа — «Pivot Report отвечает `422` `Wrong query`» ниже).
 - `conditions` — массив фильтров; каждый элемент `{ "key": "...", "values": ["<uuid>", ...] }`, где `values` зависят от ключа: UUID для сущностей, коды стран для `location_country_code`, значения поля для `string_fields[<uuid поля>]`. Несколько `conditions` объединяются по **AND**. Нераспознанный ключ в `conditions` не даёт ошибку — фильтр молча не применяется.
@@ -313,11 +313,11 @@ Endpoint: `POST /api/v1/pivot-report/data?token=xxx`. Обязательны п�
 - `domain_provider_uuid` — провайдер доменов.
 - `domain_url` — URL домена.
 - `server_uuid` — сервер, на который указывает A-запись.
-- `dns_provider_uuid` — DNS-провайдер.
+- `dns_provider_uuid` — DNS-провайдер, необязателен: без него домен покупается с NS регистратора ([how-to/domains.md](domains.md)).
 - `monitoring_user_uuid` — юзер, который получает нотификации.
 - `settings` — JSON-строкой, напр. `{"robots":{"allow":false}}`.
 
-Домен, купленный **вне** AIO, добавляется через `action: Domain\CreateManually` (тот же `repository: Eloquent\DomainRepository`). Основные поля похожи, но у `CreateManually` **нет** `domain_provider_uuid`, а `dns_provider_uuid` необязателен. Оба экшена объединяют `server_uuid` и `server_uuids`; `Create` дополнительно убирает повторы.
+Домен, купленный **вне** AIO, добавляется через `action: Domain\CreateManually` (тот же `repository: Eloquent\DomainRepository`). Основные поля похожи, но у `CreateManually` **нет** `domain_provider_uuid`; `dns_provider_uuid` необязателен у обоих экшенов. Оба экшена объединяют `server_uuid` и `server_uuids`; `Create` дополнительно убирает повторы.
 
 ### Загрузить лендинг через API — `Lander\Upload` из ZIP-архива
 
@@ -336,9 +336,9 @@ Endpoint: `POST /api/v1/pivot-report/data?token=xxx`. Обязательны п�
 
 Лендинги шагов, вайт, Traffic Filter на шаге `Filter` и остальные настройки шагов кампании меняются через API одним способом — сохранением кампании: `action: Campaign\Create`, `repository: Eloquent\CampaignRepository`, `uuids: [<uuid кампании>]`. Отдельного экшена «привязать вайт» нет.
 
-Настройки шагов лежат в аргументе `settings` — JSON-строке, где ключи — uuid шагов флоу, а значения — выбранные варианты (лендинги, вайт, фильтр и его режим). Правильный `settings` проще всего получить, поменяв вайт в `Edit Campaign` с открытым `F12`: тело запроса `process` и есть образец.
+Настройки шагов лежат в аргументе `settings` — JSON-строке, где ключи — uuid шагов флоу, а значения — выбранные варианты (лендинги, вайт, фильтр и его режим). Правильный `settings` проще всего получить, поменяв вайт в `Edit campaign` с открытым `F12`: тело запроса `process` и есть образец.
 
-Шаг, у которого во флоу `Settings Availability` = `Flow Only`, в кампании не настраивается вовсе: такие настройки из `settings` отбрасываются, и вайт на этом шаге меняется правкой флоу — сразу для всех его кампаний ([models/flow-model.md](../models/flow-model.md)).
+Шаг, у которого во флоу `Settings availability` = `Flow only`, в кампании не настраивается вовсе: такие настройки из `settings` отбрасываются, и вайт на этом шаге меняется правкой флоу — сразу для всех его кампаний ([models/flow-model.md](../models/flow-model.md)).
 
 ### Правка кампании через API сняла теги или упала — `Campaign\Create` сохраняет кампанию целиком
 
@@ -353,7 +353,7 @@ Endpoint: `POST /api/v1/pivot-report/data?token=xxx`. Обязательны п�
 - `from` / `to` — диапазон дат.
 - `timezone` — таймзона.
 - `value` — сумма (USD).
-- `is_cpc` — bool.
+- `is_cpc` — bool. Режим суммы включает только `false` (или строка `"false"`); любое другое значение, в том числе `0`, сервер считает CPC.
 - `field_uuid` + `field_value` — фильтр по значению поля визита в режиме суммы Costs (`is_cpc: false`), если оба значения непустые. В ручном режиме CPC (`is_cpc: true`) эти аргументы игнорируются.
 
 Окно — от `from` включительно до `to` не включительно, в таймзоне `timezone`. Как кост ложится на визиты и почему цифра в отчёте может отличаться от введённой — [how-to/campaigns.md](campaigns.md) (раздел `Update Costs`).
@@ -369,7 +369,7 @@ Endpoint: `POST /api/v1/pivot-report/data?token=xxx`. Обязательны п�
 Успешный `actions/process` отвечает `200` с `messages` (тексты уведомлений), `uuid` и `primary` — uuid созданного или изменённого объекта; у массовых экшенов есть ещё `result` с UUID, допущенными к обработке, и пропусками (`skipped`). Фактическое число изменений конкретного экшена проверяют и по `messages`: массовый экшен может пропустить часть объектов. Ошибки:
 
 - `400` `{"validation_errors": {"<аргумент>": ["<текст>"]}}` — не прошла проверка аргументов (нет обязательного, не тот формат);
-- `403` `{"message": "Action access denied (<ключ> required)"}` — у позиции нет права на экшен; `No access to this object (<уровень> level required)` — не хватает уровня доступа к объекту;
+- `403` `{"message": "Action access denied (<ключ> required)"}` — у позиции нет права на экшен; `No access to this object (<уровень> level required)` — не хватает уровня доступа к объекту, у массового экшена, где не доступен ни один из выбранных, — `No access to the selected objects (<уровень> level required): '<имена>'`;
 - `404` — одиночного объекта нет в тенанте либо в массовом запросе не найден ни один объект; при частичном совпадении ненайденные UUID попадают в `result.skipped`;
 - `500` `{"message": "<текст>"}` — остальные ошибки внутри обработки, текст — причина; устаревший контракт может дать `426`.
 
@@ -379,7 +379,7 @@ Endpoint: `POST /api/v1/pivot-report/data?token=xxx`. Обязательны п�
 
 ### Список конверсий по API — `tables/data`, таблица `Tracker\Conversions` (в MTK — `MTK\Conversions`)
 
-`POST /api/v1/tables/data?token=…`, в запросе таблицы — `table: Tracker\Conversions` (так её открывает страница `Conversions` в ERP; в MTK — `MTK\Conversions`) и `dates: [from, to, timezone]` в формате `YYYY-MM-DD HH:mm:ss` — окно по времени создания конверсии; дальше `page` / `limit` (до 100 строк на страницу). Колонки строки: `type` (тип конверсии), `revenue` при праве `features.conversions-revenue`, `conversion_date`, `visit_date`, `uuid` конверсии, `visit_uuid`, кампания, источник и колонки полей визита и конверсии. `search` находит конверсию по её uuid или по uuid визита.
+`POST /api/v1/tables/data?token=…`, в запросе таблицы — `table: Tracker\Conversions` (так её открывает страница `Conversions` в ERP; в MTK — `MTK\Conversions`) и `dates: [from, to, timezone]` в формате `YYYY-MM-DD HH:mm:ss` — окно по времени создания конверсии, оба конца включаются; с пустым `dates` список не ограничен по времени. Дальше `page` / `limit` (до 100 строк на страницу). Колонки строки: `type` (тип конверсии), `revenue` при праве `features.conversions-revenue`, `conversion_date`, `visit_date`, `uuid` конверсии, `visit_uuid`, кампания, источник и колонки полей визита и конверсии. `search` находит конверсию по её uuid или по uuid визита.
 
 Это список, а не статистика, поэтому потолок периода в 31 день по токену на него не действует. Нужен просмотр конверсий (`tracker.conversions.view`); юзер без полного доступа видит конверсии только своих видимых кампаний и источников. Точное тело проще всего снять на странице `Conversions` через `F12`. Колонки таблицы в интерфейсе — [models/conversion-model.md](../models/conversion-model.md).
 
@@ -404,7 +404,7 @@ CSV-экспорт доступен только для **двух** Integration
 Поля при создании (`Integration Type = Visits CSV`):
 
 - `Name`, `Description` — произвольные.
-- `Lookup Hours` — за сколько часов отчёт.
+- `Lookup Hours` — за сколько последних часов отчёт, от 1 до 48; ссылка может переопределить его параметром `deep`, а без значения в обоих местах отвечает ошибкой.
 - `Time Attribute` — `Created` (визиты по времени создания) или `Updated` (по времени обновления визита).
 - `Timezone` — напр. `Europe/Berlin`.
 
@@ -435,9 +435,9 @@ https://app.aio.tech/api/v1/external-reports/data?uuid=REPORT_UUID&secret=REPORT
 
 - `rename[Lead]=...` / `rename[Purchase]=...` — (опц.) переименовать тип конверсии в выгруженном CSV.
 - `filters[FIELD_UUID]=VALUE` — (опц.) выгрузить только конверсии, где поле `FIELD_UUID` равно `VALUE` (напр. Ad ID = 123).
-- `gclid=GCLID_FIELD_UUID` — UUID поля gclid в тенанте.
+- `gclid=GCLID_FIELD_UUID` — UUID поля gclid в тенанте, обязателен.
 - `ngsw-bypass` — служебный параметр: запрос идёт мимо service worker приложения (важно, когда ссылку открывают в браузере на домене приложения); оставить как есть.
-- `deep=30` — сколько прошедших дней включить.
+- `deep=30` — сколько прошедших дней включить, обязателен, от 1 до 31.
 - `timezone=Europe/Rome` — таймзона отчёта; если опущена — используется таймзона из настроек отчёта, а без неё — **GMT+3 (`Europe/Moscow`)**.
 
 Ссылка вводится в адресную строку, файл скачивается как `export.csv`.
@@ -466,13 +466,13 @@ Google подтягивает CSV по этой ссылке сам и дела�
 
 ### Поминутный лимит бьёт на batch-задаче — ответ `429` `Too Many Attempts.`
 
-Превышение поминутного лимита приходит как `429` с телом `{"type":"Illuminate\\Http\\Exceptions\\ThrottleRequestsException","message":"Too Many Attempts."}` и заголовком `Retry-After` — через сколько секунд счётчик пропустит запрос снова. Для обычных API-запросов счётчик общий на юзера и его вкладки интерфейса; стандартный лимит — 60 в минуту, индивидуальный может отличаться. MCP, селекты и комментарии имеют отдельные поминутные счётчики. При превышении выждать `Retry-After` секунд (не дольше минуты) и продолжить.
+Превышение поминутного лимита приходит как `429` с телом `{"type":"Illuminate\\Http\\Exceptions\\ThrottleRequestsException","message":"Too Many Attempts."}` и заголовком `Retry-After` — через сколько секунд счётчик пропустит запрос снова. Для обычных API-запросов счётчик общий на юзера и его вкладки интерфейса; стандартный лимит — 60 в минуту, индивидуальный может отличаться. MCP, селекты, комментарии и редактор дерева дистрибуций имеют отдельные поминутные счётчики. При превышении выждать `Retry-After` секунд (не дольше минуты) и продолжить.
 
-Для batch-задач: очередь с паузами между запросами, несколько таблиц одним `POST /api/v1/tables/data` (разными ключами внутри `request`), период статистики — кусками до 31 дня. Параллельность и бюджет тяжёлых запросов — отдельные счётчики (секция «Параллельные запросы к `pivot-report/data` и `tables/data`»). Альтернатива для очень больших объёмов — выделенная инфраструктура под тенант (за отдельную плату, детали через саппорт); полный разбор варианта — [context/architecture.md](../context/architecture.md).
+Для batch-задач: очередь с паузами между запросами, несколько таблиц одним `POST /api/v1/tables/data` (разными ключами внутри `request`), период статистики — кусками до 31 дня. Параллельность и бюджет тяжёлых запросов — отдельные счётчики (секция «Параллельные запросы к `pivot-report/data` и `tables/data`»). Альтернатива для очень больших объёмов — выделенная инфраструктура под тенант (за отдельную плату, детали — у команды AIO); полный разбор варианта — [context/architecture.md](../context/architecture.md).
 
 ### Токен API не работает
 
-Симптом — `401` `Auth Middleware: Unauthorized` вместо данных. Причины: (1) **у юзера выключен API-доступ** — это отдельный флаг, колонка `API` в `Settings → Users`; по умолчанию он выключен, включает его команда AIO по запросу; (2) юзер деактивирован; (3) неверный сам токен; (4) в `X-Tenant-Id` uuid тенанта, которого у юзера нет (секция «Какой тенант читает запрос — заголовок `X-Tenant-Id`»). Если авторизация проходит, а отказ приходит на конкретном запросе — причина другая: (5) у юзера токена не хватает прав: на таблицу — `500` (в Data API с телом `Table access denied`), на действие — `403` `Action access denied (<ключ> required)` (ключ права позиции назван прямо в тексте) или `403` `No access to this object (<уровень> level required)` (не хватает уровня доступа к конкретной записи — [models/permissions-model.md](../models/permissions-model.md)); (6) неверный HTTP-метод / endpoint.
+Симптом — `401` `Auth Middleware: Unauthorized` вместо данных. Причины: (1) **у юзера выключен API-доступ** — это отдельный флаг, колонка `API` в `Settings → Users`; по умолчанию он выключен, включает его команда AIO по запросу; (2) учётная запись юзера отключена целиком; (3) неверный сам токен; (4) в `X-Tenant-Id` uuid тенанта, которого у юзера нет (секция «Какой тенант читает запрос — заголовок `X-Tenant-Id`»). Если юзер отключён только в этом тенанте (`Settings → Users → Switch activity`), текст другой — `401` `Auth Middleware: Suspended`; так же отвечает запрос без заголовка, если отключение — в тенанте, выбранном в интерфейсе. Если авторизация проходит, а отказ приходит на конкретном запросе — причина другая: (5) у юзера токена не хватает прав: на таблицу — `403` `{"message": "Table access denied"}`, на действие — `403` `Action access denied (<ключ> required)` (ключ права позиции назван прямо в тексте) или `403` `No access to this object (<уровень> level required)` (не хватает уровня доступа к конкретной записи — [models/permissions-model.md](../models/permissions-model.md)); (6) неверный HTTP-метод / endpoint.
 
 ### Формат ошибки API — как парсить неуспешный ответ
 
@@ -486,7 +486,7 @@ Google подтягивает CSV по этой ссылке сам и дела�
 - `message` — человекочитаемый текст ошибки (то же, что показывает UI).
 - HTTP-код ответа = код ошибки; если у исключения нет валидного HTTP-статуса, отдаётся **500**.
 
-Часть эндпоинтов заворачивает ошибки в свой формат: Data API — `500` `{"error": "<текст>"}` или отказ доступа к записи `403` `{"message": "<текст>"}`, `Tables Data` — `500` `{"error": "Error while processing request"}` (а на неверное имя таблицы — `422` `{"message": "Invalid table name"}`, секция ниже), `Pivot Report` — `422` `{"error": "Wrong query"}`, Actions API — `{"message": …}` или `400` `{"validation_errors": …}`, лимиты параллельности и тяжёлых запросов — `429` `{"message": …}`; поминутный лимит отвечает `429` в общем конверте с `message` `Too Many Attempts.`. В скрипте ориентируйся на HTTP-код и поле `message` или `error` (не на `type` — оно может меняться).
+Часть эндпоинтов заворачивает ошибки в свой формат: Data API — `500` `{"error": "<текст>"}` или отказ доступа к таблице или записи `403` `{"message": "<текст>"}`, `Tables Data` — `500` `{"error": "Error while processing request"}`, при нехватке права на таблицу — `403` `{"message": "Table access denied"}` (на неверное имя таблицы — `422` `{"message": "Invalid table name"}`, секция ниже), `Pivot Report` — `422` `{"error": "Wrong query"}`, Actions API — `{"message": …}` или `400` `{"validation_errors": …}`, лимиты параллельности и тяжёлых запросов — `429` `{"message": …}`; поминутный лимит отвечает `429` в общем конверте с `message` `Too Many Attempts.`. В скрипте ориентируйся на HTTP-код и поле `message` или `error` (не на `type` — оно может меняться).
 
 ### `422` `Invalid table name` — в имени таблицы двойной обратный слэш
 

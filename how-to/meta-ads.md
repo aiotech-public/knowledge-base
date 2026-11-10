@@ -6,14 +6,14 @@ doc_type: how-to
 builds: [erp, mtk]
 related: [meta-spend-allocation, notification-center, google-ads, permissions, meta-data-health, meta-business-managers, analytics, meta-ad-account-activity, auto-rules-engine, auto-rules, ui-common]
 language: ru
-updated: 2026-10-28
+updated: 2026-11-09
 ---
 
 # Как в AIO управляют рекламой Meta/Facebook — модуль Meta (Ad-Manager внутри платформы)
 
 **Meta-модуль — это рекламный кабинет Facebook прямо внутри AIO: подключаешь соцпрофиль, тянешь из Meta свою иерархию (ad account → campaign → ad set → ad) и управляешь ей из платформы, не заходя в Ads Manager Facebook.** Кампании, адсеты и объявления стартуешь и стопаешь, меняешь бюджеты (CBO/ABO), подтягиваешь таргетинг и данные по спенду — всё из таблиц AIO. Модуль читает данные из Meta через подключённый соцпрофиль и шлёт команды обратно в Meta.
 
-В ERP модуль живёт по пути `/app/facebook`, раздел в навигации называется `Facebook`. В MTK вкладка `Meta` есть и в базовом виде — сокращённый раздел по пути `/app/mtk/meta`; платный модуль **`Meta+`** переключает эту вкладку на полный модуль `/app/facebook`, как в ERP (секция «Meta-модуль в MTK: базовая вкладка `Meta` и модуль `Meta+`» ниже и *Как устроен MTK-вид AIO: навигация, пресеты из шаблона и методы под типовые задачи*).
+В ERP модуль живёт по пути `/app/facebook`, раздел в навигации называется `Meta`. В MTK вкладка `Meta` есть и в базовом виде — сокращённый раздел по пути `/app/mtk/meta`; платный модуль **`Meta+`** переключает эту вкладку на полный модуль `/app/facebook`, как в ERP (секция «Meta-модуль в MTK: базовая вкладка `Meta` и модуль `Meta+`» ниже и *Как устроен MTK-вид AIO: навигация, пресеты из шаблона и методы под типовые задачи*).
 
 Это **не** про раскладку рекламного спенда по трафику в отчётах — та механика (`Meta Spend`, report-time аллокация) описана в [meta-spend-allocation.md](../mechanics/meta-spend-allocation.md). И это **не** про алерт о бане рекламного аккаунта — правило нотификации `fb_ad_account_banned` описано в [notification-center.md](../mechanics/notification-center.md).
 
@@ -28,7 +28,7 @@ updated: 2026-10-28
 - **Ad Accounts** (`meta.ad-accounts.view`) — рекламные кабинеты, привязанные к соцпрофилю: статус, баланс, платёжные поля, метрики. Детали в секции «Ad Account».
 - **Campaigns / Ad Sets / Ads** (`meta.campaigns.view` / `meta.ad-sets.view` / `meta.ads.view`) — три уровня рекламной иерархии Meta, каждый своей вкладкой. Управление (Start/Stop, бюджеты, таргетинг) — в секции «Управление кампаниями, адсетами и объявлениями».
 
-- **Business Managers** (`meta.businesses.view`, ERP) — бизнес-менеджеры Meta, доступные подключённым соцпрофилям: роль профиля, кабинеты, страницы, пиксели и люди BM — [meta-business-managers.md](meta-business-managers.md).
+- **Business Managers** (`meta.businesses.view`) — бизнес-менеджеры Meta, доступные подключённым соцпрофилям: роль профиля, кабинеты, страницы, пиксели и люди BM — [meta-business-managers.md](meta-business-managers.md).
 - **Pages** (`meta.pages.view`) — FB-страницы, привязанные к соцпрофилю (то, от чьего имени крутится реклама). Вкладка полного Meta-модуля доступна с правом `meta.pages.view`.
 - **Pixels** (`meta.ad-accounts.view`) — пиксели рекламных кабинетов и бизнес-менеджеров ваших соцпрофилей.
 
@@ -59,8 +59,8 @@ Right-click на строке (или на нескольких выделенн
 
 Статус соцпрофиля — поле `status` внутри `Identity`, четыре значения:
 
-- **`Fine`** — последний шаг прошёл успешно. При подключении через Meta App `status_text` = `Connected`, после регулярного синка — `No sync issues`. В отдельных экшенах проверки токена и Fetch встречаются `Everything is fine` и `Everything is fine😂!`.
-- **`Down`** — последняя подтяжка или проверка токена завершилась ошибкой; `status_text` несёт причину. Истёкший токен — одна из причин этого статуса.
+- **`Fine`** — последний шаг прошёл успешно. При подключении через Meta App `status_text` = `Connected`, после регулярного синка — `No sync issues`.
+- **`Down`** — последняя подтяжка завершилась ошибкой; `status_text` несёт причину. Истёкший токен — одна из причин этого статуса.
 - **`Issues`** — у профиля есть проблема синка или он вручную отключён. При лимите Meta профиль остаётся в `Issues`, а счётчик ошибок не растёт; ручное отключение сопровождается `Manually disconnected.`.
 - **`Pulling`** — подтяжка запрошена или выполняется. Пока стоит этот статус, ручной `Pull data` отбивается сообщением `Already pulling`.
 
@@ -71,8 +71,6 @@ Right-click на строке (или на нескольких выделенн
 **Когда соцка уходит в `Down`, причина видна в `status_text` — по началу строки понятно, где именно встал синк.** Форматы:
 
 - **`Failed Job: <причина>`** — основной формат: фоновая подтяжка Meta завершилась ошибкой. Вариант **`Timeout Failed Job: <причина>`** — та же подтяжка не уложилась в срок.
-- **`<Namespace>: <Meta error>`** — синк упал на конкретном шаге; `<Namespace>` ∈ `Fetch Costs` / `Fetch Campaigns` / `Fetch Ad Accounts` / `Fetch Ad Sets` / `Fetch Ads`, хвост — сырой текст Meta. `Fetch Costs: (#190) ...` = токен протух на подтяжке костов.
-- **Сырой Meta `error.message` целиком** (без префикса) — соцка не прошла проверку токена (`checkToken`): в `status_text` уходит то, что Meta вернула в `error.message` (протухший/отозванный токен, снятый доступ). Нет тела ответа — вместо неё `Error while request`; тело есть, но без `error.message` — `Unknown`.
 
 **Хвост после `Failed Job: ` — не всегда текст Meta:** пять узнаваемых ошибок Graph API AIO подменяет собственным объяснением (секция ниже). Для остальных сохраняется исходный текст ошибки; итоговая строка ограничена 1000 байтами.
 
@@ -155,9 +153,9 @@ Right-click на строке (или на нескольких выделенн
 
 **Ad Account — рекламный кабинет Meta с его статусом, платёжными реквизитами и агрегированными метриками, подтянутыми через соцпрофиль.** Главное, за чем сюда ходят, — жив ли кабинет и не ушёл ли в бан.
 
-Статус кабинета — объект `status` (`status_type` / `status_text` / `status`, где `status` может быть `danger` при проблеме). Причина бана — поле `facebook_disable_reason` (тот же объект статуса).
+Статус кабинета в Meta показывает колонка `Meta Status` на вкладке `Ad Accounts` (`DISABLED` и `CLOSED` — бан, красная метка). Причина бана — колонка `Disabled Reason` (поле `facebook_disable_reason`).
 
-Иконка кабинета в таблицах, где есть колонка рекламного кабинета — `Meta → Ad Accounts` / `Campaigns` / `Ad Sets` / `Ads` / `Statistics` / `Tree` (в MTK — `Ad Accounts` и `Campaigns`) — несёт тултип с `status_text` — это статус синхронизации на стороне AIO. Если у кабинета проставлена причина от Meta, она дописывается в тот же тултип в скобках: `No sync issues (Meta: ADS_INTEGRITY_POLICY)`. Хвост `(Meta: …)` появляется, только когда `facebook_disable_reason` непустая и не равна `NONE`; в остальных случаях тултип показывает один статус синхронизации без скобок. Что означает конкретное значение — раздел «Причины бана рекламного аккаунта (`disable_reasons`)» этого документа.
+Иконка кабинета в таблицах, где есть колонка рекламного кабинета — `Meta → Ad Accounts` / `Campaigns` / `Ad Sets` / `Ads` / `Data health` (в MTK — `Ad Accounts`, `Campaigns` и `Data health`) — несёт тултип с `status_text` — это статус синхронизации на стороне AIO. Если у кабинета проставлена причина от Meta, она дописывается в тот же тултип в скобках: `No sync issues (Meta: ADS_INTEGRITY_POLICY)`. Хвост `(Meta: …)` появляется, только когда `facebook_disable_reason` непустая и не равна `NONE`; в остальных случаях тултип показывает один статус синхронизации без скобок. Что означает конкретное значение — раздел «Причины бана рекламного аккаунта (`disable_reasons`)» этого документа.
 
 ### Причины бана рекламного аккаунта (`disable_reasons`)
 
@@ -189,22 +187,20 @@ Right-click на строке (или на нескольких выделенн
 Кабинет несёт финансово-операционные поля, подтянутые из Meta (дословно как в модели):
 
 - **`facebook_balance`** — баланс кабинета.
-- **`facebook_ads_payment_cycle`** — платёжный цикл рекламы.
-- **`facebook_funding_source_id`** / **`facebook_funding_source_name`** — id и название источника финансирования (способа оплаты).
+- **`facebook_funding_source_name`** — название источника финансирования (способа оплаты).
 - **`facebook_is_prepay_account`** — предоплатный ли аккаунт (bool).
 - **`facebook_currency`** — валюта кабинета.
 - **`facebook_account_currency_ratio_to_usd`** — курс валюты кабинета к USD (чтобы сводить в долларах).
 - **`facebook_timezone_offset_hours_utc`** — смещение таймзоны кабинета относительно UTC (важно для сшивки спенда по дням).
-- **`facebook_ad_trust_dsl`** — показатель доверия к кабинету со стороны Meta.
 - **`facebook_id`** — числовой id кабинета в Meta (например, `1234567890`); префикс `act_` добавляется при обращении к API кабинета.
 
-Метрики кабинета: `spend`, `impressions`, `inline_link_clicks`; конверсионные события приходят отдельно — в поле `actions`.
+Метрики кабинета: `spend`, `impressions`, клики по ссылке (в колонку `Meta Inline Link Clicks` пишется `outbound_clicks` — [mechanics/meta-spend-allocation.md](../mechanics/meta-spend-allocation.md)); конверсионные события приходят отдельно — в поле `actions`.
 
 ### Экшены кабинета: Edit, Pull Data, Show activity
 
-- **`Edit ad account`** (`meta.ad-accounts.edit`) — меняет `pull_strategy` (стратегию подтягивания данных), выбранную из справочника `pull-strategies`.
+- **`Edit ad account`** (`meta.ad-accounts.edit`) — выбор значения `Pull Strategy` кабинета (`Default` / `Light`, колонка `Pull Strategy`).
 - **`Pull data`** (`meta.ad-accounts.edit.pull-data`) — сразу подтянуть структуру и статистику только этого кабинета, с той же глубиной, что у соцпрофиля (`Backward for data` / `Backward for insights`, секция «Диалог `Pull data`» выше); заодно ставится подтяжка истории изменений (`Show activity`) — от момента, до которого она уже загружена.
-- **`Show activity`** (`meta.ad-accounts.view.activities`, только ERP) — история кабинета из Meta: кто, каким приложением и что поменял (статусы и модерация, бюджеты, таргетинг, креативы, списания, доступы), лентой по дням или таблицей — [how-to/meta-ad-account-activity.md](meta-ad-account-activity.md).
+- **`Show activity`** (`meta.ad-accounts.view.activities`, полный Meta-модуль: ERP и MTK с `Meta+`) — история кабинета из Meta: кто, каким приложением и что поменял (статусы и модерация, бюджеты, таргетинг, креативы, списания, доступы), лентой по дням или таблицей — [how-to/meta-ad-account-activity.md](meta-ad-account-activity.md).
 
 ## Управление кампаниями, адсетами и объявлениями
 
@@ -291,7 +287,7 @@ Right-click на строке (или на нескольких выделенн
 
 ### Кнопка уровня матчинга `Meta Spend` на вкладках Meta — на колонки `Meta Insights` не влияет
 
-**Уровень матчинга аллоцированного `Meta Spend` на трекерных таблицах выбирают в меню `Table tools` → `Attribution level`: `Campaign` / `Adset` / `Ad`. При развёрнутых инструментах это отдельная кнопка с иконкой Meta. Настройка доступна и на `Campaigns` / `Ad Sets` — дефолт `Campaign`, выбор хранится в браузере; колонки `Meta Insights` на вкладках `Campaigns` / `Ad Sets` / `Ads` — сырые числа кабинета по объекту, к визитам не привязаны и от этой кнопки не зависят.** Разрез отчёта (drill-down) по Meta-кампании, ad set или объявлению считает аллокацию на уровне этой сущности независимо от кнопки. Что такое уровень матчинга, почему на уровне `Ad` часть спенда выпадает и где кнопка действует — [mechanics/meta-spend-allocation.md](../mechanics/meta-spend-allocation.md).
+**Уровень матчинга аллоцированного `Meta Spend` на трекерных таблицах выбирают в меню `Table tools` → `Attribution level`: `Campaign` / `Adset` / `Ad`. При развёрнутых инструментах это отдельная кнопка с иконкой Meta. Кнопка появляется только в таблице с метриками, которые зависят от уровня атрибуции (`Meta Spend`, `Meta Commission` и другие Meta-метрики из набора тенанта); дефолт `Campaign`, выбор один на все таблицы и хранится в браузере. Колонки `Meta Insights` на вкладках `Campaigns` / `Ad Sets` / `Ads` — сырые числа кабинета по объекту, к визитам не привязаны и от этой кнопки не зависят.** Разрез отчёта (drill-down) по Meta-кампании, ad set или объявлению считает аллокацию на уровне этой сущности независимо от кнопки. Что такое уровень матчинга, почему на уровне `Ad` часть спенда выпадает и где кнопка действует — [mechanics/meta-spend-allocation.md](../mechanics/meta-spend-allocation.md).
 
 ## Meta Ad Preview: карточка объявления с превью на каждый язык
 

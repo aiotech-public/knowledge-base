@@ -4,9 +4,9 @@ title: Permissions / Users / Sharing (How-to)
 description: Процедуры доступа в тенанте — инвайт и деактивация юзеров, Position и проверка через Log in as user, шаринг сущностей и папок (роли Use / Viewer / Editor, Can share further, срок, массовые Share also / Force share / Unshare, частичное применение), Change ownership и Access type (Private / Use / View — Everyone правку не открывает), ветки Scopes / Editor Scopes на весь раздел, права automation.* под автоправила, типичные отказы.
 doc_type: how-to
 builds: [erp, mtk]
-related: [permissions-model, user, auto-rules, creatives, marketing-flow, remarketing-campaigns, architecture, campaigns, glossary]
+related: [permissions-model, registration, user, auto-rules, creatives, marketing-flow, remarketing-campaigns, architecture, campaigns, glossary]
 language: ru
-updated: 2026-10-28
+updated: 2026-11-09
 ---
 
 # Permissions / Users / Sharing (How-to)
@@ -17,7 +17,7 @@ updated: 2026-10-28
 
 ## TL;DR
 
-- Юзеры добавляются только инвайтом: `Settings → Users → +User` → `Generate Invite`; приглашают Owner и Admin. Уходящего юзера — деактивировать: `Settings → Users` → ПКМ → `Switch activity`.
+- Юзеры добавляются только инвайтом: `Settings → Users → +User` → `Generate invite`; приглашают Owner и Admin. Уходящего юзера — деактивировать: `Settings → Users` → ПКМ → `Switch activity`.
 - Position юзеру: `Settings → Positions` → вкладка `Assigned users`. Увидеть интерфейс глазами сотрудника — `Log in as user` (ERP, Owner / Admin).
 - Шаринг: ПКМ по строке → `Share` → роль `Use` / `Viewer` / `Editor`, по желанию `Can share further` и срок. Шарит тот, у кого на объект уровень `Own`, или кому пошарили с `Can share further`, при наличии прав действия в Position.
 - В ERP можно пошарить и папку — содержимое получает роль папки, включая то, что положат позже. В MTK списка папок в таблицах нет — там папки не создаются и не шарятся.
@@ -31,17 +31,17 @@ updated: 2026-10-28
 
 ## Как добавить нового юзера
 
-**Через интерфейс юзера добавляют по инвайту: `Settings → Users → +User` → `Generate Invite`.** Кнопка есть у Owner и Admin. Короткая форма предлагает `Position` и `Team` и приглашает с ролью `Employee`.
+**Через интерфейс юзера добавляют по инвайту: `Settings → Users → +User` → `Generate invite`.** Кнопка есть у Owner и Admin. Короткая форма предлагает `Position` и `Team` и приглашает с ролью `Employee`.
 
 **Шаги:**
 
 1. `Settings → Users → +User` → выбрать `Position` и `Team`. Position в инвайте выбирается одна — остальные назначаются потом во вкладке `Assigned users` у позиции.
 2. Короткая форма выдаёт **роль тенанта `Employee`**, не Position: доступ к своему, объектам нижестоящих по команде, пошаренному юзеру и его командам, объектам с `Access type` `Use` / `View`. Тонкая настройка — через Positions (см. [models/permissions-model.md](../models/permissions-model.md)).
 3. `Team` — команда, в которую человек попадёт; по инвайту он встаёт в неё на уровень 0 (самый нижний). Поднять уровень — в диалоге команды.
-4. `Generate Invite` → отдать инвайт-код и ссылку новому юзеру.
-5. Новый юзер регистрируется по ссылке (Name / Email / Telegram / Password), включает 2FA (через `@aio_tech_bot` в Telegram или Google Authenticator).
+4. `Generate invite` → отдать инвайт-код и ссылку новому юзеру.
+5. Новый юзер регистрируется по ссылке: имя, email, пароль и Telegram, подтверждённый через бота; 2FA (через `@aio_tech_bot` в Telegram или Google Authenticator) на регистрации можно включить или пропустить ([how-to/registration.md](registration.md)).
 
-В ERP стрелка рядом с `+User` → `Invite user` открывает расширенную форму: `Name`, `Code`, `Usages`, `Till date`, `Role`, `Position`, `Team`. Здесь можно выбрать `Admin` (полный доступ, уровень `Own` на все объекты тенанта) или `Employee`; `Owner` через этот инвайт не выдаётся.
+В ERP стрелка рядом с `+User` → `Invite user` открывает расширенную форму: `Name`, `Description`, `Code`, `Usages`, `Status`, `Type`, `Till date`, `Role`, `Position`, `Team`. Здесь можно выбрать `Admin` (полный доступ, уровень `Own` на все объекты тенанта) или `Employee`; `Owner` через этот инвайт не выдаётся.
 
 Один аккаунт-`User` может состоять в нескольких тенантах, права в каждом свои ([models/user.md](../models/user.md)). Регистрационная форма по инвайту требует новый Email и Telegram: уже зарегистрированные значения отклоняются.
 
@@ -49,7 +49,7 @@ updated: 2026-10-28
 
 **Быстрее всего — зайти под сотрудника с позицией `Buyer` через `Log in as user`** (ERP, для Owner и Admin): интерфейс откроется его глазами, и сразу видно, что из нужного ему не видно, а что лишнее видно. Как войти и выйти — секция «Как увидеть интерфейс глазами сотрудника — `Log in as user`».
 
-Если сотрудника на этой позиции ещё нет или тенант в MTK — зарегистрировать **тестового юзера** на позицию `Buyer` из шаблона тенанта (её описание — «Launches and runs traffic. Sees only their own campaigns, no team data.») и открыть его в инкогнито. Проверять лучше до реального использования.
+Если сотрудника на этой позиции ещё нет или тенант в MTK — зарегистрировать **тестового юзера** на позицию `Buyer` из шаблона тенанта (её описание — «Launches and runs traffic. Sees only their own campaigns, no team data.») и открыть его в инкогнито. Для тестового аккаунта нужны свои email и Telegram, ещё не привязанные к AIO: один Telegram — один аккаунт. Проверять лучше до реального использования.
 
 См. [models/permissions-model.md](../models/permissions-model.md) → эвристика «Обрезать всё, потом раздавать».
 
@@ -110,7 +110,7 @@ updated: 2026-10-28
 
 Наборы складываются: тому, кто и строит правила, и сам подтверждает их вердикты, нужны оба.
 
-Если из всего перечисленного выдан только `automation.status.view`, пункт меню `Automations` не появится — меню открывают `automation.templates.view`, `automation.assignments.view` или `automation.actions.view`.
+Если из всего перечисленного выдан только `automation.status.view`, пункт меню `Automations` не появится: право на страницу статуса меню не открывает — нужен ключ ещё одной страницы раздела, например `automation.templates.view`, `automation.assignments.view` или `automation.actions.view`.
 
 Помимо прав на сам раздел стоит проверить права **владельца ассайна** на сущностях Meta: действие уходит в рекламный кабинет с его правами, а не с правами того, кто его подтвердил. Как устроены сами правила — [how-to/auto-rules.md](auto-rules.md).
 
@@ -128,9 +128,9 @@ updated: 2026-10-28
 
 ## Как пошарить сущность (Campaign / Landing / Domain) конкретному юзеру
 
-**Шаринг выдаёт одному юзеру или команде доступ к одной сущности без правки Position: ПКМ по строке → `Share` (группа `Teams & Permissions`) → слева выбрать юзеров или команды → справа задать роль → `Save`.** Шара на команду действует на всех её участников, уровень в команде не важен. Кто получил доступ — видно в колонке `Shares` на сущности (в части таблиц она скрыта по умолчанию и включается в настройках таблицы).
+**Шаринг выдаёт одному юзеру или команде доступ к одной сущности без правки Position: ПКМ по строке → `Share` (группа `Teams & permissions`) → слева выбрать юзеров или команды → справа задать роль → `Save`.** Шара на команду действует на всех её участников, уровень в команде не важен. Кто получил доступ — видно в колонке `Shares` на сущности (в части таблиц она скрыта по умолчанию и включается в настройках таблицы).
 
-Доступный набор разделов зависит от билда. Шарятся кампании, лэнды, дестинейшны, источники, флоу, дистрибуции (включая `Rule Templates`), домены, серверы, провайдеры серверов / доменов / DNS, прокси, пресеты, поля, метрики, Money Streams, External Reports, шаблоны сообщений, Meta-профили, Meta-шаблоны и поставщики кабинетов Meta (`Supplier`), Google-аккаунты (только по одному), TikTok-аккаунты, Content Library, макросы, формы, адвертайзеры, а в ERP — ещё генерации, генераторы и папки. У ассайнов автоправил пункта `Share` в интерфейсе нет.
+Доступный набор разделов зависит от билда. Шарятся кампании, лэнды, дестинейшны, источники, флоу, дистрибуции (включая `Rule Templates`), домены, серверы, провайдеры серверов / доменов / DNS, прокси, пресеты, поля, метрики, Money Streams, External Reports, шаблоны сообщений, Meta-профили, Meta-шаблоны и поставщики кабинетов Meta (`Supplier`), Google- и TikTok-аккаунты (только по одному), Content Library, макросы, формы, адвертайзеры, а в ERP — ещё креативы, генерации, генераторы и папки. У ассайнов автоправил пункта `Share` в интерфейсе нет.
 
 ### Кто может шарить — и почему у строки нет пункта `Share`
 
@@ -186,7 +186,7 @@ updated: 2026-10-28
 
 ### Скопировать чужую кампанию или лэнд — нужен хотя бы `View`
 
-**Для копирования через интерфейс исходник должен быть открыт вам хотя бы на `View`, а в Position нужно право копирования раздела: для кампаний — `tracker.campaigns.edit.copy`, для лэндов — `content.landings.edit` (отдельного ключа копирования у лэндов нет).** С одним `Use` (объект виден только в списках) диалог отклоняется: `No access to this object (view level required)`. Копия принадлежит тому, кто копировал, получает `Access type = Private` и имя `<имя> copy`; шары оригинала на неё не переносятся, теги переносятся.
+**Пункт копирования в меню строки (`Copy campaign` / `Copy landing`) появляется, когда исходник открыт вам хотя бы на `View`, а в Position есть право копирования раздела: для кампаний — `tracker.campaigns.edit.copy`, для лэндов — `content.landings.edit` (отдельного ключа копирования у лэндов нет).** Окно копии сохраняется как правка новой кампании, поэтому для кампаний нужен и `tracker.campaigns.edit` — `Allow tracker.campaigns.edit` даёт оба ключа. С одним `Use` (объект виден только в списках) пункта копирования нет, а открыть окно копии сервер не даёт: `No access to this object (view level required)`. Окно копии — форма исходника, к имени в ней добавлено ` copy`, его можно поменять до сохранения. Копия принадлежит тому, кто копировал, получает `Access type = Private`; шары оригинала на неё не переносятся, теги переносятся.
 
 ## Доступ ко всему разделу без шаринга — `Scopes` и `Editor Scopes`
 
@@ -248,13 +248,13 @@ updated: 2026-10-28
 
 ### Для каких сущностей есть папки, а что шарится только поштучно
 
-**Папки (кнопка папок в верхней панели таблицы) есть в ERP у Campaigns, Sources, Destinations, Landings, Creatives, Generations, Content Library (`Lander Placeholder Groups`), Meta Social Profiles и Google Accounts.** Шаринг папки Google-аккаунтов раздаёт содержимое так же, как у остальных папок. У Creatives список видят все, у кого есть право раздела, а шаринг папки креативов раздаёт доступ к самим креативам — открыть и править их получатель может по роли папки ([how-to/creatives.md](creatives.md)).
+**Папки (кнопка папок в верхней панели таблицы) есть в ERP у Campaigns, Sources, Destinations, Landings, Creatives, Generations, Content Library (`Lander Placeholder Groups`), Meta Social Profiles, Google Accounts и TikTok Accounts.** Шаринг папки Google- и TikTok-аккаунтов раздаёт содержимое так же, как у остальных папок. У Creatives список видят все, у кого есть право раздела, а шаринг папки креативов раздаёт доступ к самим креативам — открыть и править их получатель может по роли папки ([how-to/creatives.md](creatives.md)).
 
-Папок **нет** у Domains, Servers, Flows, Distributions, Proxies, Presets, Fields, Metrics и остальных сущностей — они шарятся по одной (ПКМ → `Share`) или массово (`Share also` / `Force share`). Положить их в папку негде, поэтому «пошарить папку доменов или серверов» не работает. Google-аккаунты без папки шарятся только по одному — массовых пунктов шаринга у них нет.
+Папок **нет** у Domains, Servers, Flows, Distributions, Proxies, Presets, Fields, Metrics и остальных сущностей — они шарятся по одной (ПКМ → `Share`) или массово (`Share also` / `Force share`). Положить их в папку негде, поэтому «пошарить папку доменов или серверов» не работает. Google- и TikTok-аккаунты без папки шарятся только по одному — массовых пунктов шаринга у них нет.
 
 ## Сменить владельца и `Access type` — `Change ownership`
 
-**На страницах с пунктом `Change ownership` владелец и `Access type` меняются одним диалогом: ПКМ по строке → `Change ownership`; при поддержке массовой смены — `Mass change ownership` на выделении из нескольких строк.** Диалог общий для кампаний, лэндов, флоу, доменов и ассайнов автоправил; отдельного пункта `Change owner` у них нет.
+**На страницах с пунктом `Change ownership` владелец и `Access type` меняются одним диалогом: ПКМ по строке → `Change ownership`; при поддержке массовой смены — `Mass change ownership` на выделении из нескольких строк.** Диалог общий для кампаний, лэндов, флоу, доменов и ассайнов автоправил; отдельного пункта `Change owner` у них нет. У лэндов в нём меняется только владелец: `Access type` лэнду не сохраняется.
 
 Поля диалога (`Transfer ownership and update the access level.`):
 
@@ -337,7 +337,7 @@ updated: 2026-10-28
 
 - **Объект не открывается: тост `Sorry, you do not have access`, иконка строки `No access to open` или 403 `No access to this object (<уровень> level required)`.** Не хватает уровня на объект — смотрите `Your access: <уровень>` внизу ПКМ-меню строки. С `Use` карточка закрыта, с `View` — только чтение (`Read-only` вместо сохранения), правка — `Edit`, шаринг — `Own` или `Can share further`, смена владельца и архив — `Own`.
 
-- **В интерфейсе копия не создаётся — `No access to this object (view level required)`.** На исходник только `Use`; для открытия диалога копии нужен хотя бы `View`.
+- **В меню строки нет пункта копирования (`Copy campaign` / `Copy landing`) или окно копии отвечает `No access to this object (view level required)`.** На исходник только `Use` или в Position нет права копирования раздела; нужен хотя бы `View` — шара `Viewer` / `Editor` или `Access type = View` (у лэндов `Access type` не действует — только шара или `Scopes`).
 
 - **Тимлид не видит объект своего баера.** По иерархии команды объекты баера видит участник с **более высоким** уровнем в той же команде; равные по уровню по умолчанию так друг друга не видят (это меняет `Peers:`). Пошаренное баеру поднимается к тимлиду только в режиме `Below: Owned and direct shares` или `Below: Owned and all shares`; по умолчанию (`Owned only`) — только объекты во владении баера. Настройка — в диалоге команды.
 

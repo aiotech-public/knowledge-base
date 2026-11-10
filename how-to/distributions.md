@@ -6,7 +6,7 @@ doc_type: how-to
 builds: [erp, mtk]
 related: [distributions-model, auto-rules, flow-model, remarketing-campaigns, flow-editor, push-notifications, domains, glossary]
 language: ru
-updated: 2026-10-16
+updated: 2026-11-09
 ---
 
 # Distributions (How-to)
@@ -26,7 +26,7 @@ updated: 2026-10-16
 ### Где привязывают DTD и открывают Message templates
 
 - На каждом домене для DTD должна быть **явно выбрана** дистрибуция в `Tech → Domains → Edit domain` (поле `Direct traffic distribution`) — иначе домен её не использует. Content Distribution к домену не привязывают: домен в ней — условие правила.
-- **Message templates** — дерево текстов для ремаркетинг-рассылки. В ERP страницу открывают через `Marketing → Template distributions`, в MTK — через `PWA → Template distributions` при включённом PWA-модуле (см. секцию ниже).
+- **Message templates** — дерево текстов для ремаркетинг-рассылки. В ERP страницу открывают через `Marketing → Template distributions`, в MTK — через `PWA → Message templates` при включённом PWA-модуле (см. секцию ниже).
 
 ### Как устроены Auto Rules и управление деревом
 
@@ -70,14 +70,14 @@ Money-дистрибуции (`Payout` / `Revenue`) создаются в `Setti
 
 ### Подключение дистрибуции во флоу — два способа
 
-1. **Отдельный шаг-нода.** Для `Fill Field` — нода `Fields by distribution`; для рассылки — узел `Drip schedule` во флоу типа `Notifications`, он выбирает дистрибуцию типа `Message Templates` ([how-to/remarketing-campaigns.md](remarketing-campaigns.md)). Настройки шага открываются **модалкой** по клику на ноду в редакторе флоу (кроме портов переходов и ручки перетаскивания), дистрибуция выбирается из выпадающего списка.
+1. **Отдельный шаг-нода.** Для `Fill Field` — нода `Fields by distribution`; для рассылки — узел `Drip schedule` во флоу типа `Notifications`, он выбирает дистрибуцию типа `Message Templates` ([how-to/remarketing-campaigns.md](remarketing-campaigns.md)). Настройки шага открываются **модалкой** по клику на ноду в редакторе флоу (кроме портов переходов), дистрибуция выбирается из выпадающего списка.
 2. **Новый payload внутри существующего шага.** В редакторе флоу кликнуть по ноде шага — откроется модалка настроек; в поле `Payload type` выбрать `Content distribution`, затем выбрать дистрибуцию. Выбор доступен в самом Flow либо в кампаниях через `+Add another variant → Content distribution` (зависит от того, flow-only шаг или доступен в кампаниях).
 
 Кнопка `Apply settings` внизу модалки шага ничего не применяет — форма пишет в шаг живьём, кнопка только закрывает окно; флоу после этого всё равно нужно сохранить ([models/flow-model.md](../models/flow-model.md)).
 
 ## Direct Traffic Distribution + привязка к домену
 
-Когда: голый URL без UTM (`mydomain.com`) должен открыть конкретную кампанию. Механика DTD и Default Query, порядок дополнения параметров — [models/distributions-model.md](../models/distributions-model.md).
+Когда: голый URL без UTM (`mydomain.com`) должен открыть конкретную кампанию. Механика DTD и Default query, порядок дополнения параметров — [models/distributions-model.md](../models/distributions-model.md).
 
 **Путь:** `Settings → Distributions → +Distribution → Direct traffic`.
 
@@ -114,7 +114,7 @@ Money-дистрибуции (`Payout` / `Revenue`) создаются в `Setti
 
 Также см. [models/flow-model.md](../models/flow-model.md).
 
-### Когда Content-шаг переводят в Flow Only
+### Когда Content-шаг переводят в Flow only
 
 Если всем кампаниям нужен один набор настроек Content-шага, можно выбрать `Flow only` в `Settings availability`: шаг становится одинаковым для всех кампаний этого Flow, а внутри шага вариантом стоит дистрибуция. Из `Edit campaign` шаг пропадает — на уровне кампании его не настраивают вовсе. Для выбора дистрибуции в отдельной кампании оставляют `Campaign template` или `Campaign only`; обязательного требования `Flow only` у дистрибуции нет. Как сменить Settings availability шага — [how-to/flow-editor.md](flow-editor.md).
 
@@ -140,7 +140,7 @@ Money-дистрибуции (`Payout` / `Revenue`) создаются в `Setti
 
 **Путь:** `Marketing → Template distributions` → кнопка создания. Пикер типов на этой странице не показывается — сразу открывается создание нужного типа. Тот же тип создаётся и из общего пикера: `Settings → Distributions → +Distribution → Message templates`.
 
-В MTK страница находится в `PWA → Template distributions`, когда у тенанта включён модуль `PWA + Push`. Для просмотра нужно `marketing.template-distributions.view`, для перехода к дереву — `marketing.template-distributions.edit`. Создание на этой странице также открывает форму типа `Message templates`.
+В MTK страница находится в `PWA → Message templates`, когда у тенанта включён модуль `PWA + Push`. Для просмотра нужно `marketing.template-distributions.view`, для перехода к дереву — `marketing.template-distributions.edit`. Создание на этой странице также открывает форму типа `Message templates`.
 
 ### Создать Message templates и настроить push-лист
 
@@ -189,7 +189,7 @@ Money-дистрибуции (`Payout` / `Revenue`) создаются в `Setti
 - **Active нода не удаляется.** Сначала `Disable node`, потом `Clear recursively`.
 - **В дереве видно не все ноды уровня.** Это окно отрисовки и подгрузка страниц, а не потеря данных: под последней строкой уровня есть строка `Show more` со счётчиком `<показано> / <всего>` — дожимай её, пока не исчезнет (механика — [models/distributions-model.md](../models/distributions-model.md)).
 - **`Default query` вместе с `Direct traffic distribution`.** DTD дополняет пустые параметры первой, затем `Default query` — оставшиеся пустые. Очисти `Default query`, если он больше не должен дополнять атрибуцию.
-- **Разделение Direct Traffic по путям (`initial_path`), где оно не нужно.** Возможность есть (см. шаг 4 DTD), но для голых Direct-Traffic-запусков обычно не требуется — лишнее усложнение.
+- **Разделение Direct Traffic по путям (`initial_path`).** Делить по путям стоит, когда разные пути домена ведут в разные кампании (шаг 4 DTD); если весь домен идёт в одну кампанию, правило по пути не нужно.
 - **Большие пулы доменов (порядка 10k) на одну дистрибуцию.** Работать с таким деревом в UI может быть неудобно; большой пул можно создавать и управлять им своими скриптами через API.
 
 ## Смежные темы
@@ -197,7 +197,7 @@ Money-дистрибуции (`Payout` / `Revenue`) создаются в `Setti
 - [models/distributions-model.md](../models/distributions-model.md) — концепт-уровень: 9 типов, дерево, Strategy, Business Models, Buyer UTM Distribution.
 - [how-to/auto-rules.md](auto-rules.md) — дистрибуция типа `Auto Rules`: шаблон автоправил Meta, ассайн и запуск в разделе `Automations`.
 - [models/flow-model.md](../models/flow-model.md) — Content step, Fill Fields step, Fields by Distribution.
-- [how-to/domains.md](domains.md) — `Default Query Code`, привязка домена к серверу.
+- [how-to/domains.md](domains.md) — `Default query Code`, привязка домена к серверу.
 - [how-to/push-notifications.md](push-notifications.md) — как собирается текст сообщения (плейсхолдеры, спинтакс).
 - [how-to/remarketing-campaigns.md](remarketing-campaigns.md) — рассылка по аудитории визитов: где выбирается дистрибуция `Message Templates`.
 - [reference/glossary.md](../reference/glossary.md) — `Direct Traffic Distribution`, `Content distribution`, `Fill Field Distribution`, `Add Folder`, `Clear recursively`, `Strategy First/Weights/ML`.

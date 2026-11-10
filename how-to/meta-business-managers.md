@@ -1,19 +1,19 @@
 ---
 id: meta-business-managers
 title: Business Managers в Meta-модуле — бизнес-менеджеры, их кабинеты, страницы, пиксели и люди
-description: Вкладка Meta → Business Managers (ERP, /app/facebook/businesses, право meta.businesses.view) — бизнес-менеджеры (BM) Meta подключённых соцпрофилей — роль профиля в BM, счётчики Ad Accounts / Pages / Pixels с переходом в отфильтрованную таблицу, Pixel Last Fired, People / Admins / System Users; колонка и фильтр Business Manager на Ad Accounts / Pages / Pixels; почему вкладка пустая (у токена нет права business_management).
+description: Вкладка Meta → Business Managers (полный Meta-модуль — ERP и MTK с Meta+, /app/facebook/businesses, право meta.businesses.view) — бизнес-менеджеры (BM) Meta подключённых соцпрофилей — роль профиля в BM, счётчики Ad Accounts / Pages / Pixels с переходом в отфильтрованную таблицу, Pixel Last Fired, People / Admins / System Users; колонка и фильтр Business Manager на Ad Accounts / Pages / Pixels; почему вкладка пустая (у токена нет права business_management).
 doc_type: how-to
-builds: [erp]
+builds: [erp, mtk]
 related: [meta-ads]
 language: ru
-updated: 2026-10-28
+updated: 2026-11-09
 ---
 
 # Business Managers в Meta-модуле — бизнес-менеджеры, их кабинеты, страницы, пиксели и люди
 
 ## Где в AIO посмотреть бизнес-менеджеры (BM) Meta — вкладка Business Managers
 
-**Вкладка `Meta → Business Managers` (`/app/facebook/businesses`) показывает бизнес-менеджеры (BM, Business Manager, бизнес-портфолио) Meta, к которым есть доступ у ваших подключённых соцпрофилей.** В меню Meta она стоит перед `Pages` и `Pixels`; открывается с правом `meta.businesses.view`, есть только в ERP. Сотрудник видит BM только своих доступных соцпрофилей, Owner / Admin — все BM тенанта.
+**Вкладка `Meta → Business Managers` (`/app/facebook/businesses`) показывает бизнес-менеджеры (BM, Business Manager, бизнес-портфолио) Meta, к которым есть доступ у ваших подключённых соцпрофилей.** В меню Meta она стоит перед `Pages` и `Pixels`; открывается с правом `meta.businesses.view`, есть в полном Meta-модуле — в ERP и в MTK с модулем `Meta+` (в базовой MTK-вкладке `Meta` её нет). Сотрудник видит BM только своих доступных соцпрофилей, Owner / Admin — все BM тенанта.
 
 AIO данные BM только читает: создать BM, пригласить человека или поменять роли из AIO нельзя. Остальной Meta-модуль — соцпрофили, кабинеты, кампании — в [how-to/meta-ads.md](meta-ads.md).
 
@@ -44,6 +44,6 @@ AIO данные BM только читает: создать BM, приглас
 
 **Числа в колонках `Ad Accounts`, `Pages` и `Pixels` кликабельны: клик открывает соответствующую таблицу Meta-модуля, отфильтрованную по этому BM.** Так из BM проваливаются в его кабинеты, страницы или пиксели без ручного поиска.
 
-На вкладках `Ad Accounts`, `Pages` и `Pixels` есть скрытая колонка `Business Manager` и фильтр `Business Manager` (несколько значений). Фильтр виден с правом `meta.businesses.view`. У кабинета колонка пустая, если кабинет личный, а не в BM, или AIO ещё не узнал его BM — эти данные дозаполняются в фоне.
+На вкладках `Ad Accounts`, `Pages` и `Pixels` есть скрытая колонка `Business Manager` и фильтр `Business Manager` (несколько значений). Колонка и фильтр видны с правом `meta.businesses.view`. У кабинета колонка пустая, если кабинет личный, а не в BM, или AIO ещё не узнал его BM — эти данные дозаполняются в фоне.
 
 Сотрудник на вкладке `Pixels` видит пиксели кабинетов своих соцпрофилей и пиксели бизнес-менеджеров, доступных через его соцпрофили.

@@ -4,9 +4,9 @@ title: Доменная модель AIO — карта сущностей и с
 description: Корневой спайн доменной модели. Что за сущности есть в AIO (Tenant, Campaign, Flow, Visit, Conversion, Destination, Distribution…) и как они сцеплены. Точка входа во все concept-слои.
 doc_type: model
 builds: [erp, mtk]
-related: [tenant, user, permissions-model, source, campaign, flow-model, visit, visit-lifecycle, visit-field, landing, sdk, form, content-library, landings, destination, advertiser, conversion-model, tracker, auto-rules, distributions-model, business-model, domain, server, architecture, marketing-flow, notifications-flow, metric, analytics, domains, glossary, placeholders, ui-map]
+related: [tenant, user, permissions-model, source, campaign, flow-model, visit, visit-lifecycle, visit-field, landing, sdk, form, content-library, landings, destination, advertiser, conversion-model, tracker, auto-rules, distributions-model, business-model, domain, server, architecture, remarketing-campaigns, marketing-flow, notifications-flow, metric, analytics, domains, glossary, placeholders, ui-map]
 language: ru
-updated: 2026-10-09
+updated: 2026-11-09
 ---
 
 # Доменная модель AIO — карта сущностей и связей
@@ -61,7 +61,7 @@ Tenant
 
 Flow — это граф: узлы (**Flow State**, «шаг») + рёбра (**Transition**, «переход»). Полное описание каждого — [models/flow-model.md](flow-model.md).
 
-- · **Flow State (шаг)** — узел графа: Source / Content / Filter / Temp Destination / Domain change / Fill Fields / Fields by distribution / Condition / Fill form / Spawn conversion / Field verification / SubFlow / Notifications flow / Finish.
+- · **Flow State (шаг)** — узел графа: Source / Content / Combined Landing / Filter / Temp Destination / Domain change / Fill Fields / Fields by distribution / Condition / Fill form / Spawn conversion / Field verification / SubFlow / Notifications flow / Finish.
 - · **Transition (переход)** — ребро графа: Arrived / Handle / Handle-form / Handle-link / Passed / Rejected / Destination-pushed / Destination-rejected / Destination-interacted / No payload.
 
 ### Контент: Landing, Form, SDK, Content Library
@@ -93,12 +93,14 @@ Flow — это граф: узлы (**Flow State**, «шаг») + рёбра (**
 
 ### Маркетинг и ретеншн: Notification Flow, Message Template
 
-- **Notification Flow** (синоним — `Marketing Flow`) — отдельный флоу рассылки: ноды Check / Wait / Repeat / Push, вешается на Campaign Flow / Conversion Type. → [models/marketing-flow.md](marketing-flow.md)
-- · **Message Template** (Push/Email/Telegram/SMS) · **Sender Provider** · **Remarketing Distribution** (контент рассылки). → [mechanics/notifications-flow.md](../mechanics/notifications-flow.md), [models/distributions-model.md](distributions-model.md)
+- **Notification Flow** (синоним — `Marketing Flow`) — отдельный флоу рассылки (ноды Check / Wait / Repeat / Push и другие); запускает его remarketing-кампания ([how-to/remarketing-campaigns.md](../how-to/remarketing-campaigns.md)). → [models/marketing-flow.md](marketing-flow.md)
+- · **Message Template** (Push / Telegram) · **Sender Provider** · **Remarketing Distribution** (контент рассылки). → [mechanics/notifications-flow.md](../mechanics/notifications-flow.md), [models/distributions-model.md](distributions-model.md)
+
+В MTK рассылки доступны с модулем `PWA + Push` (вкладка `PWA`: кампании ремаркетинга и шаблоны сообщений); собственный флоу рассылки там не строится — [how-to/remarketing-campaigns.md](../how-to/remarketing-campaigns.md).
 
 ### Аналитика и измерения: Metric, Grouper
 
-- **Metric** (Conversions count = штуки, Revenue/Payout count = деньги, Computable, Data feed) — числовой показатель-колонка в отчётах; ось всей аналитики, адресуется по UUID. → [models/metric.md](metric.md)
+- **Metric** (4 типа: Conversions count = штуки, Remarketing count = события рассылок, Computable = формула, Data feed = фид событий, через него же — деньги конверсий) — числовой показатель-колонка в отчётах; ось всей аналитики, адресуется по UUID. → [models/metric.md](metric.md)
 - · **Grouper** — измерение для разбивки строк отчёта: готовый grouper или поле, доступное через `Availability as grouper`. → [models/visit-field.md](visit-field.md), [how-to/analytics.md](../how-to/analytics.md)
 
 ---
@@ -113,11 +115,11 @@ Flow — это граф: узлы (**Flow State**, «шаг») + рёбра (**
 
 ### Как Campaign наследует Flow?
 
-**Campaign → ровно один Flow.** Кампания наследует структуру флоу; часть настроек шагов переопределяется на уровне кампании (`Settings Availability`: Campaign Template / Flow Only / Campaign Only). → [models/campaign.md](campaign.md), [models/flow-model.md](flow-model.md)
+**Campaign → ровно один Flow.** Кампания наследует структуру флоу; часть настроек шагов переопределяется на уровне кампании (`Settings availability`: `Campaign template` / `Flow only` / `Campaign only`). → [models/campaign.md](campaign.md), [models/flow-model.md](flow-model.md)
 
 ### Как Visit получает Campaign и Source?
 
-**Новый вход без найденной сессии требует `cuuid`(Campaign) + `suuid`(Source).** Если их нет, атрибуцию задают `Default Query` / `Direct Traffic Distribution`. Найденная URL/cookie-сессия позволяет продолжить Visit без этих параметров. → [models/visit.md](visit.md)
+**Новый вход без найденной сессии требует `cuuid`(Campaign) + `suuid`(Source).** Если их нет, атрибуцию задают `Default query` / `Direct Traffic Distribution`. Найденная URL/cookie-сессия позволяет продолжить Visit без этих параметров. → [models/visit.md](visit.md)
 
 ### Как Conversion связана с Visit?
 
@@ -133,7 +135,7 @@ Flow — это граф: узлы (**Flow State**, «шаг») + рёбра (**
 
 ### Зачем Domain Change в пути Visit?
 
-**Domain-Change-шаг переключает трекинговый ↔ публичный домен** внутри пути визита. → [how-to/domains.md](../how-to/domains.md)
+**Шаг `Domain change` переключает трекинговый ↔ публичный домен** внутри пути визита. → [how-to/domains.md](../how-to/domains.md)
 
 ## Как связаны Flow States и текущий стейт Visit — самая частая путаница
 
@@ -147,7 +149,7 @@ Flow — это граф: узлы (**Flow State**, «шаг») + рёбра (**
 
 ### Текущий Flow State и ERP Visit Status — это две разные оси
 
-- **Visit Status (Wait / Live / Left) — это другое, ортогональное измерение.** Оно про «живость» сессии, не про позицию в графе: визит может быть `Live` стоя на Offer, или `Left`, бросив на Preland. (`Wait` = визит ждёт первые ивенты от SDK / не догрузился JS и т.п.) → *уточните у поддержки*
+- **Visit Status (Wait / Live / Left) — это другое, ортогональное измерение.** Оно про события записи сессии от SDK, не про позицию в графе: визит может быть `Live`, стоя на Offer, или `Left` на Preland. `Wait` — доступных событий записи сессии нет, `Live` — последнее событие не старше минуты, `Left` — старше минуты; закрытие вкладки статус не подтверждает. → *уточните у поддержки*
 
 - **Практический смысл (главный дебаг-объектив):** «куда уехал визит / где застрял» = найти, **на каком State** он сейчас и **каким Transition** (или `No payload`) туда попал. Это первое, что смотрят при разборе «лиды не доходят» / «лэнд не тот».
 

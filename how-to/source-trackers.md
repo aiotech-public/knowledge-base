@@ -6,7 +6,7 @@ doc_type: how-to
 builds: [erp, mtk]
 related: [source, tracker, glossary, conversion-model, ui-map, custom-fields, campaigns, sdk, placeholders, permissions-model, ui-common, visit-lifecycle, test-campaign, debug-with-logs]
 language: ru
-updated: 2026-10-28
+updated: 2026-11-09
 ---
 
 # Sources / Trackers / Postbacks (How-to)
@@ -19,9 +19,9 @@ updated: 2026-10-28
 
 ## TL;DR
 
-- **Создать Source** — `Tracker → Sources → + Source` (зелёная кнопка). Сначала диалог `Choose source template` — выбираете шаблон площадки (FB CAPI / Google Ads / TikTok …), затем в форме `Create source` правите `Name` и код источника.
+- **Создать Source** — `Tracker → Sources → + Source` (зелёная кнопка). Сначала диалог `Choose source template` — выбираете шаблон площадки (`Meta` / `Google Ads` / `TikTok` …), затем в форме `Create source` правите `Name` и код источника.
 - **Source Rewrites** = маппинг входящего параметра ссылки на slug поля визита. `Tracker → Sources → <Source> → правый клик → Edit source` → ключ `rewrites` в JSON.
-- **Постбэк-трекер** создаётся в `Tracker → Trackers → + Tracker`. Обязательно указать Source-фильтр, тип конверсии, URL.
+- **Постбэк-трекер** создаётся в `Tracker → Trackers → + Tracker`: сначала выбирается интеграция (`Tracker type`), затем обязательны `Name`, `Sources`, `Conversion type`, `Delay in seconds` и обязательные поля выбранного типа (у `HTTP Get` — `Url`).
 - **FB CAPI кастомное событие** — поле `Event` FB CAPI трекера; дополнительные данные события — стандартные поля `custom_data` (`Content Ids`, `Contents`, `Predicted LTV` …) и свои пары `Custom Key N` / `Custom Value N`.
 - Логи отправки в FB CAPI — `Tracker → Trackers → ПКМ → Tracker logs`.
 
@@ -35,7 +35,7 @@ updated: 2026-10-28
 
 **Шаги:**
 
-1. Открывается диалог **`Choose source template`** (`Выбор шаблона источника`) — выбираете шаблон площадки, под которую делается Source (FB CAPI, Google Ads, TikTok и т.д.). Шаблон **подгружает преднастроенный код источника** — ссылки и параметры уже разложены, с нуля ничего писать не нужно. Клик по карточке выбирает шаблон, двойной клик подтверждает сразу; кнопка **`Create source`** внизу диалога неактивна, пока шаблон не выбран.
+1. Открывается диалог **`Choose source template`** (`Выбор шаблона источника`) — выбираете шаблон площадки, под которую делается Source (`Meta`, `Google Ads`, `TikTok` и т.д.). Шаблон **подгружает преднастроенный код источника** — ссылки и параметры уже разложены, с нуля ничего писать не нужно. Клик по карточке выбирает шаблон, двойной клик подтверждает сразу; кнопка **`Create source`** внизу диалога неактивна, пока шаблон не выбран.
 2. Открывается форма **`Create source`** с полями:
    - **`Name`** — имя источника.
    - **Структурированный редактор** с вкладками: **`Links`** — готовые ссылки для рекламного кабинета и их `Parameters` (маппинг URL-параметров на поля визита через плейсхолдеры), **`Rewrites`** — правила «ключ URL → slug поля», **`Replaces`**, **`Raw`** — сырой JSON источника целиком.
@@ -59,7 +59,7 @@ updated: 2026-10-28
 
 Код источника **обязан содержать поля, заведённые в AIO под этот Source** — иначе параметры из tracking-ссылки не захватятся. В ERP поля заводятся заранее в `Settings → Fields`; порядок создания нового поля в MTK — [how-to/custom-fields.md](custom-fields.md). Часть полей может приехать из самого шаблона: если в коде источника есть блок `fields`, AIO при сохранении Source заводит недостающие поля сам — механика и её ограничение в [models/source.md](../models/source.md).
 
-> Source может принимать **URL-параметры** (напр. CPC, tracking-плейсхолдеры рекламных платформ) через `rewrites` / JSON-конфиг и маппить их в поле `Cost` визита. Это **не** автоматический pullback расходов через Meta-интеграцию — тот работает на **уровне кампании** через `Cost Update Strategy` (см. [how-to/campaigns.md](campaigns.md)).
+> Стоимость клика визит берёт из URL-параметра `cost` входной ссылки — как есть: `rewrites` источника этот параметр не переименовывают, поэтому цену из макроса площадки ставят прямо в `cost=`. Это **не** автоматический pullback расходов через Meta-интеграцию — тот работает на **уровне кампании** через `Cost Update Strategy` (см. [how-to/campaigns.md](campaigns.md)).
 
 > После настройки Source ему почти всегда нужны **свои постбэки** — это **ключевой шаг при создании нового Source** (отбивка конверсий наружу). См. секцию «Создать постбэк-трекер» ниже.
 
@@ -69,7 +69,7 @@ updated: 2026-10-28
 
 - **`replace`** — массив определений полей, которые заполняются в Link Generator. Каждый элемент: `required`, `key`, `label`, `placeholder`, `description`, `tooltip`, `values`, `dynamic-type`, `static-data-key`, `dynamic-data-type`, `value`.
   - **`dynamic-type`**: `text` (свободный ввод) или `select` (дропдаун — тогда `values` = map опций `ключ→label`, а `value` — вариант, предвыбранный при открытии Link Generator).
-  - В `FB w/ CAPI` четыре поля: `token` (`FB CAPI Token`, `EAAd…`-токен из BM), `pixel` (`FB Pixel`, напр. `1000000000000000`) — оба `text`, не обязательные; `fb_action` и `fb_action_f` — селекты стандартных событий Meta (`Lead`, `Purchase`, `CompleteRegistration` … + пункт `Nothing`). В iGaming есть пятое — `fb_action_i` под событие установки. Лейблы и предвыбранные значения селектов различаются по вертикали — [how-to/campaigns.md](campaigns.md) → «Lead Action и событие покупки».
+  - В `FB w/ CAPI` четыре поля: `token` (`FB CAPI Token`, `EAAd…`-токен из BM), `pixel` (`FB Pixel`, напр. `1000000000000000`) — оба `text`, не обязательные; `fb_action` и `fb_action_f` — селекты стандартных событий Meta (`Lead`, `Purchase`, `CompleteRegistration` … + пустой пункт `Nothing`; в iGaming у `fb_action` пустой пункт подписан `CompleteRegistration` и, как `Nothing`, событие не шлёт). В iGaming есть пятое — `fb_action_i` под событие установки. Лейблы и предвыбранные значения селектов различаются по вертикали — [how-to/campaigns.md](campaigns.md) → «Lead Action и событие покупки».
 
 ### Блок `links` и остальные ключи JSON источника
 
@@ -125,22 +125,22 @@ Source настраивается **JSON-конфигом** (поле `Source co
 
 Постбэк-трекер — это **исходящая** отбивка: когда нужно из AIO отправлять постбэки наружу (в рекламную платформу / партнёрку / Source), напр. трекер типа `HTTP Get`. Не путать со входящим постбэком рекламодателя, который создаёт конверсию (это Destination-постбэк, см. [models/conversion-model.md](../models/conversion-model.md)). Трекер всегда исходящий — направление и модель в [models/tracker.md](../models/tracker.md).
 
-**Путь:** `Tracker → Trackers → + Tracker` (или правый клик по трекеру → `Edit tracker`).
+**Путь:** `Tracker → Trackers → + Tracker` (или правый клик по трекеру → `Edit tracker`). Кнопка `+ Tracker` сначала открывает окно `Create tracker` с сеткой интеграций и поиском по имени; выбранная интеграция подставляется в `Tracker type` формы.
 
-**Поля редактора:**
+### Поля редактора постбэк-трекера — `Sources`, `Conversion type`, `Tracker type`, `Delay in seconds`
 
 1. **Name** — имя трекера.
 2. **Sources** — для каких Source-ов трекер срабатывает (мульти-селект). **Обязательно**.
 3. **Conversion type** — тип конверсии тенанта; в ERP типы настраиваются в `Settings → Conversion types` (засеянный набор зависит от вертикали шаблона: например, `Lead`, `Registration`, `Approved`, `Install`, `Push Subscribe`; свои в ERP добавляются там же; создание типа в MTK — [models/conversion-model.md](../models/conversion-model.md)).
 4. **Tracker type** — механизм отправки (полный список типов — [models/tracker.md](../models/tracker.md)). **От типа зависят поля payload ниже.** Если у Source нет conversion API (как Facebook CAPI / TikTok Events API) — выбирают `HTTP Get`.
-5. **Delay in seconds** — задержка перед отправкой (`No delay` / N секунд).
+5. **Delay in seconds** — задержка перед отправкой, обязательный селект: `No delay`, `1 Minute`, `5 Minutes`, `10 Minutes`, `30 Minutes`, `1 Hour`.
 6. `Confirm`. Вкл/выкл трекера — тоггл `Switch activity` в редакторе (или экшен `Switch activity` правым кликом).
 
 ### Поля payload трекера — что ставить для FB CAPI и HTTP Get
 
 Поля payload зависят от выбранного Tracker type.
 
-Для `Facebook Conversion API`: `Placement` (`{{aio.visit.fields.fb_placement}}`), `Exclude Placement`, `City` (`{{aio.visit.location_city}}`), `Zip Code` (`{{aio.visit.location_postal_code}}`), `Revenue` (`{{aio.conversion.revenue}}`), необязательные стандартные поля `custom_data` (секция «Поля `custom_data` в FB CAPI» ниже) и пары **`Custom Key N` / `Custom Value N`** — свои свойства внутри `custom_data` события.
+Для `Facebook Conversion API` форма не сохранится без `Event`, `Action Source`, `Token`, `Pixel`, `FBP Field`, `FBC Field` и `FBClic Field`; в засеянных трекерах это `{{aio.visit.fields.fb_lead_action}}` (или другое поле события), `website`, `{{aio.visit.fields.fb_capi_token}}`, `{{aio.visit.fields.fb_pixel}}`, `{{aio.visit.fields.fbp}}`, `{{aio.visit.fields.fbc}}`, `{{aio.visit.fields.fbclid}}`. Необязательные: `Email Field` / `Phone Field`, `First Name` / `Last Name`, `City` (в засеянных — `{{aio.visit.location_city}}`), `Zip Code` (`{{aio.visit.location_postal_code}}`), `Revenue` (`{{aio.conversion.revenue}}`), `Placement` / `Exclude Placement` (если значение `Placement`, обычно `{{aio.visit.fields.fb_placement}}`, есть в списке `Exclude Placement` через запятую, событие не уходит: ошибка `Visit Placement <X> is excluded`), `Event Source Domain`, стандартные поля `custom_data` (секция ниже) и пары **`Custom Key N` / `Custom Value N`** — свои свойства внутри `custom_data`.
 
 Для `HTTP Get` / постбэк-URL — поле **`Url`** с эндпоинтом партнёрки. Макросы партнёрки в URL заменяют на AIO-плейсхолдеры, напр. `click_id={{aio.visit.fields.<source>_click_id}}` — поле визита, куда для данного Source пишется click ID. Список доступных плейсхолдеров открывается кликом по иконке-шестиграннику (hexagon) в поле `Url`.
 
@@ -169,7 +169,7 @@ Source настраивается **JSON-конфигом** (поле `Source co
 
 ### Кривое значение в `custom_data` не роняет событие FB CAPI — смотрите `warnings` в логе трекера
 
-**Если значение поля `custom_data` не подошло (в том числе после подстановки плейсхолдера), AIO пропускает только это поле, а событие уходит в Meta без него.** Причина пропуска пишется в запись `Tracker logs` в блок `warnings`: `num_items "<значение>" is not a number, skipped`, `predicted_ltv "<значение>" is not a number, skipped`, `contents is not valid JSON (<ошибка>), skipped`, `contents[<N>] is not an object, skipped`.
+**Если значение поля `custom_data` не подошло (в том числе после подстановки плейсхолдера), AIO пропускает только это поле, а событие уходит в Meta без него.** Причина пропуска пишется в запись `Tracker logs` в блок `warnings`: `num_items "<значение>" is not a number, skipped`, `predicted_ltv "<значение>" is not a number, skipped`, `contents is not valid JSON (<ошибка>), skipped`, `contents must be a JSON array of objects, skipped`, `contents[<N>] is not an object, skipped`.
 
 `Contents` редактируется в JSON-редакторе формы: невалидный JSON подсвечивается при вводе и не даёт сохранить трекер. Одиночный объект без квадратных скобок AIO принимает как список из одного элемента; у элемента с `id` и без `product_id` значение `id` дублируется в `product_id`. Плейсхолдер внутри `Contents` ставится в кавычках — `"id": "{{aio.visit.fields.offer_id}}"`, иначе JSON не пройдёт проверку.
 
@@ -283,8 +283,8 @@ UUID конверсии уходит как `event_id`, у события `Purch
 
 В FB CAPI трекере поле **`Event`** обычно ссылается на плейсхолдер по типу конверсии:
 
-- `{{aio.visit.fields.fb_lead_action}}` — событие лида, выбранное как **Lead Action** в Link Generator;
-- `{{aio.visit.fields.fb_ftd_action}}` — парное событие целевого действия / покупки, выбранное в Link Generator;
+- `{{aio.visit.fields.fb_lead_action}}` — событие первого селекта в Link Generator (`FB Lead Action ( CAPI )` или `FB Registration Action ( CAPI )` — подпись зависит от вертикали);
+- `{{aio.visit.fields.fb_ftd_action}}` — событие второго селекта, парное событие целевого действия / покупки (в Sweeps он подписан `FB Lead Action ( CAPI )`);
 - `{{aio.visit.fields.fb_install_action}}` — событие установки (третий селект, есть только у `FB w/ CAPI` iGaming-шаблона; его читает засеянный `FB AIO Install`).
 
 Так событие определяется тем, что выбрали при генерации ссылки (см. [how-to/campaigns.md](campaigns.md) → Lead Action и событие покупки). **Альтернатива** — захардкодить `Event` статикой прямо в трекере; тогда для этого Conversion Type всегда отправляется одно и то же событие, независимо от выбора в Link Generator.

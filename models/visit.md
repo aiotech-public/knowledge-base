@@ -6,7 +6,7 @@ doc_type: model
 builds: [erp, mtk]
 related: [visit-lifecycle, visit-field, conversion-model, server, domain-model, ui-common, remarketing-campaigns, marketing-flow, debug-with-logs, flow-model, landings, campaign, source]
 language: ru
-updated: 2026-10-09
+updated: 2026-11-09
 ---
 
 # Visit — концепт (модель)
@@ -21,7 +21,7 @@ updated: 2026-10-09
 
 ### Как идентифицируется визит: cuuid + suuid + cookie → visit_uuid
 
-Агент сначала ищет сессию в URL, затем в **cookie**. При входе с `cuuid`+`suuid` cookie должна соответствовать домену, кампании и Source. Пока подходящая сессия доступна, повторный вход продолжает тот же визит; другой браузер, инкогнито или очистка cookie дают новый вход, если ссылка сама не содержит сессию. Окно уникальности и отличие сессии от fingerprint — [mechanics/visit-lifecycle.md](../mechanics/visit-lifecycle.md). Если сессия не найдена и нет `cuuid`/`suuid`, атрибуцию могут дать Direct Traffic-механизмы (`Default Query` / `Direct Traffic Distribution`).
+Агент сначала ищет сессию в URL, затем в **cookie**. При входе с `cuuid`+`suuid` cookie должна соответствовать домену, кампании и Source. Пока подходящая сессия доступна, повторный вход продолжает тот же визит; другой браузер, инкогнито или очистка cookie дают новый вход, если ссылка сама не содержит сессию. Окно уникальности и отличие сессии от fingerprint — [mechanics/visit-lifecycle.md](../mechanics/visit-lifecycle.md). Если сессия не найдена и нет `cuuid`/`suuid`, атрибуцию могут дать Direct Traffic-механизмы (`Default query` / `Direct Traffic Distribution`).
 
 Как ещё называют: «уники», «уникальные визиты» — про уникальность визита (за сколько браузер продолжает считаться тем же визитом — [mechanics/visit-lifecycle.md](../mechanics/visit-lifecycle.md)). Второй ключ к визиту, кроме куки, — зашифрованный слепок сессии в стартовом URL установленной PWA, в клик-ссылке push-уведомления remarketing-кампании и в постоянных ссылках `{{link:s:permanent}}` / `{{link:h:permanent}}`: срока у него нет; такая ссылка может продолжить визит под тем же `visit_uuid` и спустя месяцы, если Visit и связанные объекты доступны, а сессия корректно восстановлена — разбор в [mechanics/visit-lifecycle.md](../mechanics/visit-lifecycle.md).
 
@@ -29,11 +29,11 @@ updated: 2026-10-09
 
 **Flow State** показывает положение визита в пути в обоих билдах. В ERP есть и отдельная колонка **Status** — эти две координаты независимы:
 
-- **Текущий Flow State** — *где* визит в графе флоу (на каком шаге стоит). Двигается **переходами** (Transitions): Arrived / Handle / Handle-link / Handle-form / Passed / Rejected / Destination-pushed / Destination-rejected / Destination-interacted / No payload. Это «позиция в пути».
+- **Текущий Flow State** — *где* визит в графе флоу (на каком шаге стоит). Двигается **переходами** (Transitions), в том числе: Arrived / Handle / Handle-link / Handle-form / Passed / Rejected / Destination-pushed / Destination-rejected / Destination-interacted / No payload. Это «позиция в пути».
 
 - **Visit Status** — `Wait` / `Live` / `Left` — индикатор активности сессии, **не** позиция. Значение рассчитывается для таблицы по времени последнего доступного события сессии; это не отдельное сохранённое поле-статус визита. Определения и типовые причины — [mechanics/visit-lifecycle.md](../mechanics/visit-lifecycle.md).
 
-Эти оси **не связаны жёстко**: визит может быть `Live`, стоя на Offer, или `Left`, бросив на Preland. Связь «шаги флоу ↔ текущий стейт визита» детально — [models/domain-model.md](domain-model.md) → «Как связаны Flow States и текущий стейт Visit»; статусы.
+Эти оси **не связаны жёстко**: визит может быть `Live`, стоя на Offer, или `Left` на Preland — последнее событие записи там старше минуты. Связь «шаги флоу ↔ текущий стейт визита» детально — [models/domain-model.md](domain-model.md) → «Как связаны Flow States и текущий стейт Visit»; статусы.
 
 ### Какие поля несёт визит и как они накапливаются по пути флоу
 
@@ -53,7 +53,7 @@ Remarketing-кампании пишут на визит **два разных с
 
 ### Где визит может потеряться — точки потери (Visit Loss)
 
-На каждом шаге визит может «не дойти»: JS не догрузился, фильтр зарубил (`Rejected`), антифрод срезал перед пушем, дестинейшн отверг, правила Content не подошли (`No payload`). Метрика `Visit Loss` (`Visits Loss %`) показывает долю неквалифицированных визитов: `(Visits − Qualified Visits) / Visits`. Она не суммирует все обрывы на последующих шагах. Поэтому дебаг визита = пройти его путь и найти точку обрыва (см. [mechanics/visit-lifecycle.md](../mechanics/visit-lifecycle.md) → потеря).
+На каждом шаге визит может «не дойти»: JS не догрузился, фильтр зарубил (`Rejected`), антифрод срезал перед пушем, дестинейшн отверг, правила Content не подошли (`No payload`). Метрика `Visit Loss` (`Visits Loss %`, есть в шаблонах Finance, Nutra и Sweeps) показывает долю неквалифицированных визитов: `(Visits - Qualified Visits) / Visits`. Она не суммирует все обрывы на последующих шагах. Поэтому дебаг визита = пройти его путь и найти точку обрыва (см. [mechanics/visit-lifecycle.md](../mechanics/visit-lifecycle.md) → потеря).
 
 ## Как Visit связан с остальными сущностями
 

@@ -4,9 +4,9 @@ title: Custom Fields (How-to)
 description: Создание полей визита в Settings → Fields — шесть значений Type, атрибуты и тогглы карточки поля, папки по Type и Group (вид зафиксирован), состав колонок и экшенов, массовые действия по выделению (With selection), пачка полей под интеграцию обогащения, Geo Code как select.
 doc_type: how-to
 builds: [erp, mtk]
-related: [visit-lifecycle, glossary, user-fields, forms, architecture, source, visit-field, sdk, placeholders, landings, ui-common, flow-model, source-trackers, meta-spend-allocation, campaigns, analytics, permissions]
+related: [visit-lifecycle, glossary, source, user-fields, source-trackers, forms, architecture, visit-field, sdk, placeholders, landings, ui-common, flow-model, meta-spend-allocation, campaigns, analytics, permissions]
 language: ru
-updated: 2026-10-16
+updated: 2026-11-09
 ---
 
 # Custom Fields (How-to)
@@ -15,16 +15,16 @@ updated: 2026-10-16
 
 ---
 
-В MTK поля визита из интерфейса не создаются и не редактируются: раздела `Fields` в `Settings` нет. Заведённые в тенанте поля видны в колонках таблиц и читаются плейсхолдерами по slug; новое поле заводит команда AIO по запросу — *Как устроен MTK-вид AIO: навигация, пресеты из шаблона и методы под типовые задачи*.
+В MTK отдельной формы создания и правки полей визита нет: раздела `Fields` в `Settings` нет. Заведённые в тенанте поля видны в колонках таблиц и читаются плейсхолдерами по slug. Новое поле появляется из блока `fields` в коде источника при сохранении Source ([models/source.md](../models/source.md)) или его заводит команда AIO по запросу — *Как устроен MTK-вид AIO: навигация, пресеты из шаблона и методы под типовые задачи*.
 
 ## TL;DR
 
 - Все поля визита — в `Settings → Fields → +Field`. Slug автогенерируется по имени. Сама страница — не плоская таблица, а папки по `Type` и `Group`.
-- Атрибуты в карточке поля: `Is Visible`, `Is Registry`, `Is macros visible?`, `2FA Protected`.
+- Атрибуты в карточке поля: `Is visible?`, `Is registry?`, `Is macros visible?`, `Is 2FA protected?`.
 - Вписать значение поля прямо в карточку `Source`, `Campaign`, лендинга, `Destination` (и раздать его из `Flow` / `Lander Type` / `Advertiser`) — секция `User fields`: [how-to/user-fields.md](user-fields.md).
 - Под интеграцию обогащения (`Traffic Filter`, дозаполняющий поля визита внешними данными) пачку полей нужно завести **заранее** — иначе ответ интеграции некуда записать и поля останутся пустыми; сами интеграции.
 - `Geo Code` (и другие строки) можно превратить в **select** через `Available values`.
-- `required` напрямую на **Visit Field** сделать **нельзя** — только через `Link Generator` (требует заполнить параметр перед генерацией ссылки). Не путать с `Required` на **Form Control** в `Settings → Forms` — там обязательность инпута SDK-формы работает (см. [how-to/forms.md](forms.md) § Required — два контекста).
+- `required` напрямую на **Visit Field** сделать **нельзя** — только обязательный параметр ссылки: `required: true` у параметра в блоке `replace` кода источника, и `Link Generator` требует заполнить его перед генерацией ссылки ([how-to/source-trackers.md](source-trackers.md)). Не путать с `Required` на **Form Control** в `Settings → Forms` — там обязательность инпута SDK-формы работает (см. [how-to/forms.md](forms.md) § Required — два контекста).
 
 ---
 
@@ -43,7 +43,7 @@ updated: 2026-10-16
 
 ### Что выставлять в `Create manually` для типового строкового поля
 
-Для типового строкового поля визита в `Create manually` выставляют: `Type = Visit`, `Format = String`, `Data source = Agent Init`. `Type` и `Format` — **два раздельных select** (`Type` = сущность-владелец поля и неймспейс адресации — `Visit` / `Campaign` / `Source` / `Conversion` / `Landing` / `Destination`; для обычного поля визита это `Visit`; концепт и роутинг неймспейсов — [models/visit-field.md](../models/visit-field.md). `Format` = дефолт, formatter и тип плейсхолдера, select из ~20 значений — `String`/`Number`/`Boolean`/`Placeholder`/`Variant`/`Money`/`Phone`/`Ip`/… и др.); подробно — в шагах создания поля. `Is Visible` обычно on; `Is macros visible?` — on только если поле читается на лэнде через AIO SDK (см. [reference/sdk.md](../reference/sdk.md)); `Is 2FA Protected` обычно off. Для появления поля в основном списке разбивок Roll Up и Tracker-таблиц в `Availability as grouper` выбирают `Tables`; поле также должно быть доступно пользователю, не архивировано и не защищено 2FA (см. секцию «Поле как группер» ниже). Колонку поля в таблицах сущностей `Is Visible` не включает — её добавляют вручную через кнопку `Settings` в тулбаре таблицы → `Table settings` (секция «Поставил `Is Visible`, а колонки поля в таблице кампаний нет» этого документа).
+Для типового строкового поля визита в `Create manually` выставляют: `Type = Visit`, `Format = String`, `Data source = Agent Init`. `Type` и `Format` — **два раздельных select** (`Type` = сущность-владелец поля и неймспейс адресации — `Visit` / `Campaign` / `Source` / `Conversion` / `Landing` / `Destination`; для обычного поля визита это `Visit`; концепт и роутинг неймспейсов — [models/visit-field.md](../models/visit-field.md). `Format` = дефолт, formatter и тип плейсхолдера, select из ~20 значений — `String`/`Number`/`Boolean`/`Placeholder`/`Variant`/`Money`/`Phone`/`Ip`/… и др.); подробно — в шагах создания поля. `Is visible?` обычно on; `Is macros visible?` — on только если поле читается на лэнде через AIO SDK (см. [reference/sdk.md](../reference/sdk.md)); `Is 2FA protected?` обычно off. Для появления поля в основном списке разбивок Roll Up и Tracker-таблиц в `Availability as grouper` выбирают `Tables`; поле также должно быть доступно пользователю, не архивировано и не защищено 2FA (см. секцию «Поле как группер» ниже). Колонку поля в таблицах сущностей `Is Visible` не включает — её добавляют вручную через кнопку `Settings` в тулбаре таблицы → `Table settings` (секция «Поставил `Is Visible`, а колонки поля в таблице кампаний нет» этого документа).
 
 ### Какие атрибуты заполнять при создании поля
 
@@ -51,7 +51,7 @@ updated: 2026-10-16
 
 1. **Name** — имя поля. Slug автогенерируется по имени (напр. `Postal Code` → slug `postal_code`).
 2. **Description** — опционально.
-3. **Group** — опционально. Категория/тег (напр. `Google`, `FB`, `Landings`), задаётся при создании, чтобы группировать поля для удобной навигации в таблицах и аналитике. Эта же категория = категория поля как группера (секция «Поле как группер» этого документа) и папка второго уровня на странице `Settings → Fields`.
+3. **Group** — опционально. Категория — свободный текст (в шаблоне, например, `Google`, `Facebook`, `Tracking`), группирует поля в таблицах и аналитике. Эта же категория = категория поля как группера (секция «Поле как группер» этого документа) и папка второго уровня на странице `Settings → Fields`.
 4. **Type** (`fieldTypes`) — **сущность-владелец поля**, она же определяет неймспейс адресации (`Conversion` адресуется через `aio.conversion.fields`, остальные типы — через `aio.visit.fields`). Шесть значений: `Visit`, `Campaign`, `Source`, `Conversion`, `Landing`, `Destination`; для обычного поля визита — `Visit`. Откуда у каждого типа берётся дефолт и каким плейсхолдером поле читается — [models/visit-field.md](../models/visit-field.md); где значение вписывается в карточку сущности — [how-to/user-fields.md](user-fields.md).
 5. **Format** (`fieldFormats`) — отдельный select (не `Type`): дефолт + formatter + тип плейсхолдера. Значений ~20; что выбрать — секция «Форматы поля» этого документа. Задаётся при создании и меняется в `Edit field`.
 6. **Data source** — select, который **ни на что не влияет**: выбрать значение можно, эффекта у выбора нет, для любого поля можно оставить `Agent Init`. Кто на самом деле штампует источник записи — [models/visit-field.md](../models/visit-field.md).
@@ -71,7 +71,7 @@ updated: 2026-10-16
 ### Тогглы поля (`Is Registry`, `Is macros visible?`, `2FA Protected`) и `Available values`
 
 7. **Атрибуты** (toggle):
-   - **`Is Visible`** (в форме поля — `Is visible?`) — показывать колонку поля по умолчанию, тултип `Visibility by default at columns etc`. Работает не на всех таблицах — секция «Поставил `Is Visible`, а колонки поля в таблице кампаний нет» этого документа.
+   - **`Is Visible`** (в форме поля — `Is visible?`) — показывать колонку поля по умолчанию. Работает не на всех таблицах — секция «Поставил `Is Visible`, а колонки поля в таблице кампаний нет» этого документа.
    - **`Is Registry`** — поле накапливает разные непустые значения; повтор уже записанного значения пропускается. Если выключено — новое непустое значение заменяет текущее.
    - **`Is macros visible?`** — поле доступно через объект `aio` на лэнде (JS-доступ в рантайме, не плейсхолдеры).
    - **`2FA Protected`** — значение защищено в таблицах, когда у пользователя включена защита данных 2FA и не активирован режим доступа к защищённым данным (например, для phone и email).
@@ -91,15 +91,15 @@ updated: 2026-10-16
 
 ### `Type = Campaign` — тоже поле визита, дефолт из кампании
 
-`Campaign` — **не отдельное «поле кампании», а то же поле визита**, его непустое значение из карточки кампании копируется при регистрации визита вне Trash. Непустой параметр URL с тем же slug может перекрыть этот дефолт. Удобно для FB Pixel / CAPI Token — один общий дефолт на весь трафик кампании, не светится в URL.
+`Campaign` — **не отдельное «поле кампании», а то же поле визита**, его непустое значение из карточки кампании копируется при регистрации визита вне Trash. Непустой параметр URL с тем же slug может перекрыть этот дефолт. Так можно задать, например, FB Pixel / CAPI Token одним дефолтом на весь трафик кампании, не в URL. В шаблонах тенанта поля `fb_pixel` и `fb_capi_token` — типа `Visit`: их значения приходят в ссылке.
 
 Значение всё равно живёт **на визите** и **может быть перезаписано для конкретного визита** — как любое поле визита, в том числе выбрав его целью в шаге `Fill Fields` во флоу ([models/flow-model.md](../models/flow-model.md)). Это не одно неизменяемое значение на всю кампанию. Концепт и разница Visit-vs-Campaign — [models/visit-field.md](../models/visit-field.md).
 
-Заводится поле по-прежнему здесь, в `Settings → Fields`, но в карточке кампании оно не появляется само: форма кампании показывает только поля, добавленные кнопкой `Add field` в секции `User fields`, плюс унаследованные от `Flow`. В Finance- и iGaming-шаблонах с этим типом уже заведены свободные поля `campaign_field_1…3` (группа `Custom`) — заготовки под любое значение уровня кампании. Как добавить поле в карточку и что при этом происходит со старыми кампаниями — [how-to/user-fields.md](user-fields.md).
+Заводится поле по-прежнему здесь, в `Settings → Fields`, но в карточке кампании оно не появляется само: форма кампании показывает поля, добавленные кнопкой `Add field` в секции `User fields`, унаследованные от `Flow` и поля, у которых в кампании уже сохранено значение. В Finance- и iGaming-шаблонах с этим типом уже заведены свободные поля `campaign_field_1…3` (группа `Custom`) — заготовки под любое значение уровня кампании. Как добавить поле в карточку и что при этом происходит со старыми кампаниями — [how-to/user-fields.md](user-fields.md).
 
 ### Slug — буквальное совпадение
 
-Slug используется в плейсхолдерах (`{{aio.visit.fields.<slug>}}`), Source Mapping, Non-SDK Form Handler. **В `Edit field` slug после создания не меняется** — поле архивируется и создаётся новое. См. [reference/placeholders.md](../reference/placeholders.md).
+Slug используется в плейсхолдерах (`{{aio.visit.fields.<slug>}}`), Source Mapping, Non-SDK Form Handler. **В `Edit field` slug после создания не меняется** — для нового slug старое поле архивируют и заводят новое. См. [reference/placeholders.md](../reference/placeholders.md).
 
 ### Куда вставлять slug поля
 
@@ -108,15 +108,15 @@ Slug используется в плейсхолдерах (`{{aio.visit.fields
 
 В MTK те же диалоги правки открываются из других мест: трекеры — `Settings` (gear-иконка в шапке) → `Trackers`, `Destinations` и `Sources` — вкладки верхнего меню.
 
-### `Is Used For Cost` — только для ручных апдейтов, и тоггла в карточке поля больше нет
+### `is_used_for_costs` (Is Used For Cost) — только для ручных апдейтов, и тоггла в карточке поля больше нет
 
-Атрибут нужен для **ручного** `Update Costs By <Field>` (правый клик → Update Costs). Для FB **не актуален** — по FB-костам и профиту основной способ — метрика `Meta Spend` ([mechanics/meta-spend-allocation.md](../mechanics/meta-spend-allocation.md)); перелив в метрику `Costs` — старый путь, он по-прежнему работает (см. [how-to/campaigns.md](campaigns.md) → секция Update Costs).
+Атрибут нужен для **ручного** `Update Costs by <поле>` (правый клик по кампании). Для FB **не актуален** — по FB-костам и профиту основной способ — метрика `Meta Spend` ([mechanics/meta-spend-allocation.md](../mechanics/meta-spend-allocation.md)); перелив в метрику `Costs` — старый путь, он по-прежнему работает (см. [how-to/campaigns.md](campaigns.md) → секция Update Costs).
 
-**Выставить флаг из интерфейса нельзя:** тоггла `Is Used For Cost` нет ни в `Create manually`, ни в `Edit field`, колонки `Used For Costs` в `Settings → Fields` тоже нет. Флаг при этом работает — в выборе `Update Costs By <Field>` появляются доступные пользователю неархивные поля с включённым флагом. API создания и правки поля принимает `is_used_for_costs`, в том числе для нового поля.
+**Выставить флаг из интерфейса нельзя:** тоггла `Is used for costs?` (флаг `is_used_for_costs`) нет ни в `Create manually`, ни в `Edit field`, колонки `Used for costs` в `Settings → Fields` тоже нет. Флаг при этом работает — у кампании появляются пункты `Update Costs by <поле>` для доступных пользователю неархивных полей с включённым флагом. API создания и правки поля принимает `is_used_for_costs`, в том числе для нового поля.
 
 ### Поле как группер — `Availability as grouper`
 
-Доступность поля как **группера** задаётся **внутри поля**: `Edit field → **Availability as grouper**` — мульти-селект со значениями **`Analytics`** и **`Tables`**. Основной список разбивок и в Roll Up, и в Tracker-таблицах проверяет `Tables`; одного `Analytics` для этого списка недостаточно. Поле встаёт группером под своей категорией **`Group`** (`Landings` / `Facebook` / `Quora` / `AdForm` / `LP Content Variables`…).
+Доступность поля как **группера** задаётся **внутри поля**: `Edit field → **Availability as grouper**` — мульти-селект со значениями **`Analytics`** и **`Tables`**. Основной список разбивок и в Roll Up, и в Tracker-таблицах проверяет `Tables`; одного `Analytics` для этого списка недостаточно. Поле встаёт группером под своей категорией **`Group`** (в шаблоне тенанта, например, `Facebook` / `Google` / `Tracking` / `LP Split Content`…); поле без группы — под `Fields`.
 
 **Не путать с экшеном `Make analytic`** (правый клик по полю): он делает поле аналитическим, но сам по себе группер **не включает**. Группер — это `Availability as grouper`.
 
@@ -140,7 +140,7 @@ Slug используется в плейсхолдерах (`{{aio.visit.fields
 
 Скрыты по умолчанию и включаются в настройках таблицы: `UUID`, `Group`, `Format`, `Availability as grouper`, `Owner`, `Created`, `Updated`, `Archived`.
 
-Колонок `Data source`, `Pre Processor`, `Used For Costs` и `Analytics` в таблице нет — их убрали совсем. Сделано ли поле аналитическим, теперь видно не по колонке, а по составу экшенов правого клика: у такого поля вместо `Make analytic` предлагаются `Relink analytic` и `Remove analytic`.
+Колонок `Data source`, `Pre Processor`, `Used for costs` и `Analytics` в таблице нет — их убрали совсем. Сделано ли поле аналитическим, теперь видно не по колонке, а по составу экшенов правого клика: у такого поля вместо `Make analytic` предлагаются `Relink analytic` и `Remove analytic`.
 
 ### Экшены правого клика в `Settings → Fields`
 
@@ -174,7 +174,7 @@ Slug используется в плейсхолдерах (`{{aio.visit.fields
 
 `Pre-Processor` и `Pre-Processor Settings` из карточки поля убраны: этих контролов нет ни в `Create manually`, ни в `Edit field`, и колонки `Pre Processor` в таблице `Settings → Fields` тоже нет. Выбрать пре-процессор (`String`, `Taboola CPC`) из интерфейса больше нельзя.
 
-`Is Used For Cost` из карточки поля убран вовсе (секция «`Is Used For Cost`» этого документа). `Data source` задаётся только при создании поля — в `Edit field` его нет. `Format` меняется и в `Edit field`: смена формата меняет дефолт значения, formatter и тип плейсхолдера поля ([models/visit-field.md](../models/visit-field.md)).
+Флаг `is_used_for_costs` из карточки поля убран вовсе (секция «`is_used_for_costs` (Is Used For Cost)» этого документа). `Data source` задаётся только при создании поля — в `Edit field` его нет. `Format` меняется и в `Edit field`: смена формата меняет дефолт значения, formatter и тип плейсхолдера поля ([models/visit-field.md](../models/visit-field.md)).
 
 ## Geo Code как select (Available values)
 
@@ -193,7 +193,7 @@ Slug используется в плейсхолдерах (`{{aio.visit.fields
 
 ### `required` для Visit Field — через Link Generator
 
-Сделать **Visit Field** `required` напрямую в `Settings → Fields` **нельзя** — UI не поддерживает. Альтернатива — пометить обязательным в `Link Generator` при генерации ссылки кампании; тогда значение нужно заполнить перед генерацией ссылки; при открытии готовой ссылки это не валидатор Visit Field.
+Сделать **Visit Field** `required` напрямую в `Settings → Fields` **нельзя** — UI не поддерживает. Альтернатива — обязательный параметр ссылки: в коде источника у параметра блока `replace` ставят `required: true` ([how-to/source-trackers.md](source-trackers.md)), и `Link Generator` не сгенерирует ссылку, пока значение не заполнено; при открытии готовой ссылки это не валидатор Visit Field.
 
 Это **не то же самое**, что `Required` на **Form Control** (в Form Builder инпут можно сделать обязательным валидацией SDK-формы — там работает напрямую). См. [how-to/forms.md](forms.md) § «Required — два контекста, не путать».
 
@@ -201,7 +201,7 @@ Slug используется в плейсхолдерах (`{{aio.visit.fields
 
 Связанный механизм: именованный список значений одного типа, на который ссылаются правила вместо перечисления значений вручную.
 
-**Путь:** `Settings → Item Lists → +Item List`.
+**Путь:** `Settings → Item lists` → создать список (окно `Create item list`).
 
 Атрибуты списка при создании:
 
@@ -220,9 +220,9 @@ Slug используется в плейсхолдерах (`{{aio.visit.fields
 ## Типичные ошибки
 
 - **Подключил интеграцию обогащения (`Traffic Filter`), а поля визита пустые.** Поля под маппинг/интеграцию заводите ЗАРАНЕЕ — сначала создать поля в `Settings → Fields`, потом подключать интеграцию (детали).
-- **`required` не работает на поле.** Через `Settings → Fields` нельзя. Через `Link Generator` — отметить required при генерации.
+- **`required` не работает на поле.** Через `Settings → Fields` нельзя. Обязательным можно сделать только параметр ссылки — `required: true` в блоке `replace` кода источника, тогда его потребует `Link Generator`.
 - **Хочу поменять slug.** В `Edit field` slug не меняется — для нового slug архивировать старое поле и создать новое. Если поле уже используется в плейсхолдерах — придётся править лэнды.
-- **Поле `Is Used For Cost = true`, но FB-косты не приходят.** `Is Used For Cost` — для **ручного** Update Costs. По FB-костам и профиту основной способ — метрика `Meta Spend` ([mechanics/meta-spend-allocation.md](../mechanics/meta-spend-allocation.md)); перелив в метрику `Costs` — старый путь, он по-прежнему работает (см. [how-to/campaigns.md](campaigns.md)).
+- **Поле с `is_used_for_costs = true`, но FB-косты не приходят.** `is_used_for_costs` — для **ручного** Update Costs. По FB-костам и профиту основной способ — метрика `Meta Spend` ([mechanics/meta-spend-allocation.md](../mechanics/meta-spend-allocation.md)); перелив в метрику `Costs` — старый путь, он по-прежнему работает (см. [how-to/campaigns.md](campaigns.md)).
 
 ## Смежные темы
 
@@ -232,4 +232,4 @@ Slug используется в плейсхолдерах (`{{aio.visit.fields
 - [reference/glossary.md](../reference/glossary.md) — Fields & Groupers Catalog (Tracker/Location/Browser/OS/Time/Web/Landings/Destinations/Custom), `Available values`, `Item List`.
 - [reference/placeholders.md](../reference/placeholders.md) — `{{aio.visit.fields.<slug>}}`, Source Mapping.
 - [how-to/source-trackers.md](source-trackers.md) — Source Rewrites (slug-маппинг).
-- [how-to/campaigns.md](campaigns.md) — Update Costs By Field (использует `Is Used For Cost`).
+- [how-to/campaigns.md](campaigns.md) — `Update Costs by <поле>` (использует флаг `is_used_for_costs`).

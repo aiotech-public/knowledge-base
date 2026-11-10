@@ -6,7 +6,7 @@ doc_type: model
 builds: [erp, mtk]
 related: [landings, custom-fields, placeholders, visit-field, flow-model, distributions-model, limits, landing, permissions, ui-map, destination, advertiser, creatives, campaign-defaults, glossary]
 language: ru
-updated: 2026-10-19
+updated: 2026-11-09
 ---
 
 # Content Library — концепт (модель)
@@ -21,7 +21,7 @@ Content Library — вкладка раздела Content.
 
 ## Content Library в MTK — только с модулем `Distribution`
 
-**В MTK-виде Content Library открывает платный модуль `Distribution`: он добавляет в верхнее меню вкладку `Distributions`, и Content Type идут в её подменю отдельными пунктами — рядом с дистрибуциями.** Пункт открывает таблицу Content Item этого Content Type (`Placeholder Data`): новый Item добавляет кнопка `+Placeholder Data` (окно `Create content item`), в контекстном меню строки — правка (`Edit content item`), `Share`, `Change ownership` и `Archive`. Создать новый Content Type или поменять его структуру в MTK-виде нельзя. Видимость меню и доступные действия также зависят от прав пользователя и доступа к Item.
+**В MTK-виде Content Library открывает платный модуль `Distribution`: он добавляет в верхнее меню вкладку `Distributions`, и Content Type идут в её подменю отдельными пунктами — рядом с дистрибуциями.** Пункт открывает таблицу Content Item этого Content Type (`Placeholder data`): новый Item добавляет кнопка `+Placeholder data` (окно `Create content item`), в контекстном меню строки — правка (`Edit content item`), `Share`, `Change ownership` и `Archive`. Создать новый Content Type или поменять его структуру в MTK-виде нельзя. Видимость меню и доступные действия также зависят от прав пользователя и доступа к Item.
 
 Без модуля вкладка Content Library в MTK-виде скрыта. Для динамической записи полей можно использовать свои JS-макросы на лэнде. Как подключить модуль — *Билды, тарифы, триал и статусы тенанта*; что ещё он открывает — *Как устроен MTK-вид AIO: навигация, пресеты из шаблона и методы под типовые задачи*.
 
@@ -31,11 +31,11 @@ Content Library — вкладка раздела Content.
 
 Внутри Content Library данные лежат двумя уровнями:
 - **Content Type** — группа верхнего уровня: именованный Placeholder (напр. `Offer Names`) + **структура** (атрибуты/ключи) + **данные**.
-- **Content Item** (в интерфейсе также `Placeholder Data`) — одна единица контента под этим типом: image / text string / HTML / country / language value. Например, под типом `Offer Names` Item — это конкретный набор строк оффера; под типом с картинками — изображение и его атрибуты (напр. `FullName` / `image` / `Description`).
+- **Content Item** (в интерфейсе — `Content item`, в MTK-виде — `Placeholder data`) — одна единица контента под этим типом: image / text string / HTML / country / language value. Например, под типом `Offer Names` Item — это конкретный набор строк оффера; под типом с картинками — изображение и его атрибуты (напр. `FullName` / `image` / `Description`).
 
 Тип хранимого контента широкий: images, text strings, HTML, country и language values — всё, что можно динамически использовать через AIO-поля.
 
-Content Type создаётся кнопкой `+Content Type`; при создании задаёте имя Content Type и выбираете **поле визита**, к которому Items применяются. Для атрибутов структуры задаются имя и Key; в расширенном режиме — Tooltip, Placeholder, Description и Group. Структуру — атрибуты/ключи, то есть набор атрибутов Item — задаёте вы сами через `Edit Structure`, данные ведутся через `Manage Data`: новый Content Item создаётся через `Manage Data → +Placeholder Data`. Процедуры создания — [how-to/landings.md](../how-to/landings.md).
+Content Type создаётся кнопкой `+Content type`; при создании задаёте имя Content Type и выбираете **поле визита** (поле `Field UUID`, формат поля — `Placeholder`), к которому Items применяются. Для атрибутов структуры задаются имя и Key; в расширенном режиме — Tooltip, Placeholder, Description и Group. Структуру — атрибуты/ключи, то есть набор атрибутов Item — задаёте вы сами уже в окне создания и меняете через `Edit structure`, данные ведутся через `Manage data`: новый Content Item создаётся через `Manage data → +Content item`. Процедуры создания — [how-to/landings.md](../how-to/landings.md).
 
 ### 2. Контракт подстановки: Content Item ↔ Key ↔ поле визита ↔ плейсхолдер
 
@@ -64,12 +64,12 @@ Content Type не висит в воздухе — он привязан к **п
 ### 5. Кто выбирает Item: Fill Fields и Distribution
 
 Content Library — это хранилище; **выбор конкретного Item** можно настроить через следующие механизмы пути визита:
-- **Flow-нода `Fill Fields` в ERP** (серверная, невидима визиту): заполняет поля визита «по правилам или из Content Library». Атрибут `Payload Type` = `Fill Content` (значение из Content Library) или `Fill Text` (статичный текст). Из какого набора Items брать — определяет атрибут **`Placeholder Group`**. Детали ноды — [models/flow-model.md](flow-model.md).
+- **Flow-нода `Fill Fields` в ERP** (серверная, невидима визиту): заполняет поля визита «по правилам или из Content Library». Атрибут `Payload Type` = `Fill content` (значение из Content Library) или `Fill text` (статичный текст). Из какого набора Items брать — определяет атрибут **`Placeholder group`**. Детали ноды — [models/flow-model.md](flow-model.md).
 - **Distribution-нода `Add Fill Field`** подтип **`Library`** (наряду с Text/Image/Landing/Destination): значение для поля визита берётся из Content Library через дерево дистрибуции. Детали — [models/distributions-model.md](distributions-model.md).
 
-В дереве дистрибуции конкретный Item выбирается стратегией (First / Weights / Conversions AI). Вес варианта в стратегии `Weights` (Content / Fill Fields) в интерфейсе обозначен диапазоном **0..100** ([reference/limits.md](../reference/limits.md)).
+В дереве дистрибуции конкретный Item выбирается стратегией (`First` / `Weights` / `Machine Learning`). Вес варианта в стратегии `Weights` (Content / Fill Fields) в интерфейсе обозначен диапазоном **0..100** ([reference/limits.md](../reference/limits.md)).
 
-**Placeholder Group** (она же Lander Placeholder Group) — мост между Content Item и шагом `Fill Fields`: она указывается и в атрибуте шага, и в атрибутах самого Content Item, и определяет, из какого набора берутся значения.
+**Placeholder Group** (она же Lander Placeholder Group) — мост между Content Item и шагом `Fill Fields`: по сути это сам Content Type — в шаге его выбирают полем `Placeholder group`, у Content Item он стоит в поле `Lander placeholder group`; так задаётся, из какого набора берутся значения.
 
 ### 6. Подстановка в runtime
 
@@ -89,21 +89,21 @@ Content Library — это хранилище; **выбор конкретног
 
 Сменить `Access type` и владельца — ПКМ → `Change ownership` (для выделенных строк — `Mass change ownership`), пункт показывается только при уровне `Own` на объект. Уровни доступа и роли шары — [how-to/permissions.md](../how-to/permissions.md).
 
-По умолчанию байеры **не** имеют доступа к вкладке Content Library и не заводят Items сами: вкладку открывают права позиции, а конкретный объект — шаринг или `Access type` `Use` / `View`.
+Вкладку открывают права позиции. В позиции `Buyer` из шаблона тенанта раздел Content Library открыт (Content Type и Content Item, включая правку): байер видит вкладку и может заводить свои Items. Чужие объекты он видит только через шаринг или `Access type` `Use` / `View`; scope на весь раздел у этой позиции нет.
 
 ### 8. Встроенных Content Type-ов нет — структура целиком кастомная
 
-Предзаданных/«коробочных» Content Type-ов в Content Library нет: и набор атрибутов, и сами типы вы задаёте сами через `Edit Structure`. «Content Type» здесь — это **ваша именованная структура** (кнопка `+Content Type` → `Edit Structure`), а не выбор из готового списка типов.
+Системных Content Type-ов в Content Library нет: и набор атрибутов, и сами типы задаются в тенанте через `Edit structure`. «Content Type» здесь — это **именованная структура тенанта** (кнопка `+Content type` → `Edit structure`), а не выбор из готового списка типов. Часть шаблонов тенанта приносит примеры: в ERP Finance — `Offer Names` (поле `offer_name`, ключи `for_visitor` / `for_advertiser`), в ERP Sweeps — `Product` (поле `product_item`). Это обычные объекты тенанта — их структуру можно менять.
 
 ## Как Content Library связан с остальными сущностями
 
 - **Content (раздел) ⊃ Content Library** — вкладка раздела Content (рядом: Landings, Creatives, Macros, Uploaded Files, CDN files). → [reference/ui-map.md](../reference/ui-map.md)
-- **Content Library → Content Type → Content Item** — структура через `Edit Structure`, данные через `Manage Data`.
+- **Content Library → Content Type → Content Item** — структура через `Edit structure`, данные через `Manage data`.
 - **Content Library → поле визита формата `Placeholder`** (заводите сами через `Settings → Fields`; встроенных storage-полей нет — имена вроде `offer_storage` / `content_storage` это примеры кастомных полей). → [models/visit-field.md](visit-field.md), [how-to/custom-fields.md](../how-to/custom-fields.md)
 - **Content Library → Showcase Flow** — Showcase Site/Item как частный случай поверх Content Library. → *уточните у поддержки*
 
 - **Content Library → Landing** — потребляется через `{{aio.visit.fields.<field>.<key>}}`. → [models/landing.md](landing.md), [reference/placeholders.md](../reference/placeholders.md)
-- **Content Library ← Fill Fields-нода** (`Payload Type = Fill Content`, через `Placeholder Group`) **и ← Distribution-нода `Add Fill Field`** подтип `Library`. → [models/flow-model.md](flow-model.md), [models/distributions-model.md](distributions-model.md)
+- **Content Library ← Fill Fields-нода** (`Payload Type = Fill content`, через `Placeholder group`) **и ← Distribution-нода `Add Fill Field`** подтип `Library`. → [models/flow-model.md](flow-model.md), [models/distributions-model.md](distributions-model.md)
 - **Content Library → Destination** — значение ключа `for_advertiser` оффер-нейма можно передать в Destination/интеграцию через плейсхолдер. → [models/destination.md](destination.md), [models/advertiser.md](advertiser.md)
 
 ## Чем Content Library отличается от смежных понятий
@@ -126,7 +126,7 @@ Content Splits — A/B-варианты кусков **одного** лэнда
 
 ### Content Type (структура) vs «встроенных Content Type-ов нет» — в чём различие
 
-«Content Type» как структура/кнопка существует; предзаданных/встроенных Content Type-ов нет — структура задаётся целиком кастомно. См. «Встроенных Content Type-ов нет — структура целиком кастомная»: кнопка `+Content Type` → `Edit Structure`.
+«Content Type» как структура/кнопка существует; системных Content Type-ов нет — структура задаётся в тенанте (примеры из шаблона тоже правятся). См. «Встроенных Content Type-ов нет — структура целиком кастомная»: кнопка `+Content type` → `Edit structure`.
 
 ### Content Library vs Showcase Site/Item — в чём разница
 
@@ -137,8 +137,8 @@ Showcase — частный паттерн поверх Content Library (мас�
 - **Для конкретного атрибута нужен Key.** `{{aio.visit.fields.offer_name.for_visitor}}` читает строку `for_visitor`; форма без Key возвращает превью-картинку или имя Item.
 - **Серверная подстановка Content Library не требует SDK** и работает также на White-лэнде. Из JS поля можно читать или менять через SDK.
 - **Проверяйте хост картинок из Content Library.** Внешние абсолютные URL не импортируются вместе с картинками HTML-ZIP и продолжают вести на исходный хост. При отдаче лэнда AIO заменяет собственный CDN URL на `/_cdn` уже после подстановки полей. Для файлов из ZIP используйте пути внутри загруженного архива.
-- **`Placeholder Group`, не «Payload Group».** Корректное имя поля — `Placeholder Group`.
-- **Байеры по дефолту не видят вкладку и не заводят Items.** Вкладку открывают права позиции; сам Item байеру виден, если его пошарили или у Item `Access type` `Use` (виден в списках) либо `View` (открывается на чтение); остальные источники доступа — в разделе «Кто видит Content Type и Content Item». Новый Item создаётся `Private`.
+- **`Placeholder group`, не «Payload Group».** Корректное имя поля шага `Fill Fields` — `Placeholder group`.
+- **Чужие Items байер видит не все.** Вкладку открывают права позиции (у шаблонной позиции `Buyer` она открыта); чужой Item байеру виден, если его пошарили или у Item `Access type` `Use` (виден в списках) либо `View` (открывается на чтение); остальные источники доступа — в разделе «Кто видит Content Type и Content Item». Новый Item создаётся `Private`.
 
 - **Если контент лэнда зависит от выбора Destination, выберите его до шага Landing**, например через `Fill Fields`, и сохраните выбор в поле визита. Это поле позволяет показать соответствующий контент на лэнде.
 
@@ -152,4 +152,4 @@ Showcase — частный паттерн поверх Content Library (мас�
 - **Как Content Library накладывается поверх лэнда (динамика)** → [models/landing.md](landing.md).
 - **Content Library как способ «убрать возможность ошибиться» у байера** → [heuristics/campaign-defaults.md](../heuristics/campaign-defaults.md).
 - **Точные имена (Content Library, Key, Placeholder Group)** → [reference/glossary.md](../reference/glossary.md).
-- **UI** → [reference/ui-map.md](../reference/ui-map.md) (раздел Content `/app/landers-creatives` → вкладка Content Library, внутренний URL `/lander-placeholders`; `+Content Type`; ПКМ: Edit Structure / Manage Data / Assign to Folder / Share / Change ownership / Archive).
+- **UI** → [reference/ui-map.md](../reference/ui-map.md) (раздел Content `/app/landers-creatives` → вкладка Content Library, внутренний URL `/lander-placeholders`; `+Content type`; ПКМ: Edit structure / Manage data / Assign to folder / Share / Change ownership / Archive).

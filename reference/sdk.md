@@ -4,9 +4,9 @@ title: AIO SDK — устройство, встроенные макросы и 
 description: Единый справочник по AIO SDK — как грузится на лэнд, AIO SDK Macros Collection и его features, window.aioBus, SDK-форма, плейсхолдеры, сопутствующие макросы. Часть II — точный разбор по коду SDK (эндпоинты, слаги полей визита, протокол aioBus, lifecycle формы, фичи pwa/fingerprint/tiktok).
 doc_type: reference
 builds: [erp, mtk]
-related: [forms, placeholders, macros, architecture, landings, user-fields, postback-generator, conversion-model, custom-pwa, push-notifications, glossary, mechanics-pwa, how-to-pwa, campaigns, custom-fields, server, visit-field, notifications-flow]
+related: [forms, placeholders, macros, architecture, landings, user-fields, postback-generator, conversion-model, custom-pwa, push-notifications, glossary, how-to-pwa, campaigns, custom-fields, server, visit-field, notifications-flow]
 language: ru
-updated: 2026-10-28
+updated: 2026-11-10
 ---
 
 # AIO SDK — устройство, встроенные макросы и работа с ним
@@ -19,12 +19,12 @@ updated: 2026-10-28
 
 ## Что такое AIO SDK и зачем он нужен
 
-**AIO SDK** — JS-слой, который AIO автоматически подгружает на каждый лэнд через плейсхолдеры `{{aio}}` (перед `</body>`) и `{{aio:head}}` (в `<head>`). **Без `{{aio}}` SDK не загрузится** — формы, Backfix, трекинг и аналитика работать не будут.
+**AIO SDK** — JS-слой, который AIO подгружает на лэнд через плейсхолдеры `{{aio}}` (перед `</body>`, сюда встаёт сам бандл) и `{{aio:head}}` (в `<head>`) — на лэндах, у типа которых включён `Auto place AIO macros?`. **Без `{{aio}}` SDK не загрузится** — формы, Backfix, трекинг и аналитика работать не будут.
 
 Что SDK делает на лэнде:
 - **Рендерит SDK-форму** (в `{{form}}`) и пушит лид в Destination.
 - **Backfix** — ловит «Назад» в браузере и возвращает визит вперёд по флоу.
-- **Трекинг для аналитики** — `landed` (Qualified Visits), скроллы (Heatmaps), время на лэнде, размеры окна, таймзона, запись сессий (Session Records).
+- **Трекинг для аналитики** — `landed` (Qualified Visits), скроллы, время на лэнде, размеры окна, таймзона, запись сессий (Session Records; в ERP — и Heatmap лэнда).
 - **FB-трекинг** — `fbPixel` (клиентский) и `fbCapi` (серверный).
 - **Конверсии и поля визита** — через `window.aioBus` (`conversion`, `trigger`).
 - **Палитра и отпечаток устройства** — `hueChanger` (лёгкое смещение оттенка палитры лэнда) + `fingerprint` (device-отпечаток в поле визита, **включён по умолчанию**).
@@ -38,7 +38,7 @@ updated: 2026-10-28
 
 ## Что такое макрос в AIO и зачем он нужен
 
-**Макрос — кусок HTML/JS из `Content → Macros` (в MTK — `Settings → Macros`), который AIO вставляет в лэнд при каждой отдаче страницы; код выполняется в браузере посетителя, не на сервере.** Глобальный (`Global?` включён, по умолчанию у нового макроса) встаёт сам на лэнды, у типа которых включён `Auto place AIO macros?`: `Prefer placement` = `Head` — в `{{aio:head}}`, `Footer` — в `{{aio}}`. Локальный встаёт только на место вызова `{{aio:macros:<slug>}}`. Так пиксели, SDK-конфиг и свои скрипты не копируют в каждый лэнд. Грузить макрос по условию AIO не умеет — условие пишут `if` внутри кода.
+**Макрос — кусок HTML/JS из `Content → Macros` (в MTK — `Settings → Macros`), который AIO вставляет в лэнд при каждой отдаче страницы; код выполняется в браузере посетителя, не на сервере.** Глобальный (`Global?` включён, по умолчанию у нового макроса) встаёт сам на лэнды, у типа которых включён `Auto place AIO macros?`: `Prefer placement` = `Head` — в `{{aio:head}}` (нет его на странице — тоже в `{{aio}}`), `Footer` — в `{{aio}}`. Локальный встаёт только на место вызова `{{aio:macros:<slug>}}`. Так пиксели, SDK-конфиг и свои скрипты не копируют в каждый лэнд. Грузить макрос по условию AIO не умеет — условие пишут `if` внутри кода.
 
 Как написать и подключить свой макрос — создание и slug, Global или локальный вызов, Head или Footer, что готово к запуску кода, чтение `window.aio`, запись `trigger`, проверка, архив: [how-to/macros.md](../how-to/macros.md).
 
@@ -55,7 +55,7 @@ updated: 2026-10-28
 | **AIO Form Loader** (оверлей с локализованным сообщением на время сабмита формы) | `aio_form_loader` | Footer | нет | да |
 | **AIO Static Language Country for Form** | Finance — `aio_static_language__country_for_form` (два подчёркивания); Nutra и Sweeps — `aio_static_language_country_for_form` | Footer | нет | да |
 | **AIO GTAG** (Google Tag; вставляется тегом `{{aio:macros:aio_gtag}}`) | `aio_gtag` | **Head** | нет | да |
-| **AIO Push Subscription** (web-push подписка; только в ERP — в MTK Finance и MTK Sweeps не засеян) | `aio_push_subscription` | Footer | да | **нет** |
+| **AIO Push Subscription** (web-push подписка; только в ERP — в MTK-шаблонах не засеян) | `aio_push_subscription` | Footer | да | **нет** |
 
 > У `AIO GTAG` стоит `Prefer placement` = `Head`, но макрос не глобальный, а у локального макроса placement не действует: код встаёт ровно туда, где в лэнде написан `{{aio:macros:aio_gtag}}`, поэтому для загрузки в `<head>` вызов пишут внутри `<head>`. `AIO Push Subscription` приезжает выключенным — по описанию макроса: «Shipped switched off: turn it on when you run pushes».
 
@@ -67,8 +67,9 @@ updated: 2026-10-28
 | **AIO Autologin Redirect** — через три секунды после открытия уводит на autologin-URL дестинейшена; для своей thank-you page | `aio_autologin_redirect` | нет | Finance (ERP и MTK) |
 | **AIO Pre-Fill Form Handler** — сабмит слишком нестандартной для SDK формы (квиз, колесо, выбор подарка): имена инпутов маппятся на слаги полей визита и уходят в ссылке перехода | `aio_prefill_form_handler` | нет | Sweeps (ERP и MTK) |
 | **AIO Custom PWA** — install-flow для PWA-лэнда ручной сборки; лэндам из `PWA Builder` не нужен | `aio_custom_pwa` | нет | iGaming (ERP и MTK) |
+| **AIO VSL Kit** — для VSL-лэнда: показывает элементы `[data-vsl-reveal]` на заданной секунде видео, пишет в поле `vsl_progress` досмотренную четверть (25 / 50 / 75 / 100) и дописывает её к ссылкам `a[data-vsl-cta]`; без `<video>` считает по времени на странице | `aio_vsl_kit` | нет | Nutra (ERP и MTK) |
 
-Все четыре — `Footer`, активны.
+Все пять — `Footer`, активны.
 
 ### Редактор макроса — поля и где лежит код
 
@@ -90,6 +91,7 @@ updated: 2026-10-28
 
 **Структура содержимого:**
 ```javascript
+// выше конфига — тег бандла: <script src='/aio-static/sdk/main.js?v=…'></script>
 window.aioBus = window.aioBus || [];
 window.aioBus.push({
   type: "config",
@@ -106,6 +108,10 @@ window.aioBus.push({
       timeOnLandings: true,
       windowDimensions: true,
       hueChanger: true,
+      fingerprint: true,
+      pwa: false,
+      ttPixel: false,
+      ttCapi: false,
     },
     backFix: { /* настройки backFix, см. ниже */ },
     form: { /* настройки формы, см. ниже */ },
@@ -116,7 +122,7 @@ window.aioBus.push({
 
 ### Как включить или отключить фичу SDK — блок `features`
 
-Каждая фича включается/выключается одной строчкой. Дефолтный набор (по шаблону тенанта 2026):
+Каждая фича включается/выключается одной строчкой. Дефолтный набор (по шаблону тенанта):
 
 | Feature | Что делает | Дефолт |
 |---|---|---|
@@ -132,8 +138,8 @@ window.aioBus.push({
 | `windowDimensions` | Записывает размеры окна (ширина/высота) | `true` |
 | `hueChanger` | Чуть-чуть меняет color palette лэнда (лёгкое смещение оттенка, незаметное глазу) | `true` |
 | `fingerprint` | Device-fingerprint (FingerprintJS) → поле визита `fingerprint` | `true` |
-| `ttPixel` / `ttCapi` | TikTok Pixel (клиентский) / TikTok CAPI (серверный, кука `_ttp`) | по тенанту |
-| `pwa` | PWA-install + web-push subscribe + Android-intent | off (по запросу) |
+| `ttPixel` / `ttCapi` | TikTok Pixel (клиентский) / TikTok CAPI (серверный, кука `_ttp`) | `false` |
+| `pwa` | PWA-install + web-push subscribe + Android-intent | `false`; в iGaming (ERP и MTK) и MTK Sweeps — `true` |
 
 **Чтобы отключить фичу** — поставь `false` в `features` блоке. Тонкая настройка — в соответствующем блоке настроек ниже.
 
@@ -153,8 +159,8 @@ backFix: {
 
   enableStrangeUrlParameters: true,
 
-  pathName: "/some-path",
-  localStorageKey: "aio_bf",
+  pathName: "<служебный путь>",
+  localStorageKey: "<ключ localStorage>",
 
   link: "{{link}}&backfix=true"
 }
@@ -164,12 +170,12 @@ backFix: {
 
 | Поле | Что |
 |---|---|
-| `enabledBackFix` | функция-условие. Обычно проверяет UUID типа лэнда — backFix работает только если визит на нужном типе. По дефолту — только на прилэндах. |
-| `enableStrangeUrlParameters` | если `true` — переписывает реальные CUUID/SUUID в URL на фейковые UTM. Защита от шаринга ссылки. По дефолту `true`. |
+| `enabledBackFix` | функция-условие. Обычно проверяет UUID типа лэнда — backFix работает только если визит на нужном типе. В шаблонной Collection — типы прилэндов (`Preland`, `Preland w/ Form`; в Nutra — ещё `VSL`). |
+| `enableStrangeUrlParameters` | если `true` — подменяет query-параметры в адресной строке лэнда на случайные UTM (§II.14). Защита от шаринга ссылки. По дефолту `true`. |
 | `pathName`, `localStorageKey` | служебные. Менять обычно не нужно. |
 | `link` | куда уходит визит при срабатывании. По дефолту — на `{{link}}` с пометкой `&backfix=true` для отслеживания. |
 
-**Где смотреть UUID типов лэндов:** `Content → Landings` → правый клик на лэнде → данные / либо через API.
+**Где смотреть UUID типов лэндов:** в ERP — `Content → Landings` → меню создания → `Manage landing types`, колонка `UUID`; либо через API.
 
 **Типичная кастомизация:** добавить тип лэнда в `enabledBackFix` (например, начать делать backFix и на офферах, а не только на прилэндах).
 
@@ -181,7 +187,7 @@ backFix: {
 
 Если Backfix не определяет визит («после правок SDK перестал срабатывать», «на iframe-вайте не отдаёт визит», «работает на основном домене — не работает в iframe», «нажал „Назад“ на прилэнде — не переброшен на оффер») — причин обычно две.
 
-1. **Функция `enabledBackFix` не пропускает текущий тип лэнда** — самая частая. По умолчанию Backfix работает только на прилэндах; для другого типа добавь его UUID в функцию `enabledBackFix` (см. блок `backFix` выше).
+1. **Функция `enabledBackFix` не пропускает текущий тип лэнда** — самая частая. В шаблонной Collection Backfix включён только на типах прилэндов (в Nutra — ещё на `VSL`); для другого типа добавь его UUID в функцию `enabledBackFix` (см. блок `backFix` выше).
 2. **Лэнд/вайт открыт в iframe со стороннего домена** — разобрано ниже.
 
 ### На iframe-вайте Backfix не отдаёт визит — third-party cookies недоступны
@@ -190,11 +196,9 @@ backFix: {
 
 Дополнительно жмут сами браузеры: Safari и Firefox с защитой от трекинга блокируют third-party cookies по умолчанию → у этой аудитории Backfix в iframe не работает в принципе. Это ограничение браузеров, а не баг AIO — правкой конфига не чинится, нужно менять схему встраивания.
 
-### Чем заменить iframe, чтобы Backfix работал — редиректы или Dynamic White
+### Чем заменить iframe, чтобы Backfix работал — редиректы вместо iframe
 
-Две рабочие альтернативы iframe:
-- **Редиректы вместо iframe** — юзер физически переходит на домен лэнда обычной навигацией, куки сессии доступны, Backfix читает визит штатно.
-- **Вайт внутри AIO (`Dynamic White`)** — вайт хостится на инфраструктуре AIO, домен страницы совпадает с доменом кампании → ограничение third-party cookies не срабатывает, Backfix работает. Типы лэндов и White Page — [how-to/landings.md](../how-to/landings.md).
+Рабочая альтернатива iframe — **редиректы**: юзер физически переходит на домен лэнда обычной навигацией, куки сессии доступны, Backfix читает визит штатно.
 
 Если Backfix не работает на **основном** домене (не в iframe), а блок `backFix` не трогали — это уже предмет для разбора визита, а не настройка.
 
@@ -203,10 +207,10 @@ backFix: {
 **Структура:**
 ```javascript
 fbPixel: {
-  pixel: "{{aio.visit.fields.fb_pixel}}",
+  pixel: aio?.visit?.fields?.fb_pixel ?? null,
   events: {
-    pageView: "PageView",
-    formSubmitEvent: "{{aio.visit.fields.fb_lead_action}}"
+    pageView: 'PageView',
+    formSubmitEvent: aio?.visit?.fields?.fb_lead_action ?? null
   }
 }
 ```
@@ -218,11 +222,11 @@ fbPixel: {
 | `pixel` | откуда брать pixel-ID. По дефолту — из поля визита `fb_pixel` (значит, нужно заполнять это поле через Fill Fields или Distribution). |
 | `events.formSubmitEvent` | какое FB-событие шлём при **успешном** сабмите формы (lead). По дефолту — из поля визита `fb_lead_action`. |
 
-По коду `fbPixel` **сам по себе PageView не отправляет** — PageView шлёт `fbCapi`. `fbPixel` грузит пиксель и шлёт только lead-событие на сабмит. Подробно — §II.10.
+`fbPixel` **сам по себе PageView не отправляет** (ключ `events.pageView` в его блоке SDK не читает) — PageView шлёт `fbCapi`. `fbPixel` грузит пиксель и шлёт только lead-событие на сабмит. Подробно — §II.10.
 
 ### Как настроить fbCapi
 
-Facebook Conversion API. Серверная отправка событий в FB. По дефолту `true`, тонкая настройка идёт через поля кампании / интеграции.
+Facebook Conversion API. Серверная отправка событий в FB. По дефолту `true`. Блок `fbCapi` в Collection задаёт `pixel` (из поля визита `fb_pixel`), `fbpSlug` / `fbcSlug` (поля визита для кук `_fbp` / `_fbc`, дефолт `fbp` / `fbc`) и `events.pageView` (дефолт `PageView`) — что из этого делает SDK на лэнде, §II.10.
 
 ### Как настроить form — параметры SDK-формы
 
@@ -252,7 +256,7 @@ form: {
 |---|---|
 | `successTimeoutSeconds` | таймаут между успешным сабмитом и редиректом на autologin (дефолт 5 секунд). |
 | `language` | язык формы. Дефолт — из `navigator.language` визита. |
-| `defaultCountryCode` | страна для intl-tel-input (поле телефона). Дефолт `GB`. |
+| `defaultCountryCode` | страна телефона (intl-tel-input), если у визита нет гео (`aio.visit.country_code`). Дефолт `GB`. |
 | `rejectedMessage` | что показать визиту, если дестинейшн отклонил лид. |
 | `beforeSubmitPromise` | массив JS-хуков, выполняющихся **после валидации, но до пуша** (ключ в **ед. числе**, см. §II.20). Можно вставить кастомную логику (показать модалку подтверждения, доп. проверка). |
 | `submitPromises` | массив JS-хуков **вокруг самого пуша**. Используется для управления pushing modal'ом и success modal'ом. |
@@ -273,30 +277,30 @@ form: {
 Большинство — boolean-флаги:
 
 - **landed** — записывает в визит "лэнд загрузился". Используется в `Qualified Visits` метрике.
-- **scrolling** — для Heatmaps и видеосессий.
-- **sessionRecords** — Session Records (видеозаписи).
+- **scrolling** — скролл визита по лэнду (поля и метрики скролла).
+- **sessionRecords** — Session Records (видеозаписи) и Heatmap лэнда в ERP (карты кликов и скролла).
 - **timeOnLandings** — время на лэнде.
 - **browserTimezone** — таймзона визита.
 - **windowDimensions** — размеры окна.
 - **hueChanger** — лёгкая модификация color palette лэнда (незаметное глазу смещение оттенка).
 
-Если что-то из этого отключить — соответствующая метрика / фича перестаёт работать (например, выключил `scrolling` → нет Heatmaps).
+Если что-то из этого отключить — соответствующая метрика / фича перестаёт работать (например, выключил `sessionRecords` → нет записей сессий и Heatmap; выключил `scrolling` → у визита нет скролла).
 
 ## Когда нужен AIO Non-SDK Form Handler — макрос-фолбэк для HTML-форм
 
-Когда нужно оставить родную HTML-форму вместо `{{form}}`. Полная механика, 3 шага подключения и ограничения — [how-to/forms.md](../how-to/forms.md). Грузит intl-tel-input со своими CSS → форма может «съезжаться». Засеян в шаблонах Finance, Nutra и Sweeps (ERP и MTK) со slug `aio_nonsdk_form_handler` — вызов `{{aio:macros:aio_nonsdk_form_handler}}`; в iGaming-шаблоне макроса нет. Если тенант создан не из текущего шаблона, slug сверить в `Content → Macros`.
+Когда нужно оставить родную HTML-форму вместо `{{form}}`. Полная механика, 3 шага подключения и ограничения — [how-to/forms.md](../how-to/forms.md). Поле телефона он оформляет через intl-tel-input из SDK (команда `intl-instance`) вместе с его стилями → вёрстка формы может «съезжать». Засеян в шаблонах Finance, Nutra и Sweeps (ERP и MTK) со slug `aio_nonsdk_form_handler` — вызов `{{aio:macros:aio_nonsdk_form_handler}}`; в iGaming-шаблоне макроса нет. Если тенант создан не из текущего шаблона, slug сверить в `Content → Macros`.
 
-Ключевые ограничения: цепляется только к тегу `<form>` (если форма свёрстана как `<div>` — сабмит не перехватывается); если одновременно есть `{{form}}` и Non-SDK Handler — возможны конфликты; модалки пуша и хуков SDK-формы нет, после успешного пуша — простой редирект на автологин-ссылку из ответа (активно не развивается).
+Ключевые ограничения: цепляется только к тегу `<form>` (если форма свёрстана как `<div>` — сабмит не перехватывается); если одновременно есть `{{form}}` и Non-SDK Handler — возможны конфликты; модалки пуша и хуков SDK-формы нет, после успешного пуша — простой редирект на автологин-ссылку из ответа.
 
 ## Что делает Static Language Country — макрос фиксации языка и страны формы
 
 Шаблонный макрос: засеян в Finance, Nutra и Sweeps (ERP и MTK) активным, но **не Global** — вставлен локально только в лэнды-примеры с формой (в Finance — `Example Preland w/ Form — Starter Plan Quiz` и оффер-лэнд: `Offer Example #1 w/ Dynamic Offer Name` в ERP, `Example Offer Page — Immediate Connect` в MTK); в iGaming-шаблоне его нет. Slug различается по вертикали: Finance — `aio_static_language__country_for_form`, Nutra и Sweeps — `aio_static_language_country_for_form` (таблица макросов выше).
 
-**Что делает:** фиксирует язык SDK-формы и страну телефона **по странам/языку лэнда**, а не по визиту. Nutra-вариант по своему описанию мягче: «Uses the landing's single country/language when set, otherwise the visit's country/language» — под кампанию-пример `Multigeo IT-ES-PL - Campaign Example`.
+**Что делает:** задаёт язык SDK-формы и страну телефона по лэнду, а не по браузеру визита. Код одинаковый во всех вертикалях: если у лэнда указана ровно одна страна — телефон берёт её, иначе страну визита, а без неё — `GB`; язык — так же: единственный язык лэнда, иначе язык визита, иначе `en`. Выбранная страна становится единственной в списке стран телефона (`onlyCountries`). Под лэнды с несколькими странами (кампания-пример Nutra `Multigeo IT-ES-PL - Campaign Example`) макрос берёт страну и язык визита.
 
-**Зачем:** без него форма берёт `language` из `navigator.language` визита (может быть не тот язык, на котором написан лэнд), а страну телефона — из гео визита (может быть VPN). С макросом — оба значения берутся из метаданных лэнда (Country/Language заданы при загрузке лэнда).
+**Зачем:** без него форма берёт `language` из `navigator.language` (может быть не тот язык, на котором написан лэнд), а страну телефона — из гео визита (может быть VPN). С макросом на лэнде с одной страной и одним языком (Country/Language заданы при загрузке лэнда) оба значения берутся из лэнда.
 
-**Рекомендация:** включать как глобальный, если таргетинг по стране фиксированный.
+**Рекомендация:** включать как глобальный, если таргетинг по стране фиксированный. Глобальный макрос срабатывает на всех лэндах тенанта: на лэнде с одной страной в списке стран телефона останется только она.
 
 ## Как работает window.aioBus — очередь команд для SDK
 
@@ -307,10 +311,10 @@ form: {
 | `config` | конфигурация фич, формы, backFix (используется в AIO SDK Macros Collection) |
 | `trigger` | заполнить поле визита (`{type:"trigger", key:"...", value:"..."}`) |
 | `conversion` | отправить конверсию (`{type:"conversion", type_uuid:"...", query:{revenue: 10}}`) |
-| `form-controls` | программно заполнить контролы формы |
+| `form-controls` | программно задать набор контролов формы целиком |
 | `vue-data-object` | объявить data-объект для Vue.js на лэнде |
 
-`Trigger Field` может обновить **любое** поле визита. Не «бэкдор».
+`trigger` пишет в поле визита по slug: значение ложится в поле тенанта с этим slug, поля с таким slug нет — значение отбрасывается (§II.4).
 
 **Где используется:**
 - Глобально — в AIO SDK Macros Collection (`config`).
@@ -364,7 +368,7 @@ form: {
 
 ## SDK-плейсхолдеры — карта
 
-Полная таблица плейсхолдеров (`{{aio}}`, `{{aio:head}}`, `{{form}}`, `{{link}}`, `{{cdn}}`, `{{cdn-lp-folder}}`, `{{aio:macros:<slug>}}`, `{{aio.visit.*}}`, `{{vue.aio.visit.*}}`) с объяснением кто/когда обрабатывает — [reference/placeholders.md](placeholders.md). Не трогать — AIO вставляет сам (кроме `{{aio:macros:<slug>}}` — локальный вызов).
+Полная таблица плейсхолдеров (`{{aio}}`, `{{aio:head}}`, `{{form}}`, `{{link}}`, `{{cdn}}`, `{{cdn-lp-folder}}`, `{{aio:macros:<slug>}}`, `{{aio.visit.*}}`, `{{vue.aio.visit.*}}`) с объяснением кто/когда обрабатывает — [reference/placeholders.md](placeholders.md). `{{aio}}` и `{{aio:head}}` AIO при загрузке лэнда вставляет сам (у типа с `Auto place AIO macros?`); `{{form}}`, `{{link}}`, `{{aio:macros:<slug>}}` и остальные пишут в HTML лэнда там, где они нужны.
 
 ## Что чаще всего меняют в SDK Macros Collection — типичные кастомизации
 
@@ -380,7 +384,7 @@ form: {
 ## Типичные ошибки в SDK Macros Collection
 
 - **Поставил `features.backFix: false`, но блок `backFix: {...}` оставил** — синтаксис JS не падает, но фича не работает. Это норма, можно так делать (фича выключена, конфиг сохранён на случай возврата).
-- **JS-синтаксис сломан** (пропустил запятую, кавычку) — макрос не подгружается, все SDK-фичи отваливаются разом. Проверь в DevTools → Console: будет syntax error.
+- **JS-синтаксис сломан** (пропустил запятую, кавычку) — скрипт с конфигом не выполняется: бандл грузится отдельным тегом и работает на встроенных дефолтах (§II.5), а всё, что включает Collection (`backFix`, `fbPixel`, `fbCapi`, `form`, `pwa`), отваливается разом. Проверь в DevTools → Console: будет syntax error.
 - **Поменял UUID типа лэнда в `enabledBackFix` на неверный** — Backfix молча не работает на нужных лэндах. UUID проверяй в `Content → Landings`.
 - **Дублировал `window.aioBus.push({type: "config", ...})` в кастомном макросе** — может перезаписать настройки из SDK Collection. Если нужна локальная переконфигурация — пиши `{config: {features: {...}}}` только с теми ключами, которые меняешь.
 
@@ -404,7 +408,7 @@ form: {
 
 **Путь:** `Content → Macros → AIO SDK Macros Collection → backFix → enableStrangeUrlParameters: true`.
 
-Когда `true` — реальные CUUID / SUUID в URL переписываются на фейковые UTM. Защита от шаринга ссылки.
+Когда `true` — query-параметры в адресной строке лэнда подменяются на случайные UTM (§II.14). Защита от шаринга ссылки.
 
 Минусы:
 - Ломает шаринг ссылки (если визит откроет копию URL у себя — данных не будет).
@@ -414,7 +418,7 @@ form: {
 
 ### Как включить или выключить Backfix — и почему «per-campaign toggle Backfix» это не фича AIO
 
-**Место:** `Content → SDK Macros Collection → Edit AIO SDK Macros Collection → блок backFix` (toggle через `features.backFix: true/false`). Это уровень SDK-конфига, а не тоггл в самой кампании.
+**Место:** `Content → Macros` → правый клик по `AIO SDK Macros Collection` → `Edit macros` → блок `backFix` (toggle через `features.backFix: true/false`). Это уровень SDK-конфига, а не тоггл в самой кампании.
 
 Готового «per-campaign toggle Backfix» на стороне AIO нет. Если Backfix нужно включать/выключать по каждой кампании отдельно — это собирается вручную: заводится поле на уровне кампании со своей настройкой (доступные значения в селекте), а в `AIO SDK Macros Collection` пишется JS, который читает значение этого поля и по нему решает, включать Backfix или нет; на само поле ставится placeholder. Что выставлено в кампании — то приезжает в `AIO SDK Macros Collection` и так настраивает Backfix. То есть per-campaign управление возможно, но это ручная сборка через поле + JS-логику, а не отдельный переключатель в UI AIO.
 
@@ -433,63 +437,49 @@ features: {
 }
 ```
 
-После сохранения — Pixel перестаёт грузиться на лэнды.
+После сохранения SDK перестаёт слать lead-событие пикселя на сабмите. Сам пиксель и `PageView` продолжает грузить `fbCapi`, пока включён он (в шаблоне — `true`); чтобы пиксель не грузился вовсе, выключают обе фичи.
 
 Если после отключения `fbPixel` события всё равно двоятся, источник дубля не в SDK: их шлёт либо сторонний пиксель на лэнде, либо сам рекламодатель.
 
 ### Как настроить SDK-форму только под first-name + phone глобально
 
-Когда: нужна упрощённая форма (только имя + телефон), не дефолтная (имя / фамилия / email / phone).
+**Набор полей SDK-формы целиком задаёт команда `form-controls`, а не `config.form.controls`: `config` сливает массивы по номеру элемента, поэтому лишние дефолтные поля (фамилия, email) так не удаляются.** Когда: нужна упрощённая форма (только имя + телефон) вместо дефолтной (имя / фамилия / email / телефон).
 
-**Путь:** `Content → Macros → +Macro` (новый кастомный) → редактировать `config.form.controls`.
+**Путь:** новый глобальный макрос в `Content → Macros` (в MTK — `Settings → Macros`), в `Html`:
 
-**Что менять:**
-
-```javascript
-config: {
-  form: {
-    controls: [
-      { key: "first-name", ... },  // можно переименовать на "full-name", ключ оставить
-      { key: "phone", ... }
-      // остальные удалить
-    ]
-  }
-}
+```html
+<script>
+  window.aioBus = window.aioBus || [];
+  window.aioBus.push({type: "form-controls", controls: [
+    {key: "first_name", type: "text", placeholder: "FIRST_NAME"},
+    {key: "phone", type: "phone", placeholder: "PHONE"}
+  ]});
+</script>
 ```
 
-Ключи (`first_name`, `phone`) **должны совпадать** с AIO-слагами — даже если визуально переименовать на «full-name», ключ оставить как `first_name`.
+Скрытые `handle` / `_aio_handle` и кнопку отправки SDK добавит сам, контролу без `rules` ставит `required`. Ключи (`first_name`, `phone`) **должны совпадать** со slug-ами полей визита: подпись меняют через `placeholder` / `label`, ключ оставляют. Если к лэнду подключена форма из `Settings → Forms`, её набор приходит своей командой `form-controls`, и действует та, что стоит в очереди позже (§II.3).
 
 См. [how-to/forms.md](../how-to/forms.md) → SDK Form настройки.
 
-### Как превратить лэнд в PWA через макрос
+### Как превратить лэнд в PWA через макрос — и почему одного макроса мало
 
-Когда: обычный лэнд нужно превратить в PWA (Service Worker + manifest + Install button) без редизайна.
+**PWA-макрос — обычный макрос с конфигом фичи `pwa`: отдельного типа «PWA-макрос» в редакторе нет, и manifest он не задаёт.** Manifest AIO собирает на сервере под каждый визит из настроек PWA-лэнда (`PWA Builder` или `Custom PWA`), поэтому обычный лэнд одним макросом устанавливаемым приложением не становится ([how-to/pwa.md](../how-to/pwa.md), Путь B).
 
-**Путь:** `Content → Macros → +Macro → PWA-макрос` → задать ID кнопки (`Install button`) и div-элементы → добавить на лэнд.
+В `Html` такого макроса — `window.aioBus.push({type: "config", config: {features: {pwa: true}, pwa: {…}}})`: id кнопки установки (`installButtonId`) и контейнеров `pwa-install` / `pwa-preloader` / `pwa-inside`, ссылки продолжения `session.hess` / `session.sess`, UUID конверсий `conversions` (§II.15). Макрос делают локальным и вызывают на лэнде `{{aio:macros:<slug>}}`.
 
-**Шаги:**
+В iGaming-шаблоне (ERP и MTK) такой макрос уже засеян — `AIO Custom PWA` (`aio_custom_pwa`, `Global: нет`), по его описанию: «Install flow for hand-made PWA landings. Insert {{aio:macros:aio_custom_pwa}} into such a landing; landings built by the AIO PWA generator already have their own and must not get this one». В остальных шаблонах макроса нет — создаётся с нуля.
 
-1. Создать новый макрос типа PWA-macro.
-2. Указать:
-   - **Install button ID** — селектор кнопки на лэнде, к которой будет привязан PWA prompt.
-   - **Manifest fields** (имя, иконки, цвета).
-   - **Div-элементы** — обёртки для PWA UI.
-3. Сохранить.
-4. На лэнде — `{{aio:macros:<slug>}}` после `{{aio}}`.
-
-В iGaming-шаблоне (ERP и MTK) такой макрос уже засеян — `AIO Custom PWA` (`aio_custom_pwa`, `Global: нет`), по его описанию: «Install flow for hand-made PWA landings. Insert {{aio:macros:aio_custom_pwa}} into such a landing; landings built by the AIO PWA generator already have their own and must not get this one». В остальных шаблонах макроса нет — создаётся по шагам выше.
-
-См. [mechanics/pwa.md](../mechanics/pwa.md) → PWA-макрос; пошаговая процедура и конфиг — [how-to/pwa.md](../how-to/pwa.md) (Путь B).
+DOM-скелет лэнда и конфиг по шагам — [how-to/pwa.md](../how-to/pwa.md) (Путь B).
 
 ### Как подключить Google Ads тег `AIO GTAG` — `{{aio:macros:aio_gtag}}` на лэнде
 
 Когда: нужно отдавать конверсии в Google Ads прямо с лэнда (gtag).
 
-**Путь:** `Content → Macros → AIO GTAG` (в MTK редактор макросов — `Settings → Macros`) — **отдельный** макрос `aio_gtag`, не блок внутри `AIO SDK Macros Collection`. Из шаблона тенанта он приезжает в Finance, Nutra и Sweeps (ERP, а также MTK Finance и MTK Sweeps; в iGaming-шаблоне его нет) **активным, но не глобальным** (`Prefer placement` = `Head` у локального макроса не действует — код встаёт на место вызова). Поэтому на лэнд его ставят тегом `{{aio:macros:aio_gtag}}` — описание макроса так и говорит: `Google Ads tag, insert with {{aio:macros:aio_gtag}}.`
+**Путь:** `Content → Macros → AIO GTAG` (в MTK редактор макросов — `Settings → Macros`) — **отдельный** макрос `aio_gtag`, не блок внутри `AIO SDK Macros Collection`. Из шаблона тенанта он приезжает в Finance, Nutra и Sweeps (ERP и MTK; в iGaming-шаблоне его нет) **активным, но не глобальным** (`Prefer placement` = `Head` у локального макроса не действует — код встаёт на место вызова). Поэтому на лэнд его ставят тегом `{{aio:macros:aio_gtag}}` — описание макроса так и говорит: `Google Ads tag, insert with {{aio:macros:aio_gtag}}.`
 
 Что макрос берёт из визита: Conversion ID — из поля `gl_gtag_conversion_id` (или ID вида `AW-…` из `gl_gtag_id`), метку конверсии — из `gl_gtag_conversion_label`. Поля заполняет ссылка источника Google ([how-to/campaigns.md](../how-to/campaigns.md) → Ссылка под Google). Без Conversion ID тег не грузится вовсе, поэтому на трафик других площадок он не влияет.
 
-Конверсию тег шлёт **на успешной отправке формы**: у SDK-формы и у своей формы, которая отправляется через `fetch` (как `AIO Non-SDK Form Handler`), — только когда сервер ответил успехом, и переход на следующую страницу ждёт подтверждения от Google (до 1,5 секунды). У формы с обычной отправкой (`<form method="post">`) конверсия уходит при уходе со страницы после сабмита формы с полем email или телефона. Клик по кнопке без отправки формы конверсией не считается. ID транзакции — UUID визита, поэтому повтор той же конверсии Google считает дублем.
+Конверсию тег шлёт **на успешной отправке формы**: у SDK-формы и у своей формы, которая отправляется через `fetch` (как `AIO Non-SDK Form Handler`), — только когда сервер ответил успехом, и переход на следующую страницу ждёт подтверждения от Google (до 1,5 секунды) и записи итога в поле визита (ещё до ~1 секунды). У формы с обычной отправкой (`<form method="post">`) конверсия уходит при уходе со страницы в течение 15 секунд после сабмита формы с полем email или телефона. Клик по кнопке без отправки формы конверсией не считается. ID транзакции — UUID визита, поэтому повтор той же конверсии Google считает дублем.
 
 В тенантах, созданных раньше, `AIO GTAG` может стоять глобальным (`Global: да`) с прежним телом: оно шлёт конверсию по сабмиту формы, до ответа сервера, и в поле `gl_gtag_status` не пишет. Какая версия у вас — видно по описанию макроса.
 
@@ -510,13 +500,13 @@ config: {
 
 ### Как вынести GTAG со ссылки на уровень кампании — поля type: campaign
 
-Если GTAG нужно вынести **со ссылки на уровень кампании** (чтобы не светить в URL) — заводи поля с `type: campaign` (см. [how-to/custom-fields.md](../how-to/custom-fields.md) → Создать поле визита), архивируй старые source-поля, поменяй имена полей в конфиге макроса `AIO GTAG`.
+Если GTAG нужно вынести **со ссылки на уровень кампании** (чтобы не светить в URL) — заводи поля с `Type` = `Campaign` (см. [how-to/custom-fields.md](../how-to/custom-fields.md) → Создать поле визита), архивируй старые source-поля; если у новых полей другие slug-и — поменяй их в коде макроса `AIO GTAG` (он читает `gl_gtag_id`, `gl_gtag_conversion_id`, `gl_gtag_conversion_label`).
 
-Кастомные конверсионные поля (`type: campaign`): если значение **не должно** фигурировать в URL — два пути: (1) поле визита с `type: campaign`, (2) шаг `Fill Fields`. Кейс переноса кастомных параметров (Google Pixel, GTag Conversion ID/Label, токенов) со ссылки на кампанию: создать поля `type: campaign` (или сменить тип через БД — в UI нельзя), архивировать старые source-поля, поменять имена полей в конфиге макроса `AIO GTAG`.
+Кастомные конверсионные поля (`Type` = `Campaign`): если значение **не должно** фигурировать в URL — два пути: (1) поле визита с `Type` = `Campaign`, (2) шаг `Fill Fields`. Кейс переноса кастомных параметров (Google Pixel, GTag Conversion ID/Label, токенов) со ссылки на кампанию: создать поля `Type` = `Campaign`, архивировать старые source-поля и при новых slug-ах поменять их в коде макроса `AIO GTAG` — либо сменить `Type` у существующих полей в окне редактирования поля (slug-и тогда не меняются).
 
 ---
 
-# Часть II — SDK изнутри (справочник по коду)
+# Часть II — SDK изнутри (технический справочник)
 
 > Этот раздел — устройство SDK изнутри: имена полей визита (slugs), дефолты, эндпоинты агента, протокол `window.aioBus`, lifecycle формы. Для отладки — «что реально делает фича под капотом»; для разработчиков — контракт интеграции.
 
@@ -545,7 +535,7 @@ config: {
 ```javascript
 window.aio = {
   visit:    { uuid, country_code, fields: {…}, is_push_subscribed, … },
-  session:  { uuid },                    // per-visit PWA session-токен (отдельная длинная строка) лежит в visit.session
+  session:  { uuid },                    // новый uuid на каждую отдачу страницы; сессия визита (для ?sess=) — в visit.session
   landing:  { uuid, name, folder: [{ uuid, name, color }], countries: […], languages: […],
               lander_template_uuid, lander_type_uuid },
   campaign: { uuid, name, country_code, language_code, owner_uuid },
@@ -580,11 +570,11 @@ window.aio = {
 | `trigger` | `key`, `value` | Записать значение в поле визита (через exchange, см. II.4). |
 | `conversion` | `type_uuid`, `query` | Отправить конверсию по UUID или slug типа (см. II.4). |
 | `dom-ready` | `fn` | Выполнить функцию на старте SDK — до включения фич, Vue и отрисовки формы. |
-| `form-controls` | `controls: [...]` | Программно задать набор контролов SDK-формы (+ авто-добавление hidden-handle и submit, если не задан). |
+| `form-controls` | `controls: [...]` | Задать набор контролов SDK-формы целиком (+ hidden-handle и submit, если не задан; контролу без `rules` — `required`). |
 | `form-layout` | `layout: [...]` | Раскладка полей формы по рядам/колонкам. |
 | `form-steps` | `steps: [[...],[...]]` | Разбить форму на шаги (массив массивов ключей полей). |
 | `form-translations` | `translations: {...}` | Заменить словарь переводов формы **целиком** (присваивание, не слияние — см. «i18n и переводы формы»). |
-| `form-submit-fn` | `fn` | Зарегистрировать колбэк, который выполнится на **успешном** сабмите (так FB/TT Pixel шлют lead-событие). Потребляется макросом формы, **не** `index.js`. |
+| `form-submit-fn` | `fn` | Колбэк на **успешный** сабмит (так FB/TT Pixel шлют lead-событие), один раз на странице. `fn` — фабрика `(aioExchange, config) => () => {…}`. Читает макрос формы, **не** `index.js`. |
 | `intl-instance` | `resolve` | Получить фабрику intl-tel-input: `intl(input, {…})` инициализирует своё поле телефона. |
 | `vue-data-object` | `data: {...}` | Доложить данные в реактивный объект Vue на лэнде. |
 
@@ -619,7 +609,7 @@ window.aio = {
 
 Сброс на `pagehide` уходит с флагом **`keepalive`** — браузер не отменяет такой запрос на уходе со страницы — и выполняется, даже если предыдущий запрос ещё в полёте; так же принудительно сбрасывает буфер PWA-макрос перед уходом на оффер, в Chrome или в Safari. По интервалу новый сброс, пока предыдущий в полёте, не стартует, а сетевой отказ SDK гасит молча. Практический вывод для разбора: «поздних» полей нет у визита, у которого запрос на уходе не дошёл по сети, — это не поломка лэнда.
 
-Приёмник полей принимает не больше 15 запросов в минуту на один визит: сверх лимита он отвечает `200` со статусом `throttled` и ничего не пишет. Штатный сброс буфера раз в 10 секунд в этот лимит не упирается — упирается свой скрипт, который сам шлёт запросы на `/api/v1/trigger/field/…` чаще.
+Приёмник полей принимает не больше 15 запросов в минуту на один визит: сверх лимита он отвечает `200` со статусом `throttled` и ничего не пишет. Штатный сброс буфера раз в 10 секунд в этот лимит не упирается — упирается свой скрипт, который сам шлёт запросы на `/api/v1/trigger/field/…` чаще. Сверх интервала буфер принудительно сбрасывает и PWA-макрос — перед каждой своей попыткой перехода, так что на PWA-лэнде лимит расходуется быстрее.
 
 ## II.5 `features` — что включено по умолчанию в SDK
 
@@ -639,21 +629,21 @@ window.aio = {
 | `pwa` | **off** | PWA-install + web-push + Android-intent (II.15). |
 | `browserTimezone` | **on** | Поле `browser_time_zone`. |
 | `landed` | **on** | Метрика Qualified Visits (II.6). |
-| `scrolling` | **on** | Скролл-трекинг (Heatmaps). |
-| `sessionRecords` | **on** | Запись сессий (rrweb, II.9). |
+| `scrolling` | **on** | Скролл-трекинг (поля и метрики скролла, II.6). |
+| `sessionRecords` | **on** | Запись сессий и Heatmap лэнда в ERP (rrweb, II.9). |
 | `timeOnLandings` | **on** | Время на лэнде. |
 | `windowDimensions` | **on** | Размеры окна. |
 | `hueChanger` | **on** | Лёгкое смещение оттенка палитры лэнда (II.7). |
 | `fingerprint` | **on** | Device-fingerprint → поле `fingerprint` (II.8). |
 
-Модалки (`Pushing modal`, success/reject) не отдельная фича `features` — их рендерит форма/UTILS (II.12) через хуки `beforeSubmitPromise` / `submitPromises`.
+Модалки (`Pushing modal`, success/reject) не отдельная фича `features`: ключ `features.modal` во встроенном дефолте и в шаблонной Collection есть, но SDK его не читает. Модалку открывают свои хуки `beforeSubmitPromise` / `submitPromises` через `UTILS.openModal` (II.12).
 
 ## II.6 Макросы трекинга — какие поля визита пишут
 
 Все шлют значения через `trigger` (flush ≤10 c):
 
 - **`landed`** → `landed_on_landings_uuid` = `landing.uuid`, `landed_on_landings_types_uuid` = `lander_type_uuid`. Срабатывает один раз при загрузке. Это сигнал «лэнд реально загрузился» → метрика **Qualified Visits**.
-- **`scrolling`** → `scroll_on_landings_uuid` + `scroll_on_landings_scroll` (по лэнду) и `scroll_on_landings_type_uuid` + `scroll_on_landings_type_scroll` (по типу лэнда). На загрузке синхронно (ещё **до** первого скролла, без debounce) шлёт стартовые `scroll_on_landings_scroll=0` / `_type_scroll=0`, дальше — debounce-обновления роста. Процент скролла округляется до кратного `scrolling.round` (дефолт **4**), отправка с debounce **2 c**, значение только **растёт** (откаты вверх не шлются). Для Heatmaps.
+- **`scrolling`** → `scroll_on_landings_uuid` + `scroll_on_landings_scroll` (по лэнду) и `scroll_on_landings_type_uuid` + `scroll_on_landings_type_scroll` (по типу лэнда). На загрузке синхронно (ещё **до** первого скролла, без debounce) шлёт стартовые `scroll_on_landings_scroll=0` / `_type_scroll=0`, дальше — debounce-обновления роста. Процент скролла округляется до кратного `scrolling.round` (дефолт **4**), отправка с debounce **2 c**, значение только **растёт** (откаты вверх не шлются). Отсюда скролл визита в аналитике (`LP1 Scroll` и др.); Heatmap лэнда — из записи сессий (II.9).
 - **`timeOnLandings`** → пишет по вехам накопленного времени. Числа **5, 10, 15, 30, 60 c и 2, 3, 5, 10, 15 мин** в коде — это **задержки между отправками**, а не сами вехи; реальные пороги прошедшего времени = их нарастающие суммы: **5 c, 15 c, 30 c, 1 мин, 2 мин, 4 мин, 7 мин, 12 мин, 22 мин, 37 мин**. На каждой вехе пишет `time_on_landings_total`, `time_on_landings_uuid` + `time_on_landings_time`, `time_on_landing_types_uuid` + `time_on_landing_types_time`. Счётчик **продолжается между лэндами** (восстанавливается из `aio.time_on_landings_*`), кап — 1 час.
 
 - **`windowDimensions`** → `browser_window_width` = `innerWidth`, `browser_window_height` = `innerHeight`.
@@ -661,7 +651,7 @@ window.aio = {
 
 ## II.7 `hueChanger` — лёгкое смещение оттенка палитры
 
-Вешает на `<html>` стиль `filter: hue-rotate(<random>deg)`, где random — целое из `[hueChanger.min, hueChanger.max]` (дефолт **2–8°**). Слегка смещает оттенок палитры лэнда; эффект незаметен глазу. Включён по умолчанию.
+Вешает на `<html>` стиль `filter: hue-rotate(<random>deg)`, где random — целое из `[hueChanger.min, hueChanger.max]` (дефолт **2–8°**). Стиль записывается целиком (`style.cssText`), поэтому inline-стили, заданные тегу `<html>` в разметке лэнда, затираются. Слегка смещает оттенок палитры лэнда; эффект незаметен глазу. Включён по умолчанию.
 
 ## II.8 `fingerprint` — отпечаток устройства (включён по умолчанию)
 
@@ -672,7 +662,7 @@ window.aio = {
 - Пишет DOM-события через **rrweb** (встроенная библиотека).
 - Sampling по умолчанию: `mousemove: false`, `input: 'last'`, `scroll: 500` (мс), из mouse-interaction включены `MouseUp/MouseDown/Click/ContextMenu/DblClick`, выключены focus/blur/touch-события.
 - Каждые **10 c** (если есть события) делает `POST /api/v1/agent/persist-session-record/<visit_uuid>/<session_uuid>` с телом: `events`, `landing_uuid`, `viewport` (w/h + scroll), `useragent`, флаги `is_inside_pwa` / `is_available_for_intent` / `is_available_for_install`, `relations`. Webview-флаг шлётся **дважды** — под `isWebview` (camelCase) и `is_webview` (snake_case) с одним значением.
-- Включён по умолчанию. Это движок фичи **Session Records**.
+- Включён по умолчанию. Это движок фичи **Session Records** и источник Heatmap лэнда в ERP (карты кликов и скролла).
 
 ### `data-no-track` и `data-aio-ignore` на элементах лэнда — SDK их не читает; как исключить элемент из записи сессии
 
@@ -712,7 +702,7 @@ Pixel-ID обе фичи берут из поля визита `aio.visit.fields
 
 ### Как SDK находит и рендерит форму — селектор и сабмит
 
-SDK ищет элементы по `form.selector` (дефолт **`.aio-form`**) и достраивает в них контролы. Сабмит — `GET` на `form.url` (дефолт **`/`**, т.е. на сам лэнд) с query-строкой из данных формы. В данные добавляются `_aio_handle` и пара `handle.key=handle.value` — по ним запрос распознаётся как сабмит формы и обрабатывается как пуш лида в Destination (см. `handle` в §II.2). `_aio_handle` по умолчанию `form`, но если элемент формы несёт атрибут `data-handle`, значение берётся из него (`form.dataset.handle`). Именно этот per-form handle роутит `{{form:N}}` в разные `Handle form N`.
+SDK ищет элементы по `form.selector` (дефолт **`.aio-form`**) и достраивает в них контролы. Сабмит — `GET` на `form.url` (дефолт **`/`**, т.е. на сам лэнд) с query-строкой из данных формы. В данные добавляются `_aio_handle` и пара `handle.key=handle.value` — по ним запрос распознаётся как сабмит формы и обрабатывается как пуш лида в Destination (см. `handle` в §II.2). `_aio_handle` по умолчанию `form`, но если элемент формы несёт атрибут `data-handle`, значение берётся из него (`form.dataset.handle`). Именно этот per-form handle роутит `{{form:N}}` в разные `Handle Form N`.
 
 ### Контролы формы и валидация — типы и правила
 
@@ -748,13 +738,13 @@ Blur-сбор работает для всех text/select-полей, **кро�
 
 Параметры по умолчанию (`intlParameters`): `nationalMode: true`, `autoPlaceholder: 'aggressive'`.
 
-В кастомных формах-макросах встречается отдельный под-блок `form.phone` с настройками телефонного поля: `defaultCountry` (страна по умолчанию, напр. `"us"`), `showDialCode` (показывать код страны), `separateDialCode` (выносить код в отдельный блок — если поддерживается версией библиотеки).
+Под-блок `form.phone` (`defaultCountry`, `showDialCode`, `separateDialCode`) из готовых примеров конфига SDK не читает. Параметры intl-tel-input передают через `form.intlParameters` (например `separateDialCode: true` — код страны отдельным блоком), страну по умолчанию — через `form.defaultCountryCode`.
 
 На сабмите телефон валидируется `isValidNumber()`; в данные кладётся международный формат (`getNumber()` через `intlNumberProcessFn`).
 
 ### Lifecycle сабмита SDK-формы — шаги по порядку
 
-1. `preventDefault`, валидация телефона (если невалиден → `submitErrorCb`, дефолт `alert`).
+1. `preventDefault`, обрезка пробелов в текстовых полях и HTML-валидация формы (`checkValidity`); на промежуточном шаге — переход к следующему (см. «Мультишаг»), на последнем — проверка телефона (`isValidNumber`; невалиден → `submitErrorCb` с текстом `Phone Number is not Valid`, дефолт `alert`).
 2. `disableForms` (кнопка → состояние loading).
 3. Выполняются хуки `form.beforeSubmitPromise` — **после** валидации, **до** пуша.
 4. Если заданы `form.submitPromises` — создаётся «прерываемый» promise (`formPromise`), который **резолвится ответом пуша**; через него крутят Pushing/Success-модалки.
@@ -767,7 +757,7 @@ Blur-сбор работает для всех text/select-полей, **кро�
 
 Точные имена ключей в коде:
 - `beforeSubmitPromise` — **единственное число** — массив функций `(UTILS, aioExchange, config) => Promise`. После валидации, до пуша.
-- `submitPromises` — **множественное** — массив функций `(UTILS, formPromise, aioExchange, config) => Promise`. Вокруг пуша; `formPromise.then(json)` даёт ответ Destination для модалок. Это и есть механизм **«Pushing modal / Advanced Form Sample»**.
+- `submitPromises` — **множественное** — массив функций `(UTILS, formPromise, aioExchange, config) => Promise`. Вокруг пуша; `formPromise.then(json)` даёт ответ Destination для модалок. Это и есть механизм **Pushing modal** — модалки ожидания пуша.
 
 ### Семантика resolve/reject в хуках формы — два хука ведут себя по-разному
 
@@ -791,7 +781,7 @@ Blur-сбор работает для всех text/select-полей, **кро�
 
 ### i18n и переводы формы
 
-- Встроен свой пак переводов на **33 языка**. Полный набор ключей (`FIRST_NAME`, `LAST_NAME`, `EMAIL`, `PHONE`, `SUBMIT`, `SUBMIT_LOADING`, `SUBMIT_SUCCESS`, `SUBMIT_STEP`, `HEADER`) есть только у `en`; у остальных языков переведены подписи полей, `SUBMIT` и `HEADER`, а строки состояния кнопки (`SUBMIT_LOADING`, `SUBMIT_SUCCESS`, `SUBMIT_STEP`) — лишь у единиц, остальные падают на английский. Отсюда типичная картина на лэнде, где форма из ERP не подключена: кнопка на языке визитёра, а «отправляется» / «успех» — по-английски.
+- Встроен свой пак переводов на **33 языка**. Полный набор ключей (`FIRST_NAME`, `LAST_NAME`, `EMAIL`, `PHONE`, `SUBMIT`, `SUBMIT_LOADING`, `SUBMIT_SUCCESS`, `SUBMIT_STEP`, `HEADER`) есть только у `en` и `bg`; у остальных языков переведены подписи полей, `SUBMIT` и `HEADER`, а строки состояния кнопки (`SUBMIT_LOADING`, `SUBMIT_SUCCESS`, `SUBMIT_STEP`) — лишь у единиц, остальные падают на английский. Отсюда типичная картина на лэнде, где форма из ERP не подключена: кнопка на языке визитёра, а «отправляется» / «успех» — по-английски.
 - Если к лэнду подключена форма из ERP, её словарь замещает встроенный пак целиком, и встроенные переводы остаются фолбэком только для строк `SUBMIT*` — как устроены языки формы, [how-to/forms.md](../how-to/forms.md).
 - Язык формы = `form.language` (дефолт — первые 2 буквы `navigator.language`). Фолбэк: нужный язык → `en` → сам ключ.
 - Заменить переводы — через `aioBus` тип `form-translations`. Словарь **присваивается целиком**, а не мёржится с текущим: после этого встроенный пак SDK остаётся фолбэком только для четырёх строк `SUBMIT*`, а подписи и плейсхолдеры полей берутся из присвоенного словаря. Тем же способом на лэнд приезжает словарь формы из ERP — что из этого следует для набора языков формы, см. [how-to/forms.md](../how-to/forms.md).
@@ -853,7 +843,7 @@ Blur-сбор работает для всех text/select-полей, **кро�
 
 В шаблонах работает подстановка токенов: `%key%` (слаг поля), `%placeholder%`, `%value%`, плюс структурные `%step%`, `%steps%`, `%layout-rows%`, `%layout-columns%`, `%form-item-key%`; у `select` — `%select-options%`, `%option-value%`, `%option-label%`, `%selected%`; у `submit` — `%loading%`, `%success%`.
 
-Переопределяемы и шаблоны раскладки/шагов, не только полей: `steps`, `step`, `layout`, `layout-row`, `layout-column`, плюс `hidden`, `text`, `number`, `textarea`, `select`, `select-option`, `select-option-placeholder`, `phone`, `email`, `date`, `checkbox`, `submit`.
+Переопределяемы и шаблоны раскладки/шагов, не только полей: `steps`, `step`, `layout`, `layout-row`, `layout-column`, плюс `input-label`, `hidden`, `text`, `exclamation`, `number`, `textarea`, `select`, `select-option`, `select-option-placeholder`, `phone`, `email`, `date`, `checkbox`, `submit`.
 
 **Конфигурируемые class-name контейнеров шагов** (в `config.form`, рядом с поведенческими настройками):
 
@@ -879,7 +869,7 @@ Blur-сбор работает для всех text/select-полей, **кро�
 
 1. **SDK-форма** (`features.form: true`) — управляемая SDK: `controls`/`layout`/`steps`, intl-tel-input, модалки, переводы из коробки.
 2. **Custom / Non-SDK через aioBus** — своя `<form>` на лэнде: через `dom-ready` + `intl-instance` берёшь из SDK фабрику intl-tel-input и сам инициализируешь ею поле телефона, вешаешь submit-листенер, подкладываешь `_aio_handle=form` + `handle.key/value`, шлёшь `GET /?<params>`. **Handle обязателен — без него сабмит не станет переходом `Handle-form`.** По этой же причине кастомную форму нельзя просто повесить на `action="{{link}}"`: GET-сабмит стирает query у `action` вместе с handle. Готовые плейсхолдеры под это — `{{link_key}}` / `{{link_value}}` (скрытым полем в форму) и `{{link-form}}` (сабмит из JS), см. [reference/placeholders.md](placeholders.md). Если в флоу после Destination есть **destination-pushed** transition — юзера редиректит на шаг флоу, **а не** на `url` из ответа.
-3. **Legacy jQuery** (`.lander-form`, отдельный standalone-скрипт) — старый обработчик: собирает `.lander-form-send`, шлёт `GET /?<params>`, на успех — задержка ~10 c, потом `window.top.location.replace(url)` и FB-пиксель через `aioDataLayer.destinationPushed`. Применяется на старых лэндах.
+3. **Legacy jQuery** (`.lander-form`, отдельный standalone-скрипт) — старый обработчик: собирает `.lander-form-send`, шлёт `GET /?<params>`, на успех — задержка ~10 c, потом `window.top.location.replace(url)` и FB-пиксель через `aioDataLayer.destinationPushed`. В бандл `/aio-static/sdk/main.js` он не входит, и `{{form}}` рисует SDK-форма; встречается только там, где лэнд несёт свою копию этого скрипта.
 
 ## II.14 `backFix` — механика под капотом
 
@@ -892,7 +882,7 @@ Blur-сбор работает для всех text/select-полей, **кро�
 
 ## II.15 `pwa` — install + web-push + Android-intent
 
-PWA-макрос превращает лэнд в устанавливаемое приложение и подписывает на web-push. Здесь — что макрос делает и какими ключами конфига это управляется; пошаговая процедура (DOM-скелет лэнда, включение фичи, вшивание PWA во флоу) — в [how-to/pwa.md](../how-to/pwa.md).
+PWA-макрос управляет установкой приложения и подпиской на web-push на PWA-лэнде — manifest он не задаёт, его AIO собирает из настроек PWA-лэнда (обычный лэнд одним макросом приложением не становится). Здесь — что макрос делает и какими ключами конфига это управляется; пошаговая процедура (DOM-скелет лэнда, включение фичи, вшивание PWA во флоу) — в [how-to/pwa.md](../how-to/pwa.md).
 
 Четыре ветки поведения:
 - **Доступно для установки** (Android + Chrome, не webview, не внутри PWA): показывает preloader → ловит `beforeinstallprompt` → активирует install-кнопку → по клику `prompt()` → анимация прогресса установки. На `appinstalled` шлёт конверсию `conversions.install` и ставит визиту флаг `is_pwa_installed`. Service worker при этом регистрируется независимо от установки (см. ниже), состояния кнопки и их таймеры — ниже.
@@ -948,7 +938,7 @@ Service worker `/aio-static/aio-sw.js` макрос регистрирует **�
 
 Прелоадер перед экраном установки держится `pwa.preLoadingDuration` (деф. **2000 мс**). Id самой кнопки — `pwa.installButtonId` (деф. `install`).
 
-Числа выше — встроенные дефолты SDK; шаблоны `PWA Builder` часть таймингов переопределяют (`intervalBeforeOpenButton` 10 000 мс, `loadingDuration` 10 000 мс — у части шкурок 20 000, `installedTimeout` 50 000 мс, `openDelayAfterReady` 8000 мс — у части шкурок 2000; `openMaxWait`, `noPromptOpenAfter`, `promptWaitOnClick`, `openEarlyWait`, ключи push и встроенного браузера оставляют дефолтами SDK; [how-to/pwa.md](../how-to/pwa.md)).
+Числа выше — встроенные дефолты SDK; шаблоны `PWA Builder` часть таймингов переопределяют (`intervalBeforeOpenButton` 10 000 мс, `preLoadingDuration` 500–1500 мс, у большинства шкурок `loadingDuration` 10 000 мс, `installedTimeout` 50 000 мс и `openDelayAfterReady` 8000 мс или 2000 мс; `openMaxWait`, `noPromptOpenAfter`, `promptWaitOnClick`, `openEarlyWait`, ключи push и встроенного браузера оставляют дефолтами SDK; [how-to/pwa.md](../how-to/pwa.md)).
 
 ### Когда install-кнопка на время тапа показывает загрузку — `promptWaitOnClick`, `openEarlyWait`
 

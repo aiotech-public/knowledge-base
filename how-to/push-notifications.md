@@ -6,7 +6,7 @@ doc_type: how-to
 builds: [erp, mtk]
 related: [remarketing-campaigns, distributions-model, permissions, notifications-flow, placeholders, ui-common, mechanics-pwa, postback-generator, conversion-model, destinations, custom-fields, distributions, metric]
 language: ru
-updated: 2026-10-28
+updated: 2026-11-09
 ---
 
 # Тексты рассылки — дистрибуция Message Templates и наборы AIO
@@ -35,14 +35,16 @@ updated: 2026-10-28
 
 ### Какие дистрибуции `Message Templates` есть в тенанте из коробки — примеры по вертикали
 
-В шаблонах ERP-тенантов лежат готовые дистрибуции-примеры типа `Message Templates` с именами вида `Example - <стадия> - N pushes`: плоские наборы из 2–4 нод `Push Template` под одну стадию воронки, по описанию — образцы под свои тексты («Custom sample set - swap the texts for your brand…» в Finance / Nutra / Sweeps, «Example only … a sample of what a custom library looks like» в iGaming). Набор зависит от вертикали:
+В шаблонах ERP-тенантов лежат готовые дистрибуции-примеры типа `Message Templates` с именами вида `Example - <стадия> - N pushes`: плоские наборы нод `Push Template` под одну стадию воронки (N в имени — сколько в наборе разных текстов), по описанию — образцы под свои тексты («Custom sample set - swap the texts for your brand…» в Finance / Nutra / Sweeps, «Example only … a sample of what a custom library looks like» в iGaming). Набор зависит от вертикали:
 
 - **iGaming**: `Example - After Install - 4 pushes (AIO Global: ~5.2k)`, `Example - After Registration - 4 pushes (AIO Global: ~9k)`, `Example - After Deposit - 4 pushes (AIO Global: ~6.2k)`, `Example - All Stages - 3 pushes (AIO Global: ~4.5k)`; хвост в скобках отсылает к глобальному набору AIO той же стадии, из которого шлют готовые кампании (см. «Готовые наборы пушей от AIO»).
 - **Nutra**: `Example - Confirm Your Order - 4 pushes`, `Example - Finish Your Order - 3 pushes`, `Example - Promo Ending - 2 pushes`, `Example - Reorder Promo - 3 pushes`.
 - **Sweeps**: `Example - After Registration - 4 pushes`, `Example - Prize Reminder - 3 pushes`, `Example - New Round - 3 pushes`.
 - **Finance**: `Example - After Lead - 4 pushes`, `Example - Daily Market - 3 pushes` и третий набор под целевое действие вертикали.
 
-В MTK iGaming те же четыре дистрибуции есть, но пустые — нод `Push Template` в них нет, свой набор там собирается с нуля; в MTK Finance / Sweeps дистрибуций `Message Templates` из коробки нет. Это тенантные дистрибуции, а не глобальные наборы AIO: тексты в них правятся под свой бренд прямо в дереве — что в ноде и как выбирается вариант, ниже.
+В MTK iGaming те же четыре дистрибуции есть, но пустые — нод `Push Template` в них нет, свой набор там собирается с нуля; в MTK Finance / Nutra / Sweeps дистрибуций `Message Templates` из коробки нет. Это тенантные дистрибуции, а не глобальные наборы AIO: тексты в них правятся под свой бренд прямо в дереве — что в ноде и как выбирается вариант, ниже.
+
+Ноды в дистрибуциях-примерах ERP приходят **выключенными**: выключенная нода в отбор не попадает, и шаг серии с такой дистрибуцией ничего не отправит — в логе сообщения будет `Drip: no push nodes selected from distribution tree`. Перед запуском ноды включают в дереве (`Enable node`). Глобальные наборы AIO это не касается — их ноды включены.
 
 ## Как устроено дерево шаблонов — `Folder`, `Strategy` и четыре типа шаблонов
 
@@ -139,9 +141,9 @@ updated: 2026-10-28
 
 ## Готовые наборы пушей от AIO — что это и какие есть
 
-AIO поставляет готовые наборы push-текстов: это **глобальные дистрибуции** типа `Message Templates` — они не принадлежат ни одному тенанту и одинаковы для всех. Наборов четыре, стадия воронки стоит в названии: `iGaming After Install Pushes`, `iGaming After Registration Pushes`, `iGaming After Deposit Pushes` и `iGaming All Stages Pushes`.
+AIO поставляет готовые наборы push-текстов: это **глобальные дистрибуции** типа `Message Templates` — они не принадлежат ни одному тенанту и одинаковы для всех. Наборов четыре, стадия воронки стоит в названии: `iGaming After Install ~5.2k Pushes`, `iGaming After Registration ~9k Pushes`, `iGaming After Deposit ~6.2k Pushes` и `iGaming All Stages ~4.5k Pushes`.
 
-Внутри набора — плоский список push-нод: на каждый из 48 языков своя нода с условием `aio.visit.language_code = <язык>`, у части языков вариантов несколько. Украинского в наборах нет. Тексты написаны со спинтаксом, а в `Push icon` проставлен `{{aio.visit.pwa_icon_url}}`.
+Внутри набора — плоский список push-нод: на каждый код языка своя нода с условием `aio.visit.language_code = <язык>` (кодов 49, норвежский идёт двумя — `nb` и `no`); в наборах After Install / Registration / Deposit у части языков нод несколько. Украинского в наборах нет. Тексты написаны со спинтаксом, а в `Push icon` проставлен `{{aio.visit.pwa_icon_url}}`.
 
 Стадия в имени набора — это только имя: сама дистрибуция ни к какой стадии воронки не привязана. Сегментацию задаёт кампания — стоп-конверсия и обязательные конверсии шага ([how-to/remarketing-campaigns.md](remarketing-campaigns.md)).
 
@@ -159,7 +161,7 @@ AIO поставляет готовые наборы push-текстов: это
 
 Готовые наборы read-only: тексты в них из тенанта не меняются, и сделать себе копию «чтобы доработать под себя» тоже нельзя — в таблицах дистрибуций готовых наборов нет, а вместе с ними нет и пункта копирования.
 
-Ноды набора помечены заблокированными, экшенов редактирования у них нет, а сервер отказывает в записи независимо от интерфейса. Тултип на бейдже говорит только «общая для всех», про read-only — ни слова; при попытке редактировать заблокированную ноду интерфейс сообщает `Node is locked`.
+Открыть дерево набора из таблиц дистрибуций нельзя — набора там нет, а сервер отказывает в записи в набор и его ноды независимо от интерфейса. Тултип на бейдже говорит только «общая для всех», про read-only — ни слова.
 
 Нужны свои тексты — заводится своя дистрибуция типа `Message Templates` и наполняется своими нодами; из готового набора при этом не переносится ничего.
 
@@ -242,7 +244,7 @@ Telegram-нотификация баеру — отдельная история
 
 ### «Поставил `Strategy` с весами — рассылка встала»
 
-Рассылка перестала отправлять после того, как в дерево шаблонов добавили ноду `Strategy` с весами. Весов у шаблонов сообщений нет: нода в дереве предлагается, но при прошедшем условия Template-ребёнке шаг рассылки на ней падает, и сообщение не уходит вообще — статус сообщения становится `Failed`, ошибка появляется в `Settings → Logs` (ERP и MTK). В ERP сообщение видно также в `Marketing → Messages`. Убрать `Strategy` из дерева, а отбор строить на условиях нод.
+Рассылка перестала отправлять после того, как в дерево шаблонов добавили ноду `Strategy` с весами. Весов у шаблонов сообщений нет: нода в дереве предлагается, но при прошедшем условия Template-ребёнке шаг рассылки на ней падает, и сообщение не уходит вообще — статус сообщения становится `Failed`, текст ошибки пишется в имя сообщения; отдельной записи в `Settings → Logs` у такого падения нет. В ERP сообщение видно в `Marketing → Messages`. Убрать `Strategy` из дерева, а отбор строить на условиях нод.
 
 ### «Хочу видеть CTR и open-rate пушей»
 

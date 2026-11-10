@@ -6,7 +6,7 @@ doc_type: model
 builds: [erp, mtk]
 related: [distributions-model, conversion-model, analytics, sdk, architecture, metric, meta-spend-allocation, distributions, postback-generator, glossary, ui-map]
 language: ru
-updated: 2026-10-09
+updated: 2026-11-09
 ---
 
 # Business Model (формула Revenue/Payout) — концепт (модель)
@@ -23,7 +23,7 @@ updated: 2026-10-09
 
 Деньги в AIO считаются цепочкой из трёх звеньев, и путать их роли — главный источник вопросов:
 
-- **Conversion Type** имеет **поля** (`arrived_revenue`, кастомные суммы и т.п.) — туда постбэк кладёт значения по имени поля (в постбэке пишут `<имя поля>=<значение>`).
+- **Conversion Type** в `Revenue settings` / `Payout settings` указывает денежные деревья для своих конверсий. Суммы постбэк кладёт в **поля конверсии** — поля тенанта с `Type = Conversion` (`arrived_revenue`, кастомные суммы и т.п.), по slug поля: `<slug поля>=<значение>`. К конкретному Conversion Type поле не привязано.
 - **Revenue/Payout Distribution** — дерево правил, которое для пришедшей конверсии **обращается к Business Model**.
 - **Business Model** — по своей `Formula` рассчитывает **`Revenue` или `Payout`** конверсии; для суммы из постбэка формула читает нужное поле.
 
@@ -72,9 +72,9 @@ updated: 2026-10-09
 
 **Тенант, созданный из любого из семи публичных шаблонов (ERP: Finance / iGaming / Nutra / Sweeps; MTK: Finance / iGaming / Sweeps), получает один и тот же набор из восьми Business Model — по четыре на каждую сторону.** Имена и `Abbreviation` моделей:
 
-- **`Arrived Revenue` (`AR`)** / **`Arrived Payout` (`AP`)** — `usd({{aio.conversion.fields.arrived_revenue}})`: сумма из поля `arrived_revenue` постбэка, приведённая к USD. `Arrived Revenue` стоит в единственном включённом листе засеянного `Revenue Distribution`, поэтому это дефолт revenue-стороны.
+- **`Arrived Revenue` (`AR`)** / **`Arrived Payout` (`AP`)** — `usd({{aio.conversion.fields.arrived_revenue}})`: сумма из поля `arrived_revenue` постбэка, приведённая к USD. `Arrived Revenue` — единственная модель во включённых листах засеянного `Revenue Distribution`, поэтому это дефолт revenue-стороны.
 - **`Static Revenue` (`SR`)** / **`Static Payout` (`SP`)** — `{{node}}`: фиксированная сумма, введённая в листе дерева (описание `Static Payout` в шаблонах Finance / Nutra / Sweeps — `Fixed payout set in the distribution - the usual CPL deal`, в iGaming — `Fixed payout set in the distribution node`).
-- **`Zero Revenue` (`ZR`)** / **`Zero Payout` (`ZP`)** — `0`. `Zero Payout` стоит в единственном включённом листе засеянного `Payout Distribution` (папка `Default 0$ Payout`), поэтому это дефолт payout-стороны: пока дерево не перестроено, `Payout` у всех конверсий равен 0.
+- **`Zero Revenue` (`ZR`)** / **`Zero Payout` (`ZP`)** — `0`. `Zero Payout` — единственная модель во включённых листах засеянного `Payout Distribution` (папка `Default 0$ Payout`), поэтому это дефолт payout-стороны: пока дерево не перестроено, `Payout` у всех конверсий равен 0.
 - **`Cancel Revenue` (`CREV`)** / **`Cancel Payout` (`CPAY`)** — `{{aio.visit.revenue}} * (-1)` / `{{aio.visit.payout}} * (-1)`: минус сумма revenue / payout всех конверсий визита на момент расчёта, то есть конверсия с этой моделью обнуляет уже засчитанные деньги визита (описание `Cancel Revenue` в шаблонах Finance / Nutra / Sweeps — `Zeroes out the revenue already counted - lead rejected by CRM`, в iGaming — `Zeroes out the revenue already counted for the visit`).
 
 Под этими именами и `Abbreviation` модели видны в `Settings → Business models`.
@@ -111,7 +111,7 @@ Metric заводится в `Settings → Metrics → + Metric`. Для сум�
 
 ## Как Business Model связана с остальными сущностями AIO
 
-- **Conversion Type → имеет поля** (`arrived_revenue`, кастомные суммы…), куда постбэк кладёт значения; Business Model эти поля читает ([models/conversion-model.md](conversion-model.md)).
+- **Поля конверсии** (`arrived_revenue`, кастомные суммы…) — поля тенанта с `Type = Conversion`, куда постбэк кладёт значения; Business Model эти поля читает. **Conversion Type** выбирает денежные деревья в `Revenue settings` / `Payout settings` ([models/conversion-model.md](conversion-model.md)).
 - **Revenue/Payout Distribution → выбирает Business Model** в листе (модалка `Edit revenue`/`Edit payout`); движок дерева — [models/distributions-model.md](distributions-model.md).
 - **Business Model → пишет `Revenue`/`Payout`** конверсии по своей `Formula`.
 - **Profit = `Revenue − Cost`, не `− Payout`** — формула прибыли и что входит в Cost (рекламный спенд) — *Медиабаинг и место AIO в нём*. По FB основной способ увидеть Cost и профит — метрика `Meta Spend` в отчётах (считается на лету в момент отчёта, revenue стоит рядом) — [mechanics/meta-spend-allocation.md](../mechanics/meta-spend-allocation.md).
@@ -132,7 +132,7 @@ Revenue = деньги, которые МЫ получаем (наша коми�
 
 ### Zero Payout vs Arrived Revenue — дефолтные модели тенанта
 
-Zero Payout — всегда 0 (в `Formula` записан `0`), стоит в единственном включённом листе засеянного `Payout Distribution` (папка `Default 0$ Payout`). Arrived Revenue — `usd({{aio.conversion.fields.arrived_revenue}})`: приводит `arrived_revenue` к USD и пишет в Revenue, стоит в единственном включённом листе засеянного `Revenue Distribution` (папка `Revenue by Postback for All Conversions`, в iGaming — `Revenue by Postback`). Остальные шесть засеянных моделей (Static Revenue/Payout, Zero Revenue, Cancel Revenue/Payout и Arrived Payout) в деревьях по умолчанию не участвуют. «Статичная»/«динамическая» — описательные ярлыки по содержимому `Formula` (`{{node}}` или константа vs плейсхолдер поля), а не пункты UI (см. выше).
+Zero Payout — всегда 0 (в `Formula` записан `0`), единственная модель во включённых листах засеянного `Payout Distribution` (папка `Default 0$ Payout`). Arrived Revenue — `usd({{aio.conversion.fields.arrived_revenue}})`: приводит `arrived_revenue` к USD и пишет в Revenue, единственная модель во включённых листах засеянного `Revenue Distribution` (папка `Revenue by Postback for All Conversions`, в iGaming — `Revenue by Postback`). Остальные шесть засеянных моделей (Static Revenue/Payout, Zero Revenue, Cancel Revenue/Payout и Arrived Payout) в деревьях по умолчанию не участвуют. «Статичная»/«динамическая» — описательные ярлыки по содержимому `Formula` (`{{node}}` или константа vs плейсхолдер поля), а не пункты UI (см. выше).
 
 ### Где создаётся vs где применяется Business Model
 
@@ -178,7 +178,7 @@ Payout у любого типа, привязанного к засеянном�
 
 ### Изменили модель/правило Distribution — когда используется новая формула
 
-Изменение модели или правила само по себе не пересчитывает уже созданные конверсии. Новая конверсия считается при создании по текущим настройкам, даже если передана старая дата события. Повторный постбэк с настроенным `Correction type` может заново рассчитать Revenue и записать разницу отдельной конверсией; ручное изменение денег — отдельные экшены `Update Revenue` / `Update Payout` ([models/conversion-model.md](conversion-model.md)).
+Изменение модели или правила само по себе не пересчитывает уже созданные конверсии. Новая конверсия считается при создании по текущим настройкам, даже если передана старая дата события. Повторный постбэк с настроенным `Correction type` может заново рассчитать Revenue и записать разницу отдельной конверсией; ручное изменение денег — отдельные экшены `Update revenue` / `Update payout` ([models/conversion-model.md](conversion-model.md)).
 
 ### Деньги записались, но в листах кампаний/аналитике не видно
 

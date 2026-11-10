@@ -6,7 +6,7 @@ doc_type: model
 builds: [erp, mtk]
 related: [sdk, forms, architecture, landing, placeholders, flow-model, visit-field, destination, conversion-model, custom-fields, glossary, ui-map]
 language: ru
-updated: 2026-10-28
+updated: 2026-11-09
 ---
 
 # Form (захват лида) — концепт (модель)
@@ -17,7 +17,7 @@ updated: 2026-10-28
 
 ## Что такое Form и Form Builder — сущность с собственным UI
 
-У формы есть top-level подсекция `Settings → Forms` — список ваших форм со своими экшенами (правый клик по строке: `Edit form`, `Form builder`, `Copy form`). `+Form` и `Form builder` открывают **Form Builder** с вкладками `Settings` и `Preview`. В `Settings` находятся панель `Info` и разделы `Controls`, `Steps`, `Layouts`, `Languages`. `Edit form` открывает отдельный диалог с JSON-настройками. Состав Form Builder:
+У формы есть top-level подсекция `Settings → Forms` — список ваших форм со своими экшенами (правый клик по строке; среди них `Edit form`, `Form builder`, `Copy form`). `+Form` и `Form builder` открывают **Form Builder** с вкладками `Settings` и `Preview`. В `Settings` находятся панель `Info` и разделы `Controls`, `Steps`, `Layouts`, `Languages`. `Edit form` открывает отдельный диалог с JSON-настройками. Состав Form Builder:
 
 - **Info** — Name, Description, Tags, Base language, Color, Icon;
 - **Controls** — список инпутов + правила валидации (см. раздел Control ниже);
@@ -107,7 +107,7 @@ updated: 2026-10-28
 
 ### Flow — форма подключается нодой `Fill form`
 
-Форма подключается нодой `Fill form` (подпись `Select form` / `Choose Form`) либо через Content-шаг; разные формы можно сплитовать по весам. Submit формы запускает transition `Handle-form` (vs `Handle-link` при клике `{{link}}`). Для нескольких форм доступны `{{form:1}}` … `{{form:5}}`. Эти контейнеры обрабатываются, когда в HTML также есть обычный `{{form}}`; для номерной формы настройте соответствующий переход `Handle Form 1` … `Handle Form 5`. В меню также есть `Handle All Forms`. Параллель к поведению `{{link:N}}` в transition'ах флоу. → [models/flow-model.md](flow-model.md)
+Форма подключается нодой `Fill form` (подпись `Select form` / `Choose Form`) либо через Content-шаг; разные формы можно сплитовать по весам. Submit формы запускает transition `Handle-form` (vs `Handle-link` при клике `{{link}}`). Для нескольких форм доступны `{{form:1}}` … `{{form:5}}`; для номерной формы настройте соответствующий переход `Handle Form 1` … `Handle Form 5` — без своего перехода номерная форма уходит в базовый `Handle All`. `Handle All Forms` ловит сабмит ненумерованной формы. Параллель к поведению `{{link:N}}` в transition'ах флоу. → [models/flow-model.md](flow-model.md)
 
 ### Visit Field — маппинг контрола на поле визита
 
@@ -168,5 +168,5 @@ Field в Control settings задаёт поле визита, а UI синхро
 - **Подключение к пути** (нода `Fill form`, Content-шаг, transition `Handle-form`) → [models/flow-model.md](flow-model.md).
 - **Маппинг контрол↔поле визита, Required-контексты** → [models/visit-field.md](visit-field.md), [how-to/custom-fields.md](../how-to/custom-fields.md).
 - **Куда уходит лид после submit** → [models/destination.md](destination.md).
-- **Термины** (SDK-форма, Form Builder, Controls, Steps, Layouts, Languages, Form Behavior settings, Pushing modal, Advanced Form Sample, CSS-переменные) → [reference/glossary.md](../reference/glossary.md).
-- **UI** → [reference/ui-map.md](../reference/ui-map.md) (в ERP — `Settings → Forms` `/app/settings/forms`; Form Builder: Settings (Info и Controls/Steps/Layouts/Languages) и Preview; поведение — в ERP `Content → Macros → AIO SDK Macros Collection`, в MTK `Settings → Macros`; привязка в ERP — `Tracker → Flows → Edit Flow → Fill form`; рендер — `{{form}}` в коде лэнда).
+- **Термины** (SDK-форма, Form Builder, Controls, Steps, Layouts, Languages, Form Behavior settings, Pushing modal, CSS-переменные) → [reference/glossary.md](../reference/glossary.md).
+- **UI** → [reference/ui-map.md](../reference/ui-map.md) (в ERP — `Settings → Forms` `/app/settings/forms`; Form Builder: Settings (Info и Controls/Steps/Layouts/Languages) и Preview; поведение — в ERP `Content → Macros → AIO SDK Macros Collection`, в MTK `Settings → Macros`; привязка в ERP — `Tracker → Flows → Edit flow → Fill form`; рендер — `{{form}}` в коде лэнда).

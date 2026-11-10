@@ -6,7 +6,7 @@ doc_type: how-to
 builds: [erp, mtk]
 related: [placeholders, sdk, permissions-model, landings, custom-fields, user-fields, forms, distributions-model, postback-generator, conversion-model]
 language: ru
-updated: 2026-10-16
+updated: 2026-11-10
 ---
 
 # Свой макрос в AIO — как написать, подключить и проверить
@@ -23,7 +23,7 @@ updated: 2026-10-16
 - не создаёт своих плейсхолдеров: текстовой переменной вида `{{funnel}}` из макроса не получится, текст на страницу выводит только его JS;
 - не грузится по условию: правил «ставить макрос, только если…» нет, условие пишут `if` внутри кода.
 
-Шаблонные макросы, которые приезжают с тенантом (`AIO SDK Macros Collection`, `AIO GTAG`, `AIO Non-SDK Form Handler` и другие), описаны в [reference/sdk.md](../reference/sdk.md).
+Шаблонные макросы, которые приезжают с тенантом, описаны в [reference/sdk.md](../reference/sdk.md). Набор зависит от шаблона тенанта: `AIO SDK Macros Collection` есть во всех, а `AIO GTAG`, `AIO Non-SDK Form Handler` и другие — не во всех.
 
 ## Как создать макрос — `Content → Macros` → `+ Macros`
 

@@ -1,12 +1,12 @@
 ---
 id: campaign
 title: Campaign — концепт
-description: Что такое кампания в AIO, её роль как инстанса Flow и точки агрегации, как через неё входит визит (cuuid), как Edit Campaign накладывается на Flow, чем отличается от Flow/Source/Link, и чем от неё отличается второй тип — Remarketing Campaign. Концепт; процедуры — в how-to/campaigns.md.
+description: Что такое кампания в AIO, её роль как инстанса Flow и точки агрегации, как через неё входит визит (cuuid), как Edit campaign накладывается на Flow, чем отличается от Flow/Source/Link, и чем от неё отличается второй тип — Remarketing Campaign. Концепт; процедуры — в how-to/campaigns.md.
 doc_type: model
 builds: [erp, mtk]
 related: [campaigns, ui-map, flow-model, visit-lifecycle, meta-spend-allocation, source, remarketing-campaigns, architecture, domain, ui-common]
 language: ru
-updated: 2026-10-09
+updated: 2026-11-09
 ---
 
 # Campaign — концепт
@@ -27,17 +27,17 @@ updated: 2026-10-09
 - **Свойство:** общая логика Flow используется кампаниями на нём. Настройки, переопределённые в кампании, сохраняют её собственные значения.
 - **Гоча:** изменение общего Flow затрагивает существующие кампании, а выбранные в них лэнды не заменяются новым шаблоном автоматически. Для нового пути рекомендуется создать отдельный Flow и запускать с него новые кампании; при переводе старой кампании нужно проверить её настройки шагов. См. [models/flow-model.md](flow-model.md).
 
-### 2. Edit Campaign = оверлей поверх шагов Flow
+### 2. Edit campaign = оверлей поверх шагов Flow
 
-Когда открываешь `Edit Campaign`, в основной области видны **шаги привязанного Flow в виде карточек** — это и есть «инстанс» пути. Но редактируются не все настройки, а только те, что Flow разрешил трогать на уровне кампании — механика **`Settings Availability`** (`Campaign Template` / `Flow Only` / `Campaign Only`), детально — [models/flow-model.md](flow-model.md) → Settings Availability.
+Когда открываешь `Edit campaign`, в основной области видны **шаги привязанного Flow в виде карточек** — это и есть «инстанс» пути. Но редактируются не все настройки, а только те, что Flow разрешил трогать на уровне кампании — механика **`Settings availability`** (`Campaign template` / `Flow only` / `Campaign only`), детально — [models/flow-model.md](flow-model.md) → Settings availability.
 
-Поэтому два байера на одном Flow могут иметь разные лэнды/фильтр/дестинейшны в своих кампаниях — каждый правит свой оверлей, не ломая общий чертёж. Сам путь целиком виден, не уходя из редактора: рядом с селектом `Traffic flow` есть кнопка-глаз `Flow preview` — нередактируемая схема выбранного флоу полноэкранной модалкой. Что именно правится в Edit Campaign, как устроены карточки шагов и превью — [how-to/campaigns.md](../how-to/campaigns.md).
+Поэтому два байера на одном Flow могут иметь разные лэнды/фильтр/дестинейшны в своих кампаниях — каждый правит свой оверлей, не ломая общий чертёж. Сам путь целиком виден, не уходя из редактора: рядом с селектом `Traffic flow` есть кнопка-глаз `Flow preview` — нередактируемая схема выбранного флоу полноэкранной модалкой. Что именно правится в Edit campaign, как устроены карточки шагов и превью — [how-to/campaigns.md](../how-to/campaigns.md).
 
 ### 3. Ссылка — это «адрес» кампании, `cuuid` — её идентичность
 
-Tracking-ссылку для рекламы собирает **Link Generator** из тройки `Campaign + Domain + Source`. В ссылке зашит **`cuuid` = UUID этой кампании** (и `suuid` = UUID source). По `cuuid` AIO определяет, *в какую кампанию* положить визит (агент принимает клик и передаёт параметры). Если в новом заходе не хватает `cuuid` или `suuid` после декодирования ссылки, атрибуцию нужно дополнить через `Default Query` домена или `Direct Traffic Distribution` (см. [mechanics/visit-lifecycle.md](../mechanics/visit-lifecycle.md)). Штатный путь прямого трафика в MTK — `Default Query` на каждом домене. Общая форма `Edit domain` также позволяет выбрать доступную существующую `Direct Traffic Distribution`; это не заменяет настройку её правил.
+Tracking-ссылку для рекламы собирает **Link Generator** из тройки `Campaign + Domain + Source`. В ссылке зашит **`cuuid` = UUID этой кампании** (и `suuid` = UUID source). По `cuuid` AIO определяет, *в какую кампанию* положить визит (агент принимает клик и передаёт параметры). Если в новом заходе не хватает `cuuid` или `suuid` после декодирования ссылки, атрибуцию нужно дополнить через `Default query` домена или `Direct Traffic Distribution` (см. [mechanics/visit-lifecycle.md](../mechanics/visit-lifecycle.md)). Штатный путь прямого трафика в MTK — `Default query` на каждом домене. Общая форма `Edit domain` также позволяет выбрать доступную существующую `Direct Traffic Distribution`; это не заменяет настройку её правил.
 
-Одна кампания может породить **много ссылок** (разные домены, разные Source, разные `Launcher`-ы при multi-buyer) — но `cuuid` у них один. История ссылок живёт в `Edit Campaign → Link history` при наличии права `tracker.generated-links.view`.
+Одна кампания может породить **много ссылок** (разные домены, разные Source, разные `Launcher`-ы при multi-buyer) — но `cuuid` у них один. История ссылок живёт в `Edit campaign → Link history` при наличии права `tracker.generated-links.view`.
 
 ### 4. Кампания — корень агрегации (деньги и аналитика)
 
@@ -76,19 +76,19 @@ Tracking-ссылку для рекламы собирает **Link Generator** 
 
 **В MTK-билде кампания использует ту же базовую механику, но редактор ограничен** (MTK — это ограниченный вид того же тенанта, разбор — *Как устроен MTK-вид AIO: навигация, пресеты из шаблона и методы под типовые задачи*):
 
-1. **Флоу только выбрать, не собрать.** Поле `Traffic flow` в `Edit Campaign` — это дропдаун с преднастроенными флоу: они приходят из шаблона тенанта, и набор зависит от вертикали (например, `1/2Step | Preland to Offer` в Finance, `PWA / OneLink` в iGaming, `Default 1Step Flow` в Sweeps — что клонируется из шаблона, [context/architecture.md](../context/architecture.md)). Создавать новые и редактировать существующие флоу в MTK нельзя — редактора флоу в этом виде нет. «Кампания = инстанс Flow» остаётся верным, только Flow берётся готовым.
+1. **Флоу только выбрать, не собрать.** Поле `Traffic flow` в `Edit campaign` — это дропдаун с преднастроенными флоу: они приходят из шаблона тенанта, и набор зависит от вертикали (например, `1/2Step | Preland to Offer` в Finance, `PWA / OneLink` в iGaming, `Default 1Step Flow` в Sweeps — что клонируется из шаблона, [context/architecture.md](../context/architecture.md)). Создавать новые и редактировать существующие флоу в MTK нельзя — редактора флоу в этом виде нет. «Кампания = инстанс Flow» остаётся верным, только Flow берётся готовым.
 2. **Нет выбора `Conversions AI` / `Metrics AI`.** Редактор кампании в MTK не предлагает эти AI-стратегии оптимизации.
-3. **Нет панели `LP Splits`.** В MTK не редактируют сплиты элементов лэнда через эту панель. В блоке `Landing` кампании выбирают целые лэнды (`First` / `Weights`). Уже настроенные сплиты в HTML обрабатываются при показе лэнда.
+3. **Нет панели `LP splits`.** В MTK не редактируют сплиты элементов лэнда через эту панель. В блоке `Landing` кампании выбирают целые лэнды (`First` / `Weights`). Уже настроенные сплиты в HTML обрабатываются при показе лэнда.
 
-В `Edit Campaign` остаются встроенный фильтр в блоке `AIO Filter` (его параметры), косты, домены и source. Вкладка `Sessions`, доступная в ERP при отдельном праве, в MTK не показывается. Где что лежит в MTK-навигации — *Как устроен MTK-вид AIO: навигация, пресеты из шаблона и методы под типовые задачи*.
+В `Edit campaign` остаются встроенный фильтр в блоке `AIO Filter` (его параметры), косты, домены и source. Вкладка `Sessions`, доступная в ERP при отдельном праве, в MTK не показывается. Где что лежит в MTK-навигации — *Как устроен MTK-вид AIO: навигация, пресеты из шаблона и методы под типовые задачи*.
 
 ## Как Campaign связана с остальными сущностями
 
 - **Campaign → ровно один Flow** (путь). Наследует структуру + оверрайды шагов.
 - **Campaign + Source → Link → Visit.** Визит входит по `cuuid`+`suuid`.
-- **Campaign → Link-домен.** Обычно трекинговый; публичный домен может подменяться шагом `Domain-Change` внутри пути ([models/domain.md](domain.md)).
+- **Campaign → Link-домен.** Обычно трекинговый; публичный домен может подменяться шагом `Domain change` внутри пути ([models/domain.md](domain.md)).
 - **Campaign ← Visit / Conversion / Cost.** Корень роллапа всей статистики.
-- **Campaign → шаги Flow** показываются карточками в `Edit Campaign` (оверлей по `Settings Availability`).
+- **Campaign → шаги Flow** показываются карточками в `Edit campaign` (оверлей по `Settings availability`).
 
 ## Чем Campaign отличается от смежных понятий
 
@@ -109,13 +109,13 @@ Tracking-ссылку для рекламы собирает **Link Generator** 
 
 **По умолчанию кампания не ограничена одним Link-доменом.** Для обычного нового захода можно использовать другой рабочий домен своего тенанта; кампания и её инфраструктура должны быть действующими.
 
-Toggle `Lock campaign to this domain` в `Edit Campaign` появляется после выбора `Link domain` и по умолчанию выключен. При включении новый обычный заход с другого домена отклоняется. Последующий шаг `Domain Change` может сменить публичный домен внутри пути визита.
+Toggle `Lock campaign to this domain` в `Edit campaign` появляется после выбора `Link domain` и по умолчанию выключен. При включении новый обычный заход с другого домена отклоняется. Последующий шаг `Domain Change` может сменить публичный домен внутри пути визита.
 
 Выбор нескольких доменов для этого ограничения не поддержан: настройка привязана к одному выбранному `Link domain`.
 
 ## Куда идти за деталями Campaign — смежные темы
 
-- **Процедуры** → [how-to/campaigns.md](../how-to/campaigns.md) (создание, Edit Campaign, Link Generator, Update Costs, FB/AIO Meta).
+- **Процедуры** → [how-to/campaigns.md](../how-to/campaigns.md) (создание, Edit campaign, Link Generator, Update Costs, FB/AIO Meta).
 - **Путь, который кампания инстанцирует** → [models/flow-model.md](flow-model.md); что проходит по пути → [mechanics/visit-lifecycle.md](../mechanics/visit-lifecycle.md).
 - **Вход трафика** → [models/source.md](source.md).
 - **UI** → [reference/ui-map.md](../reference/ui-map.md): ERP `Tracker → Campaigns`, MTK `Campaigns` в основном меню; общий табличный UI — [reference/ui-common.md](../reference/ui-common.md).

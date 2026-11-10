@@ -6,7 +6,7 @@ doc_type: how-to
 builds: [erp, mtk]
 related: [how-to-pwa, campaigns, visit-lifecycle, debug-with-logs, visit-timeline, live-pulse, landings, source-trackers, conversion-model, postback-generator, tracker, sdk, destinations, permissions-model]
 language: ru
-updated: 2026-10-16
+updated: 2026-11-09
 ---
 
 # Как протестировать связку до запуска — тестовый клик, фильтр, превью-ссылка, тестовая конверсия
@@ -26,7 +26,7 @@ updated: 2026-10-16
 
 ## Где найти тестовый визит и что с ним произошло
 
-**Тестовый визит ищут в `Tracker → Visits` (в MTK — вкладка `Visits`) за сегодня с сортировкой по времени создания, а если его там нет — на вкладке `Trash` (`Tracker → Trash`, в MTK — `Settings → Trash`).** Флаг Trash проверяйте и в `Visits`; в MTK есть фильтр `Show Trash`. Первично отсеянный визит может отсутствовать на экране `Visits` — ищите его на отдельной вкладке `Trash`. Период по умолчанию — `Today`, и «сегодня» считается в таймзоне, выбранной у часов в верхней панели: клик около полуночи может оказаться во «вчера». При сортировке не по времени самые свежие визиты в таблице могут ещё не появиться. `In Buffer` у строки — визит ещё в буфере; сам флаг не означает ошибку ([mechanics/visit-lifecycle.md](../mechanics/visit-lifecycle.md)).
+**Тестовый визит ищут в `Tracker → Visits` (в MTK — вкладка `Visits`) за сегодня с сортировкой по времени создания, а если его там нет — на вкладке `Trash` (`Tracker → Trash`, в MTK — `Settings → Trash`).** Флаг Trash проверяйте и в `Visits`; в MTK есть фильтр `Show trash`. Первично отсеянный визит может отсутствовать на экране `Visits` — ищите его на отдельной вкладке `Trash`. Период по умолчанию — `Today`, и «сегодня» считается в таймзоне, выбранной у часов в верхней панели: клик около полуночи может оказаться во «вчера». При сортировке не по времени самые свежие визиты в таблице могут ещё не появиться. `In Buffer` у строки — визит ещё в буфере; сам флаг не означает ошибку ([mechanics/visit-lifecycle.md](../mechanics/visit-lifecycle.md)).
 
 Что происходило с визитом, в ERP показывают пункты меню визита (ПКМ): `Visit logs` — логи визита; для детальной отладки добавьте `Debug` в `Severity` ([how-to/debug-with-logs.md](debug-with-logs.md)); `Visit timeline` — хронология шагов, полей и конверсий, для Owner / Admin ([how-to/visit-timeline.md](visit-timeline.md)). В MTK меню у визита нет — его логи открываются в `Settings → Logs` фильтром `Loggable UUID` по UUID визита. Живой поток кликов — `Analytics → Live Pulse` (ERP): тестовый клик прилетает событием `init`, отсеянный — в нижнюю полосу `TRASH` ([how-to/live-pulse.md](live-pulse.md)).
 
@@ -44,13 +44,13 @@ updated: 2026-10-16
 
 1. `Tracker → Campaigns` (в MTK — вкладка `Campaigns`) → ПКМ по превью-кампании (`Preview Campaign`, в Sweeps — `1Step Preview Campaign`, в Nutra — `Global Preview Campaign`) → `Link generator`.
 2. `Domain` — ваш рабочий домен, `Source` — `Preview Link` (`1Step Preview Link`).
-3. `Landing UUID` — UUID лэнда из списка лэндов (колонка `UUID` по умолчанию скрыта, включается в `Settings → Table settings`).
+3. `Landing UUID` — UUID лэнда из списка лэндов (колонка `UUID` по умолчанию скрыта, включается в настройках таблицы — `Table settings`).
 
 Визит ложится в статистику превью-кампании, сабмит формы уходит в её `Destination` — какой стоит по вертикали, [how-to/landings.md](landings.md). Нет такого источника — его создают из шаблона `Preview Link` (категория `AIO Tools`) в `Tracker → Sources → + Source`; параметр `lp` выбирает лэнд только во флоу, которое использует его в настройке шага.
 
 ### Visit by 1Step Preview Link — превью-визит одним кликом из меню лэнда
 
-**Пункт `Visit by 1Step Preview Link` в меню лэнда (группа `Preview`) и одноимённая вкладка в окне `Landing quick preview` сами собирают превью-ссылку на этот лэнд и открывают её в новой вкладке браузера.** Ссылка остаётся в окне `Visit generation`. Пункт появляется, когда команда AIO привязала к тенанту домен, источник и кампанию превью, — это запрос в поддержку (что в нём указать — [how-to/landings.md](landings.md)). Пока привязки нет, ту же ссылку собирают через `Link generator` превью-кампании, как описано в секции «Preview Link и 1Step Preview Link» этого документа. Пункт виден с правом `content.landings.view.embed-preview`.
+**Пункт `Visit by 1Step Preview Link` в меню лэнда (в верхнем блоке, рядом с `Embed preview`) и одноимённая вкладка в окне `Landing quick preview` сами собирают превью-ссылку на этот лэнд и открывают её в новой вкладке браузера.** Ссылка остаётся в окне `Visit generation`. Пункт появляется, когда команда AIO привязала к тенанту домен, источник и кампанию превью, — это запрос в поддержку (что в нём указать — [how-to/landings.md](landings.md)). Пока привязки нет, ту же ссылку собирают через `Link generator` превью-кампании, как описано в секции «Preview Link и 1Step Preview Link» этого документа. Пункт виден с правом `content.landings.view.embed-preview`.
 
 ### 2Step Preview Link, AIO Internal Route и другие незнакомые источники в списке
 

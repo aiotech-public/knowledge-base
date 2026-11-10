@@ -6,7 +6,7 @@ doc_type: model
 builds: [erp, mtk]
 related: [landings, sdk, ui-map, how-to-pwa, mechanics-pwa, analytics, limits, placeholders, user-fields, content-library, forms, creatives]
 language: ru
-updated: 2026-10-19
+updated: 2026-11-09
 ---
 
 # Landing — концепт
@@ -21,11 +21,11 @@ updated: 2026-10-19
 
 ### Как Lander Type задаёт поведение лэнда: флаги макросов, событий и CDN
 
-У каждого лэнда есть **тип**: дефолтные — `Preland`, `Offer`, `White`, `Preland w/ Form`, `Thank-You Page` (типы настраиваемые; в ERP — `Content → Landings ▾ → Manage landing types`). Тип — это не ярлык для глаза, а **набор флагов поведения**, заданных в `Edit landing type`:
-- **`Auto place AIO macros`** — авто-вставлять SDK-макросы (`{{aio:head}}`/`{{aio}}`) при обработке;
+У каждого лэнда есть **тип**. Стартовый набор типов приходит из шаблона тенанта и зависит от вертикали: везде есть `Preland`, `Offer` и `White`; в Finance и Nutra — ещё `Preland w/ Form`, в Finance, Nutra и Sweeps — `Thank-You Page`, в Nutra — `VSL`, в iGaming — `PWA` (типы настраиваемые; в ERP — `Content → Landings ▾ → Manage landing types`). Тип — это не ярлык для глаза, а **набор флагов поведения**, заданных в `Edit landing type`:
+- **`Auto place AIO macros?`** — авто-вставлять SDK-макросы (`{{aio:head}}`/`{{aio}}`) при обработке;
 - **`Generate events?`** — включать роль-группер типа в каталог аналитики и переключатель типа на странице лэндов; запись пути визита этот флаг не отключает;
-- **`Full CDN used`** и **`Temp CDN used`** — флаги режима раздачи файлов лэнда с CDN (разобраны отдельной секцией ниже);
-- Color/Icon (бейдж на карточке) и схема полей типа (= «Content settings» лэнда).
+- **`Full CDN used?`** и **`Temp CDN used?`** — флаги режима раздачи файлов лэнда с CDN (разобраны отдельной секцией ниже);
+- Color/Icon (бейдж на карточке) и схема полей типа (`Structure`; на лэнде из неё строится карточка `Content settings`).
 
 #### Как Lander Type помечает PWA и задаёт её конверсии
 
@@ -102,14 +102,14 @@ AIO добавляет файлы в `_assets`, когда находит data-U
 |---|---|
 | **Landing vs Content-шаг** | Шаг `Content` — **узел флоу** (с правилами выбора варианта). Landing — **что** этот узел показывает. Один шаг может выбирать из нескольких лэндов. |
 | **Landing vs Lander Type** | Lander Type задаёт автоматические макросы, доступность роль-группера в аналитике и Temp CDN. Landing — конкретная страница *этого* типа. |
-| **processed vs original index.html** | Визит открывает **processed**-версию; `Download → Original` возвращает исходный ZIP без изменений процессинга. |
+| **processed vs original index.html** | Визит открывает **processed**-версию; `Original upload` из уведомления экспорта (`Download`) возвращает исходный ZIP без изменений процессинга. |
 | **Landing vs Creative** | Creative — рекламный креатив из картинок и видео (в ERP — `Content → Creatives`, [how-to/creatives.md](../how-to/creatives.md)), не страница; на лэнд не подставляется. |
 
 ## Что часто ломается с лэндами (подводные камни)
 
 - **Ассеты — в папке `index.html` ZIP-архива или её подпапках.** Корнем лэнда AIO считает папку самого неглубокого `index.html`; файлы выше или рядом с ней не загружаются, и стили «поедут». Обёртывающая папка сама по себе не мешает (детали — [how-to/landings.md](../how-to/landings.md)).
 - **PHP/серверного кода нет** — только HTML+JS (+Vue). Логику, которая на классических трекерах жила в PHP на лэнде, переписывать на JS.
-- **White и SDK** (Lander Type = все флаги No) — обычный Content-показ не подставляет SDK-макросы автоматически. Остальные плейсхолдеры обрабатываются отдельно; HTML-форма или явно подключённый скрипт этим флагом не удаляются.
+- **White и SDK** (у типа `White` из шаблона выключены `AIO Macros`, `Generate events` и `Full CDN used`) — обычный Content-показ не подставляет SDK-макросы автоматически. Остальные плейсхолдеры обрабатываются отдельно; HTML-форма или явно подключённый скрипт этим флагом не удаляются.
 - **Категории `Countries/Languages/Tags` на лэнде — метаданные, не фильтр** (не фильтруют трафик).
 
 ## Куда дальше по теме лэндов (процедуры, SDK, формы, troubleshooting)

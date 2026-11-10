@@ -1,33 +1,33 @@
 ---
 id: flow-editor
 title: Flow Editor (How-to)
-description: Создание флоу (Tracker → Flows → Traffic flow → Campaigns) и почему он не сохраняется, подписи нод и стрелок на канвасе и выбор перехода у стрелки, модалка настроек шага и Apply settings, drag-хендл, View flow, удаление и архив шагов, Settings Availability, Handle-link, fallback на переполнение капы.
+description: Создание флоу (Tracker → Flows → Traffic flow → Campaigns) и почему он не сохраняется, подписи нод и стрелок на канвасе и выбор перехода у стрелки, модалка настроек шага и Apply settings, drag-хендл, View flow, удаление и архив шагов, Settings availability, Handle-link, fallback на переполнение капы.
 doc_type: how-to
 builds: [erp]
 related: [flow-model, campaigns, campaign-defaults, placeholders, glossary, conversion-model, distributions]
 language: ru
-updated: 2026-10-09
+updated: 2026-11-10
 ---
 
 # Flow Editor (How-to)
 
 ## Краткая шпаргалка по Flow Editor
 
-Мелкие, но регулярные процедуры в Flow Editor. Концепция Flow (States, Transitions, Settings Availability) — в [models/flow-model.md](../models/flow-model.md).
+Мелкие, но регулярные процедуры в Flow Editor. Концепция Flow (States, Transitions, Settings availability) — в [models/flow-model.md](../models/flow-model.md).
 
 - Создать флоу — `Tracker → Flows` → зелёная кнопка `Traffic flow` → плитка `Campaigns`; копия готового — ПКМ по флоу → `Copy flow`.
 - Переход у стрелки — клик по подписи на стрелке открывает меню переходов шага.
 - Настройки шага — клик по ноде открывает модалку; `Apply settings` только закрывает её, флоу сохраняет `Save`.
-- Передвинуть ноду — тянуть за drag-хендл (крестик слева в строке ноды), не за тело.
+- Передвинуть ноду — зажать её шапку или строку описания и тянуть; короткий клик без сдвига открывает настройки.
 - Удалить «висящий» блок — выделить + клавиша `Delete` (пока сам блок не сохранён; кроме `Start`).
-- `Settings Availability` шага — `Campaign Only` / `Flow Only` / `Campaign Template`. Меняется в `Edit Flow → <Step> → Settings Availability`.
+- `Settings availability` шага — `Campaign only` / `Flow only` / `Campaign template`. Меняется в `Edit flow → <Step> → Settings availability`.
 - `Handle-link` — нумерованные кнопки на лэнде через `{{link:N}}`.
 - Fallback при переполнении капы — `Destination Full` transition.
 - Посмотреть схему без правки — `View flow` (полный экран, цепочки шагов свёрнуты, разворачиваются кликом).
 
 ## Как создать новый флоу (поток) — `Tracker → Flows` → `Traffic flow`
 
-**Новый флоу для кампаний создаётся в `Tracker → Flows` зелёной кнопкой `Traffic flow` («Флоу трафика») над таблицей → плитка `Campaigns` («Кампании»).** Кнопка активна при праве `tracker.flows.edit`; без него она серая с подсказкой `No permission`. Частые формулировки: «как создать поток», «как создать Campaign Flow», «нет выбора потоков при создании кампании».
+**Новый флоу для кампаний создаётся в `Tracker → Flows` зелёной кнопкой `Traffic flow` («Флоу трафика») над таблицей → плитка `Campaigns` («Кампании»).** Кнопка видна при праве `tracker.flows.edit`; без него кнопки над таблицей нет. Частые формулировки: «как создать поток», «как создать Campaign Flow», «нет выбора потоков при создании кампании».
 
 1. `Tracker → Flows` → `Traffic flow`. Откроется окно `Add flow to AIO` с двумя плитками: `Campaigns` — обычный флоу от источника к офферу (помечен рекомендуемым), и `Campaign sub-flow` («Sub-Flow кампании») — отдельный кусок флоу, который обрабатывает визит и возвращает его в основной флоу ([models/flow-model.md](../models/flow-model.md)).
 2. Выбрать `Campaigns` — откроется редактор, на канвасе одна нода `Start`.
@@ -60,26 +60,27 @@ updated: 2026-10-09
 | `Initiate conversion` / «Запустить конверсию» | `Spawn conversion` |
 | `Traffic filtering` / «Фильтрация трафика» | `Filter` и шаги Traffic Filters |
 | `Check rules` / «Проверка правил» | `Condition` |
-| `Flip domains` / «Сменить домены» | `Domain Change` |
-| `Operate with fields` / «Работа с полями» | `Fill Fields` |
-| `Use trees to fill fields` | `Fields by Distribution` |
+| `Flip domains` / «Сменить домены» | `Domain change` |
+| `Operate with fields` / «Работа с полями» | `Fill fields` |
+| `Use trees to fill fields` / «Использовать деревья для заполнения» | `Fields by distribution` |
 | `Select form` / «Выбрать форму» | `Fill form` |
-| `Verify field via sender provider` | `Field verification` |
+| `Verify field via sender provider` / «Проверить поле через провайдера» | `Field verification` |
 | `Extend your flow` / «Расширить флоу» | `Sub flow` |
 | `External target` / «Внешняя цель» | `Destination` |
 | `Initial state` / «Начальное состояние» | `Source` и `Start` |
+| `Ending state` / «Конечное состояние» | `Finish` |
 
 ### Подпись на стрелке — переход, по которому уходит визит
 
 | Подпись | Переход | Когда срабатывает |
 |---|---|---|
-| `arrived` | `Arrived` | визит вошёл из `Source` |
-| `handle` | `Handle` | базовый переход шага; сюда же уходит клик по `{{link}}` и ссылка продолжения PWA, если у шага нет `all links` |
-| `all links` / `link 1`…`link 5` | `Handle link` / `Handle link N` | клик по `{{link}}` / по `{{link:N}}` при наличии соответствующего перехода |
-| `all forms` / `form 1`…`form 5` | `Handle form` / `Handle form N` | сабмит ненумерованной формы / формы `{{form:N}}` при наличии соответствующего перехода |
+| `arrived` | `Visit Arrived` | визит вошёл из `Source` |
+| `handle` | `Handle All` | базовый переход шага; сюда же уходят клик по ссылке и сабмит формы, для которых у шага нет своей стрелки (в том числе ссылка продолжения PWA) |
+| `all links` / `link 1`…`link 5` | `Handle All Links` / `Handle Link N` | `link N` — клик по `{{link:N}}`; `all links` — клик по ненумерованному `{{link}}`. Клик по `{{link:N}}` без своей стрелки `link N` уходит в `handle`, а не в `all links` |
+| `all forms` / `form 1`…`form 5` | `Handle All Forms` / `Handle Form N` | `form N` — сабмит формы `{{form:N}}`; `all forms` — сабмит ненумерованной формы. Сабмит `{{form:N}}` без своей стрелки `form N` уходит в `handle`, а не в `all forms` |
 | `passed` / `rejected` | `Passed` / `Rejected` | исход `Filter`, `Condition`, `Field verification` |
-| `no payload` | `No payload` | на шаге не подошёл ни один вариант |
-| `pushed` / `reject` / `full` / `interact` | `Destination-pushed` / `Destination-rejected` / `Destination Full` / `Destination-interacted` | исходы пуша в Destination |
+| `no payload` | `No Payload` | на шаге не подошёл ни один вариант |
+| `pushed` / `reject` / `full` / `interact` | `Destination Pushed` / `Destination Rejected` / `Destination Full` / `Destination Interacted` | исходы пуша в Destination |
 | `repeat` / `end repeat` | повтор в флоу рассылок | нода `Repeat` |
 
 Когда какой переход выбирается и что с ним происходит дальше — [models/flow-model.md](../models/flow-model.md).
@@ -92,17 +93,17 @@ updated: 2026-10-09
 
 Когда: нужно поменять вариант, стратегию, правила или `Visual settings` шага во флоу.
 
-**Путь:** `Edit Flow → клик по ноде шага → модалка настроек → правки → Apply settings → Save`.
+**Путь:** `Edit flow → клик по ноде шага → модалка настроек → правки → Apply settings → Save`.
 
-Клик по любому месту ноды (имя, описание, значок-шестерёнка) открывает модалку с настройками шага; не открывают её только порты транзишенов и drag-хендл. Форма пишет в шаг живьём, поэтому кнопка `Apply settings` (RU `Применить настройки`) ничего не применяет — она закрывает окно. **Флоу при этом ещё не сохранён**: без `Save` в редакторе флоу правки шага пропадут. Полный состав модалки и настройки каждой ноды — [models/flow-model.md](../models/flow-model.md) (раздел «Настройки нод — поштучно»).
+Клик по любому месту ноды (имя, описание, значок-шестерёнка) открывает модалку с настройками шага; не открывает её только клик по портам переходов, а после перетаскивания ноды модалка тоже не появляется. Форма пишет в шаг живьём, поэтому кнопка `Apply settings` (RU `Применить настройки`) ничего не применяет — она закрывает окно. **Флоу при этом ещё не сохранён**: без `Save` в редакторе флоу правки шага пропадут. Полный состав модалки и настройки каждой ноды — [models/flow-model.md](../models/flow-model.md) (раздел «Настройки нод — поштучно»).
 
 ## Передвинуть ноду на канвасе
 
 Когда: нужно разложить схему руками, а не `Re-sort`.
 
-**Путь:** зажать drag-хендл — крестик из четырёх стрелок слева в строке ноды — и тянуть.
+**Путь:** зажать шапку ноды (строку с иконкой и именем) или строку описания под ней и тянуть. Крестик из четырёх стрелок слева в шапке — подсказка, что ноду можно перетаскивать.
 
-Тянуть за тело ноды нельзя: клик по нему открывает модалку настроек. Симптом «нода не двигается, вместо этого открывается окно настроек» — значит, тянули не за хендл. Хендл есть только в `Edit flow` — в `View flow` ноды не двигаются. Схема раскладывается сверху вниз; авто-раскладка — кнопка `Re-sort` в нижнем тулбаре канваса. Как устроена нода на канвасе — [models/flow-model.md](../models/flow-model.md).
+Короткий клик без сдвига по тем же местам открывает модалку настроек. Симптом «нода не двигается, вместо этого открывается окно настроек» — значит, кнопку мыши отпустили, не сдвинув курсор; проверьте ещё, что канвас не заблокирован. Перетаскивание работает только в `Edit flow` — в `View flow` ноды не двигаются. Схема раскладывается сверху вниз; авто-раскладка — кнопка `Re-sort` в нижнем тулбаре канваса. Как устроена нода на канвасе — [models/flow-model.md](../models/flow-model.md).
 
 ## Посмотреть схему флоу без редактирования — `View flow`
 
@@ -127,7 +128,7 @@ updated: 2026-10-09
 
 Когда: сохранённый шаг больше не нужен. Полностью удалить его в редакторе нельзя; кроме `Start`, его можно архивировать после удаления связанных стрелок.
 
-**Путь:** `Edit Flow → клик по ноде шага → Visual settings → Archive state → Apply settings → Save`.
+**Путь:** `Edit flow → клик по ноде шага → Visual settings → Archive state → Apply settings → Save`.
 
 Архивировать шаг можно, только сняв все transitions к нему и от него — иначе архивирование не сработает ([models/flow-model.md](../models/flow-model.md) → состояние `Archived`). Заархивированные шаги показываются тумблером `Show archived states` в панели `Flow details`.
 
@@ -135,11 +136,11 @@ updated: 2026-10-09
 
 Если клавиша не срабатывает, проверьте, что канвас разблокирован, блок выделен, фокус находится на ноде и это не `Start`.
 
-## Сменить Settings Availability шага
+## Сменить Settings availability шага
 
-Когда: настройка должна быть видна / скрыта на уровне кампании или флоу. Типовой случай — настройку нужно жёстко зафиксировать на уровне Flow, чтобы она была одинакова во всех кампаниях и не правилась в каждой отдельно → `Flow Only`.
+Когда: настройка должна быть видна / скрыта на уровне кампании или флоу. Типовой случай — настройку нужно жёстко зафиксировать на уровне Flow, чтобы она была одинакова во всех кампаниях и не правилась в каждой отдельно → `Flow only`.
 
-**Путь:** `Edit Flow → <Step> → Settings Availability → Campaign Only / Flow Only / Campaign Template`.
+**Путь:** `Edit flow → <Step> → Settings availability → Campaign only / Flow only / Campaign template`.
 
 Три значения и их механика — [models/flow-model.md](../models/flow-model.md). См. [heuristics/campaign-defaults.md](../heuristics/campaign-defaults.md) для эвристик.
 
@@ -147,7 +148,7 @@ updated: 2026-10-09
 
 Когда: на одном лэнде несколько Call-to-Action кнопок, каждая ведёт на свой шаг флоу.
 
-**Путь:** `Edit Flow` → стрелка от `Content`-шага к шагу, куда ведёт кнопка → клик по подписи на стрелке → `link 1`, `link 2`, … (раздел «Как выбрать или сменить переход у стрелки»).
+**Путь:** `Edit flow` → стрелка от `Content`-шага к шагу, куда ведёт кнопка → клик по подписи на стрелке → `link 1`, `link 2`, … (раздел «Как выбрать или сменить переход у стрелки»).
 
 В HTML лэнда:
 
@@ -158,7 +159,7 @@ updated: 2026-10-09
 
 Каждый `{{link:N}}` соответствует Handle-link N во флоу. Доступно до 5 нумерованных линков.
 
-В меню шага есть отдельные переходы `link 1`…`link 5`. Для `{{link:N}}` задайте стрелку с тем же номером. Переход `all links` обслуживает ненумерованный `{{link}}`; базовый `handle` — резервный переход, когда нужного перехода по номеру нет.
+В меню шага есть отдельные переходы `link 1`…`link 5`. Для `{{link:N}}` задайте стрелку с тем же номером. Клик по `{{link:N}}` уходит по своей стрелке `link N`, а без неё — сразу по базовому `handle`: стрелку `all links` нумерованный клик не использует. Ненумерованный `{{link}}` уходит по `all links`, а без неё — по `handle`. Нумерованные формы `{{form:N}}` подбирают переход так же: `form N`, без неё — `handle` (`all forms` ловит только ненумерованную форму). Поэтому на шаге с нумерованными ссылками или формами держите стрелку на каждый номер или базовый `handle`.
 
 Также см. [reference/placeholders.md](../reference/placeholders.md) → `{{link:N}}`, [reference/glossary.md](../reference/glossary.md) → `Handle-link N`.
 
@@ -172,7 +173,7 @@ updated: 2026-10-09
 
 ## Связанные материалы
 
-- [models/flow-model.md](../models/flow-model.md) — концепт: States, Transitions, Settings Availability, Split Groups.
+- [models/flow-model.md](../models/flow-model.md) — концепт: States, Transitions, Settings availability, Split Groups.
 - [how-to/campaigns.md](campaigns.md) — создание кампании на флоу.
 - [how-to/distributions.md](distributions.md) — Content Distribution в Content step.
-- [heuristics/campaign-defaults.md](../heuristics/campaign-defaults.md) — Campaign Template и Skip-Skip защита.
+- [heuristics/campaign-defaults.md](../heuristics/campaign-defaults.md) — Campaign template и Skip-Skip защита.

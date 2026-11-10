@@ -4,9 +4,9 @@ title: Карта интерфейса AIO (где что лежит)
 description: Полная карта навигации app.aio.tech — топ-меню (Tracker/Content/Marketing/Finance/Tech/Automations/Analytics, иконками Meta/Google/TikTok, Settings; Dashboard из меню убран, но остаётся стартовой страницей), подразделы каждого, меню профиля (Billing, смена тенанта, Manage tenant). Чтобы быстро находить нужный раздел.
 doc_type: reference
 builds: [erp, mtk]
-related: [postback-generator, landings, analytics, how-to-pwa, sdk, creatives, generations, remarketing-campaigns, auto-rules, meta-ads, meta-business-managers, google-ads, tiktok-ads, source-trackers, events-exporter, live-pulse, session-analytics, registration, architecture, glossary, permissions-model, debug-with-logs, custom-fields, api, ui-common, profile-settings, placeholders]
+related: [postback-generator, landings, analytics, how-to-pwa, sdk, creatives, generations, remarketing-campaigns, auto-rules, meta-data-health, meta-ads, meta-business-managers, google-ads, tiktok-ads, source-trackers, live-pulse, events-exporter, session-analytics, registration, architecture, glossary, permissions-model, debug-with-logs, custom-fields, api, ui-common, profile-settings, placeholders]
 language: ru
-updated: 2026-10-28
+updated: 2026-11-09
 ---
 
 # Карта интерфейса AIO (где что лежит)
@@ -80,11 +80,10 @@ Marketing (в главном меню — `Marketing`) — ремаркетин�
 
 ## Где смотреть Revenue и Payout Distributions — Finance `/app/finance`
 
-Finance — финансы кампаний: как считается выручка и выплаты по кампаниям/баерам.
+Finance — финансы кампаний: как считается выручка и выплаты по кампаниям/баерам. Пункт в главном меню закрыт правом `finance.distributions.view`.
 
-- **Payout Settings** `/payout-settings` — правила выплат (Payout Distributions).
-- **Revenue Settings** `/revenue-settings` — правила выручки (Revenue Distributions).
-- **Distributions** `/distributions` — денежные дистрибуции Finance (те же деревья, что и в `Settings → Distributions`).
+- **Подменю собирается из ваших денежных дистрибуций:** сверху — дистрибуции типа `Revenue`, под разделителем — типа `Payouts`. Каждый пункт назван именем дистрибуции и открывает её дерево (`/app/finance/distributions?uuid=…`) — те же деревья, что и в `Settings → Distributions`.
+- Клик по `Finance` открывает последнюю открытую страницу раздела, а если её уже нет в меню — первую дистрибуцию списка.
 - Полный список всех типов Distributions (не только денежных) — в `Settings → Distributions`.
 
 ## Где управляются серверы, домены и инфраструктура — Tech `/app/tech`
@@ -94,7 +93,7 @@ Tech — инфраструктура: серверы, домены, прокс�
 - **Servers** `/servers` — серверы.
 - **Domains** `/domains` — домены.
 - **Proxies** `/proxies` — прокси.
-- **DNS providers** `/dns-providers`, **Domain providers** `/domain-providers`, **Server providers** `/server-providers`, **Proxy providers** `/proxy-providers` — провайдеры.
+- **DNS providers** `/dns-providers`, **Domain providers** `/domain-providers`, **Server providers** `/server-providers` — провайдеры.
 - **Domain checkers** `/domain-checkers` — чекеры доменов (бан/репутация).
 - **Deployments** `/deployments` — деплои.
 
@@ -106,10 +105,11 @@ Automations — раздел автоправил над сущностями Me
 - **Assignments** `/app/automations/assignments` — ассайны: какой шаблон правил на каком скоупе Meta-сущностей работает.
 - **Rule Templates** `/app/automations/auto-rules` — таблица шаблонов правил.
 - **History** `/app/automations/actions` — журнал вердиктов и очередь апрувов; заголовок страницы — `Auto Rules Log`, в подменю она отделена разделителем от трёх настроечных страниц.
+- **Processes** `/app/automations/processes` и **Process Flows** `/app/automations/process-flows` — запуски процессов и их шаблоны; в подменю — отдельный блок под `History`, права `automation.processes.view` и `automation.process-flows.view`.
 
 ### Что открывается по клику на `Automations` и почему пункта может не быть в меню
 
-Клик по пункту `Automations` открывает последнюю посещённую страницу раздела, а при первом заходе — первую доступную по правам, начиная со `Status`. Сам пункт показывается по любому из трёх прав: `automation.templates.view`, `automation.assignments.view`, `automation.actions.view`. Роль, у которой есть только `automation.status.view`, пункта в меню не увидит, хотя страница `/app/automations/status` открывается по прямой ссылке ([how-to/auto-rules.md](../how-to/auto-rules.md)).
+Клик по пункту `Automations` открывает последнюю посещённую страницу раздела, а при первом заходе — первую доступную по правам, начиная со `Status`. Сам пункт показывается по любому из пяти прав: `automation.templates.view`, `automation.assignments.view`, `automation.actions.view`, `automation.processes.view`, `automation.process-flows.view`. Роль, у которой есть только `automation.status.view`, пункта в меню не увидит, хотя страница `/app/automations/status` открывается по прямой ссылке ([how-to/auto-rules.md](../how-to/auto-rules.md)).
 
 ### Где правится дерево фаз и правил — `Rule Template Tree` `/app/automations/auto-rules/tree`
 
@@ -119,20 +119,22 @@ Automations — раздел автоправил над сущностями Me
 
 Meta — Facebook/Meta: соцпрофили, рекламные аккаунты, кампании, ad sets, ads.
 
+- **Data health** `/data-health` — свежесть подтяжки данных по рекламным кабинетам ([how-to/meta-data-health.md](../how-to/meta-data-health.md)); первый пункт меню.
 - **Social profiles** `/social-profiles` — Meta Social Profiles.
 - **Ad accounts** `/ad-accounts` — рекламные аккаунты.
 - **Campaigns** `/campaigns`, **Ad sets** `/ad-sets`, **Ads** `/ads` — структура FB-рекламы. Управление Meta-модулем целиком — [how-to/meta-ads.md](../how-to/meta-ads.md).
-- **Business Managers** `/businesses` — бизнес-менеджеры Meta ваших соцпрофилей (ERP, право `meta.businesses.view`) — [how-to/meta-business-managers.md](../how-to/meta-business-managers.md).
+- **Business Managers** `/businesses` — бизнес-менеджеры Meta ваших соцпрофилей (ERP и MTK с модулем `Meta+`, право `meta.businesses.view`) — [how-to/meta-business-managers.md](../how-to/meta-business-managers.md).
 - **Pages** `/pages` — FB-страницы, привязанные к соцпрофилю; пункт закрыт правом `meta.pages.view`.
 - **Pixels** `/pixels` — пиксели рекламных аккаунтов и бизнес-менеджеров ваших соцпрофилей.
+- **Other** `/other` — служебная страница: сюда открываются групперы модуля, у которых нет своей страницы.
 
 ## Где лежит рекламный кабинет Google — `/app/google`
 
 Google — второй рекламный модуль рядом с Meta: подключённые аккаунты и подтянутая из Google Ads иерархия.
 
 - **Accounts** `/accounts` — подключённые Google-аккаунты.
-- **Ad accounts** `/ad-accounts` — рекламные аккаунты.
-- **Campaigns** `/campaigns`, **Ad groups** `/ad-groups`, **Ads** `/ads`, **Keywords** `/keywords` — структура рекламы Google.
+- **Ad Accounts** `/ad-accounts` — рекламные аккаунты.
+- **Campaigns** `/campaigns`, **Ad Groups** `/ad-groups`, **Ads** `/ads`, **Keywords** `/keywords` — структура рекламы Google.
 - **Other** `/other` — прочие сущности модуля.
 
 Разбор модуля целиком (подключение через OAuth, что тянется и как часто) — [how-to/google-ads.md](../how-to/google-ads.md).
@@ -152,9 +154,10 @@ TikTok — третий рекламный модуль (только ERP): по
 
 Analytics — отчёты: когорты, сравнение, Roll Up.
 
-### Где смотреть Roll Up report — `/app/analytics/dd`
+### Где смотреть Roll Up report и Live Pulse — `/app/analytics/dd`, `/app/analytics/live-pulse`
 
-- **Roll Up report** (в UI также **Drill Down**) `/dd` — Roll Up (древовидный отчёт через Groupers). В MTK группа Analytics свёрнута в плоскую вкладку **Reports** (`/analytics/dd`) — это только Roll Up, см. *Как устроен MTK-вид AIO: навигация, пресеты из шаблона и методы под типовые задачи*.
+- **Roll Up report** (в UI также **Drill Down**) `/dd` — Roll Up (древовидный отчёт через Groupers). В MTK вкладка **Analytics** — только **Pivot Reports** (Roll Up, `/app/mtk/analytics/dd`) и **Pulse** (Live Pulse, `/app/mtk/analytics/live-pulse`), см. *Как устроен MTK-вид AIO: навигация, пресеты из шаблона и методы под типовые задачи*.
+- **Live Pulse** `/live-pulse` (ERP и MTK; в MTK — пункт `Pulse` вкладки `Analytics`) — живой поток событий трафика (`init` / `handle` / `conversion`); не отчёт: счётчики живут только пока страница открыта ([how-to/live-pulse.md](../how-to/live-pulse.md)).
 
 ### Какие отчёты Analytics доступны только в ERP
 
@@ -162,7 +165,6 @@ Analytics — отчёты: когорты, сравнение, Roll Up.
 - **Comparative analytics** `/compare-analytics` — сравнение периодов. Пункта в меню `Analytics` сейчас нет — страница открывается только прямым адресом.
 - **Events Exporter** — асинхронная выгрузка сырых таблиц (`Visits` / `Trash Visits` / `Conversions`) в файлы; открывается диалогом из Analytics ([how-to/events-exporter.md](../how-to/events-exporter.md)).
 - **BI Builder** `/bi-builder` — конструктор BI-дашбордов (табы, виджеты).
-- **Live Pulse** `/live-pulse` — живой поток событий трафика (`init` / `handle` / `conversion`); не отчёт: счётчики живут только пока страница открыта ([how-to/live-pulse.md](../how-to/live-pulse.md)).
 - **Session Analytics** `/session-analytics` — записи сессий с плеером + сравнение scroll- и click-карт до трёх лэндов рядом ([how-to/session-analytics.md](../how-to/session-analytics.md)).
 
 ## Где настраиваются права, формы, конверсии и фильтры — Settings `/app/settings`
@@ -175,8 +177,8 @@ Settings — настройки тенанта. Состав подраздел�
 - **Positions** `/positions`, **Teams** `/teams` — роли и команды (права/шеринг, см. [models/permissions-model.md](../models/permissions-model.md)).
 - **Advertisers** `/advertisers` — рекламодатели.
 - **Servers** `/servers`, **Proxies** `/proxies` — серверы и прокси. В MTK эти разделы перенесены в Settings (в ERP они в Tech).
-- **DNS providers** `/dns-providers`, **Domain providers** `/domain-providers`, **Server providers** `/server-providers` — провайдеры.
-- **Domain checkers** `/domain-checkers` — чекеры доменов.
+- **DNS providers** `/dns-providers`, **Domain providers** `/domain-providers`, **Server providers** `/server-providers` — провайдеры. В Settings — только в MTK; в ERP они в Tech.
+- **Domain checkers** `/domain-checkers` — чекеры доменов. В Settings — только в MTK; в ERP — в Tech.
 - **Tags** `/tags`, **Presets** `/presets` — теги и пресеты.
 - **Logs** `/logs` — логи (Monitor / Destination Handler, Loggable UUID). Логи по одному визиту быстрее открыть ПКМ по визиту в `Tracker → Visits` → `Visit logs` (переключи `Severity` на `Debug`, иначе таблица выглядит пустой; [how-to/debug-with-logs.md](../how-to/debug-with-logs.md)).
 - **Trackers** `/trackers` — постбэк-трекеры (в MTK перенесены сюда из Tracker).
@@ -204,10 +206,10 @@ Settings — настройки тенанта. Состав подраздел�
 Меню профиля открывается кликом по аватару в верхнем правом углу.
 
 - **Переключатель тенантов** — поиск + список тенантов, у каждого **бейдж билда** (`ERP` / `MTK`). Так переключаются между тенантами и видно, в каком билде каждый.
-- **Billing** — биллинг-модалка тенанта (план, статус, инвойсы, оплата; см. *Билды, тарифы, триал и статусы тенанта*).
-- **Manage tenant** — управление тенантом.
+- **Billing** — биллинг-модалка тенанта (план, статус, инвойсы, оплата; см. *Билды, тарифы, триал и статусы тенанта*); пункт видят Owner и Admin тенанта, Employee — нет.
+- **Manage tenant** — управление тенантом; пункт тоже только у Owner и Admin.
 - **Profile settings** — настройки профиля пользователя.
-- **Support** / **Start chat** — связаться с поддержкой; **Need assistance?** — помощь.
+- **Support** / **Start chat** — связаться с поддержкой (пункт виден не всем тенантам); **Need assistance?** — помощь.
 - **Cloud Files** — файловое хранилище тенанта.
 - **Data API Docs** — спека `Data API` прямо в продукте ([how-to/api.md](../how-to/api.md)).
 - **Become affiliate** — реферальная программа AIO (пункт виден не всем тенантам).

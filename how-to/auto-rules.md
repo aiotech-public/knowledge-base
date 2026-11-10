@@ -6,7 +6,7 @@ doc_type: how-to
 builds: [erp]
 related: [meta-ads, auto-rules-engine, ui-map, distributions-model, meta-spend-allocation, limits, permissions-model, permissions, architecture, notification-center]
 language: ru
-updated: 2026-10-16
+updated: 2026-11-09
 ---
 
 # Автоправила Meta (раздел Automations) — шаблон, ассайн и запуск
@@ -17,9 +17,9 @@ updated: 2026-10-16
 
 Раздел называется `Automations` (`/app/automations`) и есть только в ERP-билде. Почему собранное правило может не сделать ничего — [mechanics/auto-rules-engine.md](../mechanics/auto-rules-engine.md).
 
-## Четыре страницы раздела `Automations` — что где лежит
+## Четыре страницы автоправил в разделе `Automations` — что где лежит
 
-**`Status`** (заголовок страницы — `Tenant Automation Status`) — обзор движка: KPI-полоса (виджет `Savings` и пять карточек — `Actions created`, `Executed`, `Stops`, `Budget changes`, `Failed`), счётчик `Pending approvals` с отметкой о подтверждениях, срок которых наступает до конца ближайшего часа, и список ассайнов с временем прогонов и кнопкой `Live check`. `Declined` и `Observed changes` в полосу не попадают — это серии графика `Actions by day`. В карточках главное число — за последние 30 суток, рядом мельче вчера, текущий и прошлый месяц. `Savings` — оценка по темпу расхода остановленных сущностей (`Estimate by the running spend rate of stopped entities`), а не факт из рекламного кабинета. Подтверждают действия не здесь, а на `History` или из уведомления; в `Live check` у ждущей сущности только бейдж `Needs approval`.
+**`Status`** (заголовок страницы — `Tenant Automation Status`) — обзор движка: KPI-полоса (виджет `Savings` и пять карточек — `Actions created`, `Executed`, `Stops`, `Budget changes`, `Failed`), счётчик `Pending approvals` с отметкой о подтверждениях, срок которых истекает в ближайший час, и список ассайнов с временем прогонов и кнопкой `Live check`. `Declined` и `Observed changes` в полосу не попадают — это серии графика `Actions by day`. В карточках главное число — за последние 30 суток, рядом мельче вчера, текущий и прошлый месяц. `Savings` — оценка по темпу расхода остановленных сущностей (`Estimate by the running spend rate of stopped entities`), а не факт из рекламного кабинета. Подтверждают действия не здесь, а на `History` или из уведомления; значок с подсказкой `Needs approval` в `Live check` повторяет отметку `Require approval` у сработавшего правила, а не очередь подтверждений.
 
 **`Assignments`** — ассайны: какой шаблон на каком скоупе работает. Список ограничен уровнем доступа к ассайну: чужой ассайн виден участникам с более высоким уровнем в команде владельца, позициям со `Scopes` на ассайны, Owner / Admin и всем — если у него `Access type` `Use` или `View` (разбор — секция «Кто видит чужой ассайн»).
 
@@ -29,7 +29,7 @@ updated: 2026-10-16
 
 ### Бейдж `Rolling out` на страницах `Automations` — плашка, а не ограничение
 
-На всех четырёх страницах раздела стоит бейдж `Rolling out` (в таблицах — в шапке рядом с поиском, на `Status` — в шапке страницы) с подсказкой `Auto Rules are rolling out gradually — enabled for selected clients step by step.`; в русской локали — `Раскатывается` / `Auto Rules раскатывается постепенно — включаем клиентам пошагово.`. Плашка информационная: она зашита в страницы раздела, не привязана к настройке тенанта и ничего в разделе не блокирует — если раздел открыт, шаблоны, ассайны и журнал работают штатно. Доступность самого раздела задают права ветки `automation.*`.
+На всех четырёх страницах автоправил стоит бейдж `Rolling out` (в таблицах — в шапке рядом с поиском, на `Status` — в шапке страницы) с подсказкой `Auto Rules are rolling out gradually — enabled for selected clients step by step.`; в русской локали — `Раскатывается` / `Auto Rules раскатывается постепенно — включаем клиентам пошагово.`. Плашка информационная: она зашита в страницы раздела, не привязана к настройке тенанта и ничего в разделе не блокирует — если раздел открыт, шаблоны, ассайны и журнал работают штатно. Доступность самого раздела задают права ветки `automation.*`.
 
 ## Как навесить правило прямо со страниц Meta — `Apply Auto Rules`
 
@@ -118,7 +118,7 @@ updated: 2026-10-16
 - `Multiply by` — «The budget is multiplied by this factor (1.2 = +20%, 0.8 = −20%).»;
 - `Add / subtract` — «This amount is added to the budget; a negative value decreases it.».
 
-Рядом `Min budget` и `Max budget`: «The resulting budget never leaves the min–max bounds.» Пустая граница подписана `No limit`.
+Рядом `Min budget` и `Max budget`: «The resulting budget never leaves the min–max bounds.» Пустая граница подписана `No limit`. Граница не разворачивает действие: если `Max budget` ниже текущего бюджета, повышающее правило бюджет не снизит — действие пропускается с ошибкой ([mechanics/auto-rules-engine.md](../mechanics/auto-rules-engine.md) → «Бюджетное действие пропущено»).
 
 Шаблон с `change_budget` не вешается на уровень `Ads`: у объявления своего бюджета нет, и форма ассайна отдаёт ошибку `This template changes budgets — it cannot be assigned to ads (no budget on ad level)`.
 
@@ -192,7 +192,7 @@ updated: 2026-10-16
 
 ### Сотрудник с полными правами `automation.*` не видит ассайны коллег — нужен `Scopes` на ассайны
 
-**Шестнадцать императивов `automation.*` открывают страницы и действия, но видимость не расширяют: ни один из них не означает «видеть все ассайны тенанта».** Симптом: роли выдана вся ветка, а в `Assignments`, `History` и `Status` человек видит только свои ассайны.
+**Шестнадцать императивов автоправил из ветки `automation.*` открывают страницы и действия, но видимость не расширяют: ни один из них не означает «видеть все ассайны тенанта».** Симптом: роли выдана вся ветка, а в `Assignments`, `History` и `Status` человек видит только свои ассайны.
 
 Для этого есть позиционные ключи вне ветки `automation.*`, только в ERP:
 
@@ -243,7 +243,7 @@ updated: 2026-10-16
 
 Во всех пяти заготовках у правил проставлена отметка `Require approval`, но на исполнение она не влияет: при свежих данных ассайн с заготовкой в режиме `Auto` останавливает сущности без подтверждения; при устаревших данных действие ждёт апрува. Нужен человеческий шаг — ставьте ассайн в `Approve`.
 
-В таблице `Rule Templates` заготовок нет — она показывает только шаблоны тенанта, а в тенанте, только что созданном из шаблона, она пуста: дистрибуций типа `Auto Rules` ни один шаблон тенанта не засевает ([context/architecture.md](../context/architecture.md)), и пять глобальных заготовок — единственные готовые правила из коробки. Выбрать заготовку можно в селекте шаблона в форме ассайна и в `Backtest Rules`: там она стоит рядом с собственными шаблонами и помечена значком AIO с подсказкой «Shared across all — the same distribution is used everywhere». Чтобы поменять под себя границы фаз или условия, шаблон форкают в свой тенант через `Duplicate` — копия создаётся уже в тенанте.
+В таблице `Rule Templates` заготовок нет — она показывает только шаблоны тенанта, а в тенанте, только что созданном из шаблона, она пуста: дистрибуций типа `Auto Rules` ни один шаблон тенанта не засевает ([context/architecture.md](../context/architecture.md)), и пять глобальных заготовок — единственные готовые правила из коробки. Выбрать заготовку можно в селекте шаблона в форме ассайна и в `Backtest Rules`: там она стоит рядом с собственными шаблонами и помечена значком AIO с подсказкой «Shared across all — the same distribution is used everywhere». Саму заготовку не поправить и в свой тенант из интерфейса не скопировать: в таблицах шаблонов её нет, а с ней и пункта `Duplicate`. Свои границы фаз или условия задают в собственном шаблоне — через `Simple rule` или `Advanced`.
 
 ## Как проверить правило, ничего не запуская — `Live check` и `Backtest Rules`
 
@@ -271,15 +271,15 @@ updated: 2026-10-16
 
 ## Права `automation.*` — своя ветка, отдельная от дистрибуций
 
-Страницы `Automations` и создание шаблонов с ассайнами открываются веткой `automation.*`. Для исполнения нужны права на ручные действия `meta.*`; отдельные действия с шаблонами используют `settings.distributions.*`, как описано в секции о шаринге. Императивов шестнадцать, четырьмя группами — шаблоны, ассайны, журнал вердиктов и страница статуса; объявлены они только в ERP, а в матрице `Settings → Positions` собраны в секцию `Automation section` с подписями вида `Automation: view templates` и `Automation: approve verdicts`. Полный список слагов и какая страница каким из них открывается — [models/permissions-model.md](../models/permissions-model.md), выдача прав под типовые роли — [how-to/permissions.md](permissions.md).
+Страницы `Automations` и создание шаблонов с ассайнами открываются веткой `automation.*`. Для исполнения нужны права на ручные действия `meta.*`; отдельные действия с шаблонами используют `settings.distributions.*`, как описано в секции о шаринге. Автоправилам в ветке отведено шестнадцать императивов, четырьмя группами — шаблоны, ассайны, журнал вердиктов и страница статуса; объявлены они только в ERP, а в матрице `Settings → Positions` собраны в секцию `Automation section` с подписями вида `Automation: view templates` и `Automation: approve verdicts`. Полный список слагов и какая страница каким из них открывается — [models/permissions-model.md](../models/permissions-model.md), выдача прав под типовые роли — [how-to/permissions.md](permissions.md).
 
-Пункта `Automations` не будет в меню, если из ветки выдан только `automation.status.view`: меню поднимают view-права на шаблоны, ассайны или журнал — разбор в [models/permissions-model.md](../models/permissions-model.md). Права ветки открывают страницы и действия, но не расширяют видимость: чужие ассайны показываются по уровню доступа — владение, уровень в команде, `Access type`, позиционные `scopes.automation.assignments` / `edit-scopes.automation.assignments` (секция «Кто видит чужой ассайн»), а `automation.assignments.share` рычага в интерфейсе не имеет.
+Пункта `Automations` не будет в меню, если из ветки выдан только `automation.status.view`: из прав автоправил меню поднимают view-права на шаблоны, ассайны или журнал — разбор в [models/permissions-model.md](../models/permissions-model.md). Права ветки открывают страницы и действия, но не расширяют видимость: чужие ассайны показываются по уровню доступа — владение, уровень в команде, `Access type`, позиционные `scopes.automation.assignments` / `edit-scopes.automation.assignments` (секция «Кто видит чужой ассайн»), а `automation.assignments.share` рычага в интерфейсе не имеет.
 
 Само действие в Meta исполняется правами владельца, записанного в вердикте, на такой же ручной экшен — [mechanics/auto-rules-engine.md](../mechanics/auto-rules-engine.md).
 
-### Пункт `Backtest` виден, а сам запуск отбивается
+### Пункт `Backtest Rules` виден, а сам запуск отбивается
 
-Пункт `Backtest` в контекстных меню Meta-страниц и в таблице шаблонов показывается по праву на просмотр шаблонов (`automation.templates.view`), а сам запуск бэктеста требует `automation.assignments.edit.test-run`. Роль с доступом к форме, но без `test-run`, получает отказ на запуске. Для загрузки селекта шаблонов в форме нужен также `automation.assignments.view` или `automation.assignments.edit`; недостающие права надо выдать.
+Пункт `Backtest Rules` в контекстных меню Meta-страниц и в таблице шаблонов показывается по праву на просмотр шаблонов (`automation.templates.view`), а сам запуск бэктеста требует `automation.assignments.edit.test-run`. Роль с доступом к форме, но без `test-run`, получает отказ на запуске. Для загрузки селекта шаблонов в форме нужен также `automation.assignments.view` или `automation.assignments.edit`; недостающие права надо выдать.
 
 ### Карточка `New simple rule` открывается, а правило не создаётся — нужно `automation.templates.edit`
 

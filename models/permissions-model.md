@@ -4,9 +4,9 @@ title: Permissions Model AIO
 description: Модель доступа AIO — уровни доступа к объекту Use / View / Edit / Own и откуда они берутся (владение, команды с числовыми уровнями, Peers / Below, шаринг, Access type, Scopes / Editor Scopes, роли Owner / Admin / Employee), права Positions и Imperatives с серверной проверкой ключей, Your access, Change ownership, копирование, Log in as user и дословные тексты отказов.
 doc_type: model
 builds: [erp, mtk]
-related: [architecture, meta-data-health, meta-business-managers, generations, analytics, limits, postback-generator, session-analytics, comments, remarketing-campaigns, permissions, auto-rules, meta-ads, auto-rules-engine, notification-center, api, campaigns, creatives, registration, custom-fields, tenant, user, glossary, how-to-pwa]
+related: [architecture, meta-data-health, meta-business-managers, generations, analytics, limits, postback-generator, session-analytics, comments, remarketing-campaigns, permissions, auto-rules, ui-map, meta-ads, auto-rules-engine, notification-center, api, campaigns, creatives, registration, custom-fields, tenant, user, glossary, landings, how-to-pwa]
 language: ru
-updated: 2026-10-28
+updated: 2026-11-09
 ---
 
 # Permissions Model AIO
@@ -57,7 +57,7 @@ updated: 2026-10-28
 | Роль | Доступ |
 |---|---|
 | **Owner** | Полный доступ: `Own` на все объекты тенанта и все права Position без назначения позиций. По дефолту — тот, кто создал тенант. |
-| **Admin** | Полный доступ, как у Owner. Управляет юзерами в `Settings → Users`: приглашает, меняет роль, отключает. |
+| **Admin** | Полный доступ, как у Owner; войти под Owner через `Log in as user` Admin не может. Управляет юзерами в `Settings → Users`: приглашает, меняет роль, отключает. |
 | **Employee** | Только то, что дают его Positions и лестница уровней на объекты. |
 
 **Что даёт полный доступ (Owner / Admin в текущем тенанте):**
@@ -87,9 +87,9 @@ updated: 2026-10-28
 
 ### У каких сущностей есть `Access type` и какое значение по умолчанию
 
-**`Access type` есть у всех сущностей, которые шарятся, и правило для всех одно: `Use` и `View` значат одно и то же, исключений по сущностям нет.** Это кампании, флоу, источники, дестинейшены, лэнды, Content Library, пресеты, поля, метрики, дистрибуции, Money Streams, внешние отчёты, списки, шаблоны сообщений, Meta-профили, Meta-шаблоны, поставщики кабинетов Meta (`Supplier`), Google-аккаунты, TikTok-аккаунты, ассайны автоправил, домены, сервера, прокси, провайдеры доменов, серверов и DNS, а также папки, макросы, формы и адвертайзеры, а в ERP — ещё генерации и генераторы.
+**`Access type` есть почти у всех сущностей, которые шарятся, и правило для них одно: `Use` и `View` значат одно и то же.** Это кампании, флоу, источники, дестинейшены, Content Library, креативы, пресеты, поля, метрики, дистрибуции, Money Streams, внешние отчёты, списки, шаблоны сообщений, Meta-профили, Meta-шаблоны, поставщики кабинетов Meta (`Supplier`), Google-аккаунты, TikTok-аккаунты, ассайны автоправил, домены, сервера, прокси, провайдеры доменов, серверов и DNS, а также папки, макросы, формы и адвертайзеры, а в ERP — ещё генерации и генераторы.
 
-Значение по умолчанию у большинства — `Private`; у папок, макросов, форм, адвертайзеров и списков (`Item lists`) — `Use`, поэтому их видят в списках и селектах все. `Use` получают и поля, которые создаются сами, когда источник создают из шаблона. Генераторы, заведённые до того, как у них появились владелец и `Access type`, принадлежат Owner-у тенанта и открыты всем с `Use`; новые генераторы и генерации создаются `Private`. У элемента Content Library `Access type` выбирают ещё в форме создания (по умолчанию `Private`). У кампаний (трафиковых и remarketing), источников, лэндов, макросов, форм, адвертайзеров, прокси, Meta-профилей, Meta-шаблонов и Google-аккаунтов колонка `Access type` в таблице по умолчанию скрыта и включается в настройках колонок.
+Значение по умолчанию у большинства — `Private`; у папок, макросов, форм, адвертайзеров, креативов и списков (`Item lists`) — `Use`, поэтому их видят в списках и селектах все. `Use` получают и поля, которые создаются сами, когда источник создают из шаблона. Генераторы, заведённые до того, как у них появились владелец и `Access type`, принадлежат Owner-у тенанта и открыты всем с `Use`; новые генераторы и генерации создаются `Private`. У элемента Content Library `Access type` выбирают ещё в форме создания (по умолчанию `Private`). У кампаний (трафиковых и remarketing), источников, макросов, форм, адвертайзеров, креативов, генераций, прокси, Meta-профилей, Meta-шаблонов, Google- и TikTok-аккаунтов колонка `Access type` в таблице по умолчанию скрыта и включается в настройках колонок.
 
 ## Как Positions кастомизируют доступ Employee
 
@@ -157,7 +157,7 @@ Imperative — это «единица разрешения» внутри Posit
 
 **Шаринг поставщиков рекламных кабинетов (`Supplier`) закрыт ключами `meta.suppliers.share` (`Meta: suppliers share`) и `meta.suppliers.share.ownership` (`Meta: suppliers ownership change`), в ERP и MTK.** Ветки `scopes.meta.suppliers` / `edit-scopes.meta.suppliers` дают уровень на всех поставщиков без шаринга; как поставщики шарятся — [how-to/meta-data-health.md](../how-to/meta-data-health.md).
 
-Вкладку `Meta → Business Managers` и фильтр `Business Manager` на вкладках Meta открывает ключ `meta.businesses.view` (только ERP) — [how-to/meta-business-managers.md](../how-to/meta-business-managers.md).
+Вкладку `Meta → Business Managers` и фильтр `Business Manager` на вкладках Meta открывает ключ `meta.businesses.view` (ERP и MTK с модулем `Meta+`) — [how-to/meta-business-managers.md](../how-to/meta-business-managers.md).
 
 ### Какими ключами закрыты генерации — `content.generations.*`
 
@@ -191,7 +191,7 @@ Feature-императивов восемь, каждый закрывает с�
 - `Features: heatmaps` (`features.heatmaps`) — тепловые карты лэнда: вкладка `Heatmap` в `Manage landing` и в окне `Landing quick preview`; только в билде ERP.
 - `Features: notes` (`features.notes`) — комментарии к кампаниям и лэндам и лента `All comments` ([how-to/comments.md](../how-to/comments.md)); в ERP и MTK.
 - `Features: notes edit` (`features.notes.edit`) — остался в матрице от заметок, которые заменены комментариями, и в интерфейсе ни на что не влияет; только в билде ERP.
-- `Features: conversions revenue` (`features.conversions-revenue`) — колонки `Revenue` и `Revenue Business Model` в `Tracker → Conversions`. Без права этих колонок в таблице нет, хотя сама таблица открывается.
+- `Features: conversions revenue` (`features.conversions-revenue`) — колонки `Revenue` и `Revenue Business Model` в `Tracker → Conversions` и в окне `Show nearby visits`. Без права этих колонок нет ни в таблице, ни в футере, ни в CSV, хотя сама таблица открывается.
 - `Features: conversions payout` (`features.conversions-payout`) — колонки `Payout` и `Payout Business Model` там же, на тех же условиях.
 - `Features: table export` (`features.table-export`) — выгрузка таблицы в CSV ([how-to/analytics.md](../how-to/analytics.md)).
 - `Features: postback generator` (`features.conversion-postback-generator`) — экран сборки ссылки входящего постбэка ([how-to/postback-generator.md](../how-to/postback-generator.md)).
@@ -218,9 +218,9 @@ Feature-императивов восемь, каждый закрывает с�
 
 Отдельного тумблера доступности у раздела нет: включать его тенанту не нужно, видимость решают только права. Роли полного доступа (Owner / Admin) проходят по ветке автоматически, как и по остальным императивам. Симптом «у сотрудника нет раздела `Automations`» разбирается его Position, а не настройкой тенанта. Что делает сам раздел — [how-to/auto-rules.md](../how-to/auto-rules.md).
 
-### Какие императивы `automation.*` бывают — четыре группы
+### Какие императивы автоправил есть в ветке `automation.*` — четыре группы
 
-Императивов шестнадцать. В матрице `Settings → Positions` они собраны в секцию `Automation section` (RU `Раздел «Автоматизации»`), подписи гранулярных — вида `Automation: view templates`, `Automation: edit assignments`, `Automation: approve verdicts`.
+Императивов автоправил шестнадцать; кроме них в ветке `automation.*` лежат ключи страниц `Processes` и `Process Flows` (`automation.processes.*`, `automation.process-flows.*`, [reference/ui-map.md](../reference/ui-map.md)). В матрице `Settings → Positions` они собраны в секцию `Automation section` (RU `Раздел «Автоматизации»`), подписи гранулярных — вида `Automation: view templates`, `Automation: edit assignments`, `Automation: approve verdicts`.
 
 - Шаблоны правил — `automation.templates.view`, `automation.templates.edit`, `automation.templates.edit.duplicate`, `automation.templates.edit.archive`, `automation.templates.share`, `automation.templates.share.ownership`.
 - Ассайны — `automation.assignments.view`, `automation.assignments.edit`, `automation.assignments.edit.archive`, `automation.assignments.edit.test-run`, `automation.assignments.share`, `automation.assignments.share.ownership`.
@@ -243,9 +243,9 @@ Feature-императивов восемь, каждый закрывает с�
 
 ### Какая страница раздела Automations каким правом открывается
 
-Каждая из четырёх страниц закрыта своим view-императивом: `/app/automations/status` — `automation.status.view`, `/app/automations/assignments` — `automation.assignments.view`, `/app/automations/auto-rules` (`Rule Templates`) — `automation.templates.view`, `/app/automations/actions` (`History`) — `automation.actions.view`. Без нужного права страница не открывается. Заход на `/app/automations` без указания страницы ведёт на последнюю открытую страницу раздела (она запоминается в браузере), а если её нет или права на неё нет — на первую доступную по правам в порядке `Status` → `Assignments` → `Rule Templates` → `History`.
+Каждая из четырёх страниц автоправил закрыта своим view-императивом: `/app/automations/status` — `automation.status.view`, `/app/automations/assignments` — `automation.assignments.view`, `/app/automations/auto-rules` (`Rule Templates`) — `automation.templates.view`, `/app/automations/actions` (`History`) — `automation.actions.view`. Без нужного права страница не открывается. Заход на `/app/automations` без указания страницы ведёт на последнюю открытую страницу раздела (она запоминается в браузере), а если её нет или права на неё нет — на первую доступную по правам в порядке `Status` → `Assignments` → `Rule Templates` → `History` → остальные страницы раздела.
 
-Сам пункт меню `Automations` появляется по любому из трёх прав — `automation.templates.view`, `automation.assignments.view`, `automation.actions.view`. Одного `automation.status.view` для пункта меню мало, хотя страница статуса по прямой ссылке при нём открывается ([how-to/auto-rules.md](../how-to/auto-rules.md)).
+Сам пункт меню `Automations` появляется по view-праву любой страницы раздела, кроме статуса: из прав автоправил это `automation.templates.view`, `automation.assignments.view`, `automation.actions.view`, плюс `automation.processes.view` и `automation.process-flows.view` страниц процессов. Одного `automation.status.view` для пункта меню мало, хотя страница статуса по прямой ссылке при нём открывается ([how-to/auto-rules.md](../how-to/auto-rules.md)).
 
 В матрице право страницы статуса подписано `Automation: status page` (`automation.status.view`), вся ветка страницы — `Automation: status`.
 
@@ -257,7 +257,7 @@ Feature-императивов восемь, каждый закрывает с�
 
 Модалка `Settings → Positions → + Position`: `Position name` + `Description` + `Assign color` + **`Priority`** (слайдер) + две вкладки — **`Imperatives`** и **`Assigned users`** (кому назначена).
 
-Императивы — **упорядоченный список** (`#1`, `#2`, …); у каждого ряда тоггл **`Deny` / `Allow`** + дропдаун выбора правила (`+ Add imperative` добавляет ряд, ряды перетаскиваются). Правила в дропдауне сгруппированы по **секциям-папкам**: можно взять целую секцию (`Analytics section`) или гранулярно `<Секция>: <подсекция>` (`Analytics: Roll Up report`, `Content: CDN files`…). Подпись есть у каждого ряда, включая все ветки `Scopes: <раздел>` и `Editor Scopes: <раздел>`. В **дропдауне** императивы перечислены по алфавиту — это порядок выбора, **не** путать с порядком применения (сверху вниз в самом списке Position).
+Императивы — **упорядоченный список** (`#1`, `#2`, …); у каждого ряда тоггл **`Deny` / `Allow`** + дропдаун выбора правила (`+ Add imperative` добавляет ряд, ряды перетаскиваются). Правила в дропдауне сгруппированы по **секциям-папкам**: можно взять целую секцию (`Analytics section`) или гранулярно `<Секция>: <подсекция>` (`Analytics: Roll Up report`, `Content: CDN files`…). Подписи есть почти у всех ключей, включая ветки `Scopes: <раздел>` и `Editor Scopes: <раздел>`; ключ без подписи показывается как есть (например, `scopes.meta.suppliers`, `meta.businesses.view`). В **дропдауне** императивы перечислены по алфавиту — это порядок выбора, **не** путать с порядком применения (сверху вниз в самом списке Position).
 
 **Порядок важен:** интерфейс применяет императивы **сверху вниз** (`Allow` добавляет, `Deny` убирает). Сервер следует этому порядку для разных ключей императивов. Для предсказуемого результата не повторяйте один ключ в нескольких строках. Между Positions с разными ключами конфликт решает `Priority`.
 
@@ -294,7 +294,7 @@ Feature-императивов восемь, каждый закрывает с�
 
 **Команда (`Settings → Teams`) даёт доступ через числовой уровень участника: кто стоит выше по уровню в той же команде, получает `Own` на объекты всех, кто ниже.** Команд в тенанте может быть несколько (по вертикалям, по группам баеров, по гео), юзер может состоять в нескольких. Пошарить объект можно на любую команду тенанта — шару получают все её участники, независимо от уровня.
 
-Три команды приезжают из шаблона тенанта во всех семи шаблонах — `Tech Department`, `Media Buying Team A` (описание: «Buyers see their own traffic; the team head sees everyone's.») и `Media Buying Team B` («A second team - proof that two teams do not see each other.»). Участников в них нет: юзеры шаблоном не копируются, поэтому состав и уровни в каждой назначаются самостоятельно.
+Три команды приезжают из шаблона тенанта во всех шаблонах вертикалей — `Tech Department`, `Media Buying Team A` (описание: «Buyers see their own traffic; the team head sees everyone's.») и `Media Buying Team B` («A second team - proof that two teams do not see each other.»). Юзеры шаблоном не копируются: при создании тенанта из шаблона в каждую из трёх команд записывается только его владелец (Owner) — с уровнем 1; остальных участников и их уровни назначают самостоятельно.
 
 ### Уровень участника команды — кто выше, владеет объектами тех, кто ниже
 
@@ -339,7 +339,7 @@ Feature-императивов восемь, каждый закрывает с�
 
 ### Какие команды видно в `Settings → Teams` и где посмотреть уровень юзера
 
-**В `Settings → Teams` сотрудник видит только команды, в которых состоит; все команды тенанта видят Owner / Admin и позиции, где к странице `Settings: teams page` (`settings.teams.view`) добавлены `Scopes` / `Editor Scopes` на команды (`scopes.settings.teams` / `edit-scopes.settings.teams`, оба билда).** В таблице участники разбиты на колонки `Managers` (все выше нижнего уровня команды) и `Regular Members` (нижний уровень команды — не обязательно 0). В ERP в `Settings → Users` колонка `Teams` показывает команды юзера, а в подсказке к команде — его уровень в ней: `<команда> · Level N`. В диалоге шаринга доступны все команды тенанта, не только свои.
+**В `Settings → Teams` сотрудник видит только команды, в которых состоит; все команды тенанта видят Owner / Admin и позиции, где к странице `Settings: teams page` (`settings.teams.view`) добавлены `Scopes` / `Editor Scopes` на команды (`scopes.settings.teams` / `edit-scopes.settings.teams`, оба билда).** В таблице участники разбиты на колонки `Managers` (все выше нижнего уровня команды) и `Regular Members` (нижний уровень команды — не обязательно 0). В `Settings → Users` колонка `Teams` показывает команды юзера, а в подсказке к команде — его уровень в ней: `<команда> · Level N`. В диалоге шаринга доступны все команды тенанта, не только свои.
 
 ### Не сохраняется имя команды / ошибка на символах — валидация имени Team
 
@@ -418,9 +418,9 @@ AIO намеренно не скрывает юзеров друг от друг
 
 **В интерфейсе копирование доступно при уровне хотя бы `View`; для Employee действие также требует права копирования раздела, если оно проверяется (например, `Tracker: campaigns copy`). Owner / Admin проходят проверку ключа по роли.** Копия принадлежит тому, кто копировал, получает `Access type = Private`; в диалоге копирования к предложенному имени добавляется ` copy`, и имя можно изменить перед сохранением; шары оригинала на неё не переносятся, теги — переносятся.
 
-### Удаление vs деактивация юзера
+### Удаление vs деактивация юзера — `Switch activity` или `Remove from tenant`
 
-Чтобы было видно авторство прошлых заливок — деактивировать (`Settings → Users` → `Switch activity`), не удалять. Процедура и предупреждение «откатить нельзя» — [how-to/permissions.md](../how-to/permissions.md).
+Уходящего юзера по умолчанию деактивируют (`Settings → Users` → `Switch activity`): он теряет доступ к тенанту, остаётся в списке юзеров, и это откатывается тем же пунктом. `Remove from tenant` снимает его роль в тенанте и членство в командах тенанта; глобальный аккаунт юзера при этом остаётся. Процедура — [how-to/permissions.md](../how-to/permissions.md).
 
 ### Tenant Owner — особый случай
 
@@ -439,14 +439,14 @@ AIO намеренно не скрывает юзеров друг от друг
 | Name | название инвайта |
 | Code | кастомное **или** случайное значение — это код, который шаришь юзеру; от 4 до 255 символов. **Регистр не важен ни при создании, ни при вводе:** код, отличающийся от уже существующего только регистром, создать нельзя — форма подсветит поле ошибкой `The code has already been taken.`, а при регистрации `free14` и `FREE14` откроют один и тот же инвайт ([how-to/registration.md](../how-to/registration.md)) |
 | Usages | сколько раз можно использовать инвайт-код (например, `1` — одноразовый) |
-| Status | active/inactive |
+| Status | `Active` (по умолчанию), `Revoked` или `Complete` |
 | Type | `User` (обычный) |
 | Till date | срок действия |
 | Role | в этой форме доступны **`Admin` / `Employee`**; `Owner` не предлагается. В `Edit tenant role` тоже назначаются только `Admin` и `Employee`. |
 | Position | одна; остальные назначают во вкладке `Assigned users` нужной Position |
 | Team | в какую team зачислить; юзер попадает в неё на уровень 0, поднять уровень можно в диалоге команды |
 
-Кнопка `Generate invite` создаёт инвайт-код и регистрационную ссылку. Юзер регистрируется по ссылке (вводит Name, Email, Telegram, Password, опционально включает 2FA).
+Кнопка `Generate invite` создаёт инвайт-код и регистрационную ссылку. Юзер регистрируется по ссылке: вводит Name, Email и Password, подтверждает Telegram через бота (ник вручную не вводится), опционально включает 2FA.
 
 ### Как самопроверить доступы новой Position
 
@@ -454,7 +454,7 @@ AIO намеренно не скрывает юзеров друг от друг
 
 ### Без 2FA — поля скрыты
 
-При включённой защите данных чувствительные значения скрыты до подтверждения 2FA. Подтверждение включает временный `Unsecured Mode`, в котором они открываются. В `Settings → Logs` защищены `Message`, `IP Address` и `Useragent`; у полей визита защита определяется атрибутом `2FA Protected`. 2FA настраивается через Telegram-бота (`AIO-tech-bot`) или Google Authenticator. «Не вижу телефон/email юзера» чаще всего означает, что у смотрящего не включена 2FA.
+При включённой защите данных чувствительные значения скрыты до подтверждения 2FA. Подтверждение включает временный `Unsecured Mode`, в котором они открываются. В `Settings → Logs` защищены `Message`, `IP Address` и `Useragent`; у полей визита защита определяется атрибутом `2FA Protected`. 2FA настраивается через Telegram-бота (`AIO-tech-bot`) или Google Authenticator. «Не вижу телефон/email юзера» значит, что значение защищено: открывает его только подтверждение 2FA, поэтому у смотрящего без настроенной 2FA оно остаётся скрытым.
 
 **Доступ сам скрывается снова по таймауту.** После ввода 2FA-кода чувствительные поля (`phone`, `email`, логи) видны не бессрочно — по истечении `Unsecured Mode` они закрываются опять. Длительность задаётся **на каждого пользователя отдельно** (чтобы изменить её, напишите в чат команде AIO), по умолчанию — **10 минут**. Подпись в интерфейсе `Data will be hidden after 30 minutes for security reasons.` — статичный текст, он не подстраивается под реальное значение, поэтому ориентироваться на него нельзя. Симптом «только что видел телефон, а теперь снова скрыто» — это истёкший таймаут, а не баг: нужно повторно подтвердить 2FA.
 
@@ -550,12 +550,6 @@ AIO намеренно не скрывает юзеров друг от друг
 
 В шаблонах MTK креативов, `Google` и рассылок у `Buyer` нет, зато открыт просмотр доменов — `Tech: domains page` (`tech.domains.view`): байер видит список доменов, но не управляет ими.
 
-**Почему:**
-
-- Доступ к Tech без понимания механики = case «байер случайно нажал Repoint, домен лёг на 10 минут».
-- Принцип least privilege — стандартная индустрия.
-- Расширить доступ потом легко; обратно ограничить — тяжело (политически).
-
 ### «Дать баеру смотреть стату без права редактировать» — view-only через Position
 
 **Когда:** нужен view-only доступ — «пусть баер видит статистику кампаний, но ничего не редактирует», «дать смотреть, но не трогать».
@@ -576,11 +570,9 @@ AIO намеренно не скрывает юзеров друг от друг
 
 Альтернатива без изменения команды — шаринг кампаний на команду (`Share` / массовый `Share also` → команда): шара на команду действует на всех её участников независимо от уровня. Разница: `Peers:` работает для всех будущих кампаний сразу, а шаринг — только для выделенных.
 
-**Почему:** by design AIO даёт baseline-изоляцию байеров одного уровня — это нормальная корпоративная модель (junior не видит чужие тесты). Если хочется иначе — это **явный choice**, включается настройкой команды, а не дефолтом.
-
 ### Как байер меняет заголовок через сплиты (ERP)
 
-Если заголовок уже вынесен в `Content Split` лэнда, байер может задать свои варианты в кампании через `LP splits → Use campaign splits → Edit splits`. Для этого достаточно уровня `View` на лэнд; для Employee без полного доступа сохранение требует ключа `content.landings.edit` в Position. Уровень `Edit` на сам лэнд для этой операции не нужен.
+Если заголовок уже вынесен в `Content Split` лэнда, байер может задать свои варианты в кампании: `LP splits` → режим `Campaign` → `Set up campaign splits` / `Edit splits` (окно `Landing splits`). Нужны уровень `View` на лэнд, доступ `Edit` к кампании и ключ `tracker.campaigns.edit.landing-splits` (`Tracker: campaigns edit landing splits`); `allow` на `tracker.campaigns.edit` даёт его по префиксу, отнять — `Deny` этого ключа. Ключ `content.landings.edit` и уровень `Edit` на сам лэнд для этой операции не нужны. Окно правит сплиты самого лэнда: общие варианты меняются у всех кампаний с этим лэндом, варианты кампании — только у неё ([how-to/landings.md](../how-to/landings.md)).
 
 ### Как ротировать варианты лэндинга (MTK)
 

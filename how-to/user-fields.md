@@ -6,7 +6,7 @@ doc_type: how-to
 builds: [erp, mtk]
 related: [custom-fields, architecture, source, visit-field, permissions-model, sdk, ui-common, flow-model, landing, advertiser, destination, placeholders, remarketing-campaigns]
 language: ru
-updated: 2026-10-28
+updated: 2026-11-09
 ---
 
 # User fields — поля визита прямо в карточках Source, Campaign, лендинга и Destination
@@ -43,13 +43,13 @@ updated: 2026-10-28
 
 У лендинга секция есть в редакторе, загрузке ZIP, PWA-билдере и `Custom PWA`; у `Destination` — во всех способах создания. `Advertiser` открывается через `Settings → Advertisers`.
 
-В ERP карточки открываются через `Tracker → Sources`, `Tracker → Campaigns`, `Tracker → Destinations`. У `Flow` вне типа `Notifications` пул — `Campaign`: `Tracker → Flows → Edit Flow`, левая панель. У `Lander Type` пул — `Landing`: `Content → Landings ▾ → Manage landing types`.
+В ERP карточки открываются через `Tracker → Sources`, `Tracker → Campaigns`, `Tracker → Destinations`. У `Flow` вне типа `Notifications` пул — `Campaign`: `Tracker → Flows` → окно `Edit flow`, левая панель. У `Lander Type` пул — `Landing`: `Content → Landings ▾ → Manage landing types`.
 
 В MTK `Sources`, `Campaigns`, `Destinations` и `Landings` — вкладки верхнего меню. Редактирование `Flow` и `Lander Type` из интерфейса недоступно.
 
 В ремаркетинговой кампании секции `User fields` нет.
 
-`Destination` — шестое значение `Type`, появившееся вместе с этой секцией. Полный список значений и что каждое означает — [models/visit-field.md](../models/visit-field.md).
+`Destination` — одно из шести значений `Type`. Полный список значений и что каждое означает — [models/visit-field.md](../models/visit-field.md).
 
 В Finance- и iGaming-шаблонах тенанта под каждую карточку уже заведены по три свободных поля нужного `Type` в группе `Custom`: `source_field_1…3`, `campaign_field_1…3`, `landing_field_1…3`, `destination_field_1…3` (описание у каждого — `Free <source|campaign|landing|destination>-level field - name it and use it for anything`): переименуйте и используйте под любое значение уровня этой сущности. В Nutra- и Sweeps-шаблонах таких заготовок нет.
 
@@ -76,7 +76,7 @@ updated: 2026-10-28
 - **`Type` поля не совпадает с пулом карточки.** У `Source` в форме видны только поля `Type = Source`, у `Campaign` и `Flow` — `Campaign`, у лендинга и `Lander Type` — `Landing`, у `Destination` и `Advertiser` — `Destination`.
 - **Поле уже добавлено** в эту карточку — оно среди строк, а не в поповере.
 - **Поле заархивировано** — архивные в поповер не попадают.
-- **Нет доступа к полю.** Пул уважает доступ: предлагаются поля, до которых у вас есть хотя бы уровень `Use` — свои, расшаренные вам или вашей команде, поля участников ниже вас по уровню в команде и поля с `Access type` `Use` или `View`, а при `Scopes` / `Editor Scopes` на поля в позиции (`scopes.settings.fields`, только ERP) — все поля тенанта. Чтобы выбрать поле, открывать его карточку не нужно — уровня `Use` хватает. Все источники доступа — [models/permissions-model.md](../models/permissions-model.md).
+- **Нет доступа к полю.** Пул уважает доступ: предлагаются поля, до которых у вас есть хотя бы уровень `Use` — свои, расшаренные вам или вашей команде, поля участников ниже вас по уровню в команде (и равных по уровню, если уровню так выставлено `Peers:`) и поля с `Access type` `Use` или `View`, а при `Scopes` / `Editor Scopes` на поля в позиции (`scopes.settings.fields`, только ERP) — все поля тенанта. Чтобы выбрать поле, открывать его карточку не нужно — уровня `Use` хватает. Все источники доступа — [models/permissions-model.md](../models/permissions-model.md).
 
 Отдельный случай — поле, которое родитель забрал себе режимом «только родитель»: в дочерней форме его нет ни строкой, ни пунктом в поповере.
 
@@ -124,7 +124,7 @@ AIO копирует значение template-поля из родителя **
 
 В форме при смене родителя его заготовки попадают в инпуты, которые ещё не правили вручную в этом открытии. Сохранённое ранее значение само по себе не делает инпут тронутым. Если у существующей дочерней карточки своего значения нет, при открытии форма тоже подставит template-значение родителя. Поэтому очищенный ранее инпут может снова заполниться заготовкой; чтобы сохранить пустое значение, очистите его перед сохранением.
 
-Создание `Destination` способом `By Integration` заготовки `Advertiser` не подставляет вовсе.
+Создание `Destination` способом `By integration` заготовки `Advertiser` не подставляет вовсе.
 
 ## Вписал значение поля в один `Source`, а на новом `Source` оно пустое — дефолта у поля нет
 

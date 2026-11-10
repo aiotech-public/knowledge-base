@@ -6,7 +6,7 @@ doc_type: how-to
 builds: [erp, mtk]
 related: [placeholders, landing, glossary, mechanics-pwa, how-to-pwa, generations, limits, permissions-model, user-fields, landing-visual-editor, comments, landing-qa, ui-common, profile-settings, architecture, forms, sdk, notification-center, events-exporter, custom-fields, content-library, distributions-model, macros, visit-lifecycle, session-analytics, campaign-defaults, flow-model, analytics, onboarding-tours, campaigns]
 language: ru
-updated: 2026-10-21
+updated: 2026-11-09
 ---
 
 # Landings (How-to)
@@ -42,13 +42,13 @@ updated: 2026-10-21
 
 Других карточек в модалке нет. **PWA отсюда не создаётся** — у неё свой раздел `Content → PWA` со своей кнопкой `+ PWA` (в MTK — страница `PWA` платного модуля `PWA + Push`; без модуля PWA Builder в MTK нет), см. [mechanics/pwa.md](../mechanics/pwa.md) и [how-to/pwa.md](pwa.md). **Сгенерировать лэнд через AI отсюда нельзя** — карточки генерации в модалке нет: сайт генерируется на странице `Content → Generations` (только ERP), а лэнд из готового архива создаётся пунктом `Create landing` — [how-to/generations.md](generations.md).
 
-Каретка-дропдаун у `+ Landing` есть **только на странице `Content → Landings`**: **Manage templates** (Lander Templates) + **Manage landing types**. На странице `Content → PWA` у кнопки создания каретки нет — ни `Manage templates`, ни `Manage landing types` оттуда не открыть. Типы лэндов **полностью настраиваемые** (Color/Icon + тогглы поведения `Auto place AIO macros` / `Generate events` / `Full CDN used` / `Temp CDN used` + схема полей) — не только те, что приезжают из шаблона тенанта (`Offer` / `Preland` / `White` везде, остальные — по вертикали). Детально — секция «Типы лэндов и шаблоны — конфигурация» ниже.
+Каретка-дропдаун у `+ Landing` есть **только в ERP на странице `Content → Landings`**: **Manage templates** (Lander Templates) + **Manage landing types**. На странице `Content → PWA` у кнопки создания каретки нет — ни `Manage templates`, ни `Manage landing types` оттуда не открыть; на странице `Landings` в MTK каретки тоже нет. Типы лэндов **полностью настраиваемые** (Color/Icon + тогглы поведения `Auto place AIO macros` / `Generate events` / `Full CDN used` / `Temp CDN used` + схема полей) — не только те, что приезжают из шаблона тенанта (`Offer` / `Preland` / `White` везде, остальные — по вертикали). Детально — секция «Типы лэндов и шаблоны — конфигурация» ниже.
 
 ### `Create manually` — HTML сохраняется как написан, без обработки ZIP
 
-**Лэнд из `Create manually` AIO хранит ровно с тем кодом, что введён в редакторе: относительные пути не переписываются на CDN, вшитые `data:`-картинки не выносятся в `_assets`, а `{{aio:head}}` / `{{aio}}` не вставляются — даже если у типа лэнда включён `Auto place AIO macros`.** Плейсхолдеры приходят только из самого кода или из выбранного `Lander template` (шаблон `Simple` — пустая обёртка, своих плейсхолдеров не несёт).
+**Лэнд из `Create manually` AIO хранит ровно с тем кодом, что введён в редакторе: относительные пути не переписываются на CDN, вшитые `data:`-картинки не выносятся в `_assets`, а `{{aio:head}}` / `{{aio}}` не вставляются — даже если у типа лэнда включён `Auto place AIO macros`.** Плейсхолдеры приходят только из самого кода или из выбранного `Lander template` (шаблон `Simple` — пустая обёртка `{{lander}}`, плейсхолдеров SDK не несёт).
 
-Отсюда три следствия. SDK и макросы на ручном лэнде появляются, только если поставить `{{aio:head}}` перед `</head>` и `{{aio}}` перед `</body>` — без них страница отдаётся без SDK, и данные из браузера (поля из JS, события SDK) в визит не уходят; `{{link}}` при этом работает. Своих файлов у ручного лэнда нет: картинки и стили вшивают в HTML или грузят по абсолютным URL, относительный путь вида `img/1.png` не откроется. Лимит 1024 КБ на HTML действует и здесь ([reference/limits.md](../reference/limits.md)). Пункт `Create manually` требует права `content.landings.edit.manually`.
+Отсюда три следствия. SDK и макросы на ручном лэнде появляются, только если поставить `{{aio:head}}` перед `</head>` и `{{aio}}` перед `</body>` — без них страница отдаётся без SDK, и данные из браузера (поля из JS, события SDK) в визит не уходят; `{{link}}` при этом работает. Своих файлов у ручного лэнда нет: картинки и стили вшивают в HTML или грузят по абсолютным URL, относительный путь вида `img/1.png` не откроется. Лимит 1024 КБ на HTML действует и здесь ([reference/limits.md](../reference/limits.md)). В ERP пункт `Create manually` виден при праве `content.landings.edit.manually`; само сохранение лэнда требует `content.landings.edit`.
 
 ## Manage landing — редактор и экшены
 
@@ -108,7 +108,7 @@ updated: 2026-10-21
 - **`{{link}}`** — подставляется в `href` (`<a href="{{link}}">`) вместо статичного URL, ведёт на следующий шаг флоу. Цель определяет переход `Handle-link` текущего шага флоу; для самой подстановки дополнительных параметров не нужно.
 - **`{{form}}`** — вместо HTML-формы, туда подгрузится AIO SDK-форма.
 - **`{{cdn}}` vs `{{cdn-lp-folder}}`** — частая путаница. Из JS/CSS файла — `{{cdn}}` (обрабатывается при заливке). Из inline-скрипта в `index.html` — `{{cdn-lp-folder}}` (подставится в runtime); `{{cdn}}` в исходном HTML тоже заменяется при загрузке ZIP.
-- **`{{aio:head}}` / `{{aio}}`** — не трогать, AIO вставляет сам.
+- **`{{aio:head}}` / `{{aio}}`** — не трогать: AIO вставляет их сам при обработке ZIP, если у типа лэнда включён `Auto place AIO macros`.
 - **`{{aio.visit.fields.offer_name.for_visitor}}`** — динамическое название оффера. Поле `offer_name` хранит `for_visitor` (показываем визиту) и `for_advertiser` (передаём в Destination). Оффер-неймы — в `Content → Content Library`; в шаблоне ERP Finance это тип контента `Offer Names`, и на нём собран лэнд-пример `Offer Example #1 w/ Dynamic Offer Name` («one landing serves several offers without an edit»). В MTK Finance библиотеки контента нет, и у лэнда-примера `Example Offer Page — Immediate Connect` имя бренда зашито в вёрстку.
 
 ## Загрузка через UI
@@ -118,7 +118,7 @@ updated: 2026-10-21
    - **Countries** / **Languages** — гео и языки, это метаданные, а не фильтр трафика (секция «Категоризация — countries, languages, tags» этого документа).
    - **Tags** — `EN`, `FR`, имя байера и т.п. Можно создавать тут же.
 3. Заполни второй блок — **Lander type** и **Lander template**:
-   - **Lander type** — `Preland` / `Offer` / `White`. Влияет на `Backfix` (по дефолту срабатывает только на прилэндах через проверку `lander_type_uuid`) и на фильтрацию во флоу. Если у выбранного типа задана схема полей, её настройки появляются тут же, под селектами.
+   - **Lander type** — `Preland` / `Offer` / `White`. Влияет на `Backfix` (в макросе `AIO SDK Macros Collection` из шаблона он включён для прелендов — типов `Preland` и `Preland w/ Form`, в Nutra ещё `VSL`; проверка идёт по `lander_type_uuid`) и на фильтрацию во флоу. Если у выбранного типа задана схема полей, её настройки появляются тут же, под селектами.
    - **Lander template** — обязательный выбор шаблона; автоматически `Simple` не выбирается. В типовой настройке используется `Simple` (пустая обёртка). Кастомные шаблоны используют редко.
 4. Перетащи ZIP в зону загрузки под полями или открой файл вручную.
 5. Под зоной загрузки — секция `User fields`: значения полей визита, которые задаются прямо у лэнда ([how-to/user-fields.md](user-fields.md)).
@@ -191,11 +191,11 @@ Manage landing → вкладка **CDN files** (или отдельная вк�
 
 ## Альтернатива — Embed Preview / Quick Preview
 
-Быстрый preview без открытия отдельной вкладки. Доступен в трёх местах:
+Быстрый preview без открытия отдельной вкладки. Открывается, в частности, отсюда:
 
 - **`Content → Landings`** — иконка «глаз» (hover — preview popup, клик — Landing Quick Preview). Action правым кликом — **Embed Preview**.
-- **`Tracker → Campaigns` → Edit Campaign** — hover на Content-шаге (Preland / Offer).
-- **`Analytics → Roll Up Report`** — иконка глаза при раскрытии груперов по лэндам.
+- **`Tracker → Campaigns` → Edit campaign** — hover на Content-шаге (Preland / Offer).
+- **`Analytics → Roll Up report`** — иконка глаза при раскрытии груперов по лэндам.
 
 Это **статичный** preview: плейсхолдеры визита не подставляются. Для проверки рантайма — Visit by 1Step Preview Link.
 
@@ -209,7 +209,7 @@ Manage landing → вкладка **CDN files** (или отдельная вк�
 
 ## Multi-page lands (sub-pages)
 
-Если в ZIP есть дополнительные `.html`-файлы помимо `index.html`, они подгружаются как sub-pages. Доступны в редакторе `Manage landing` через выпадающее меню **Pages** *(см. [reference/glossary.md](../reference/glossary.md), секция Sub-pages)*.
+Если в ZIP есть дополнительные `.html`-файлы помимо `index.html`, они подгружаются как sub-pages. Доступны в редакторе `Manage landing` в секции **Pages** левой колонки *(см. [reference/glossary.md](../reference/glossary.md), секция Sub-pages)*.
 
 Типичные use-cases:
 - Разные языковые версии: `index_en.html`, `index_ru.html`, `index_de.html`.
@@ -227,9 +227,9 @@ Manage landing → вкладка **CDN files** (или отдельная вк�
 
 Передача lead-данных в Destination — через `{{aio.visit.fields.phone}}`, `.email`, `.first_name`, `.last_name`. При **Simple Redirect** — те же плейсхолдеры прямо в URL.
 
-### Лэнды-примеры шаблона под каждый путь — `AIO EXAMPLE` в `Content → Landings`
+### Лэнды-примеры шаблона под каждый путь — где найти в `Content → Landings`
 
-Пути 1 и 2 видно на лэндах-примерах шаблона тенанта. SDK-форма (`{{form}}`): `Offer Example #1 w/ Dynamic Offer Name` (ERP Finance) / `Example Offer Page — Immediate Connect` (MTK Finance), `Offer Example #1 - Order Form (SDK)` (Nutra), `Offer Example #1 - AIO SDK Form` (Sweeps) — у Nutra и Sweeps по описанию «the page only carries {{form}} and the styling». Своя HTML-форма с `AIO Non-SDK Form Handler`: `Example Offer Page — Custom HTML Form` (Finance), `Offer Example #3 - Custom HTML Form` (Nutra), `Offer Example #2 - Custom HTML Form` (Sweeps) — по описанию Sweeps-примера «it reads the server answer, so a refused lead is visible instead of a blind redirect». В iGaming-шаблоне лэндов с формой нет.
+Пути 1 и 2 видно на лэндах-примерах шаблона тенанта. SDK-форма (`{{form}}`): `Offer Example #1 w/ Dynamic Offer Name` (ERP Finance) / `Example Offer Page — Immediate Connect` (MTK Finance), `Offer Example #1 - Order Form (SDK)` (Nutra), `Offer Example #1 - AIO SDK Form` (Sweeps) — у Nutra и Sweeps по описанию на странице только `{{form}}` и стили, а форму выбирает шаг `Fill Form` флоу. Своя HTML-форма с `AIO Non-SDK Form Handler`: `Example Offer Page — Custom HTML Form` (Finance), `Offer Example #3 - Custom HTML Form` (Nutra), `Offer Example #2 - Custom HTML Form` (Sweeps) — по описанию Sweeps-примера «it reads the server answer, so a refused lead is visible instead of a blind redirect». В iGaming-шаблоне лэндов с формой нет.
 
 В Sweeps есть и третий образец — `Preland Example #2 - Gift Boxes w/ Quiz Form` с макросом `AIO Pre-Fill Form Handler` (`aio_prefill_form_handler`): «the pattern for a form too custom for the SDK one» — квиз, колесо, выбор подарка на своей вёрстке; макрос маппит имена инпутов на слаги полей визита и передаёт их в ссылке перехода, агент пишет их в визит тем же запросом. Что из шаблона клонируется в тенант — [context/architecture.md](../context/architecture.md).
 
@@ -237,17 +237,18 @@ Manage landing → вкладка **CDN files** (или отдельная вк�
 
 Форма создаётся в `Settings → Forms → +Form` (Controls / Steps / Layouts / Languages), на лэнде `{{form}}`, привязка к кампании через `Tracker → Flows → Fill Form` (Payload Type = Form). Можно сплитовать трафик между двумя формами по Weights. В шаблонах Finance, Nutra и Sweeps шаг `Fill Form` уже стоит во флоу-примерах с SDK-формой под именем `Choose Form`, а в `Settings → Forms` лежат готовые формы (например `Default Leads Form` в Finance, `Order Form - Name & Phone` в Nutra, `Default SOI Form` в Sweeps) — кампании-примеры выбирают их в этом шаге; в iGaming-шаблоне ни форм, ни шага `Choose Form` нет.
 
-В MTK конструктора `Settings → Forms` нет — новую SDK-форму не собрать и засеянную не отредактировать. Но шаблоны MTK Finance и MTK Sweeps привозят готовые формы (например `Default Leads Form`, `Short Form - Name & Phone` в Finance; `Default SOI Form`, `Email Only Form` в Sweeps), а во флоу-примерах стоит шаг `Choose Form`, где кампания выбирает одну из них; в MTK iGaming форм нет. Для собственной формы — путь 2 (Non-SDK Form Handler) или путь 3 (форма как макрос). См. *Как устроен MTK-вид AIO: навигация, пресеты из шаблона и методы под типовые задачи*.
+В MTK конструктора `Settings → Forms` нет — новую SDK-форму не собрать и засеянную не отредактировать. Но шаблоны MTK Finance, MTK Nutra и MTK Sweeps привозят готовые формы (например `Default Leads Form`, `Short Form - Name & Phone` в Finance; `Order Form - Name & Phone` в Nutra; `Default SOI Form`, `Email Only Form` в Sweeps), а во флоу-примерах стоит шаг `Choose Form`, где кампания выбирает одну из них; в MTK iGaming форм нет. Для собственной формы — путь 2 (Non-SDK Form Handler) или путь 3 (форма как макрос). См. *Как устроен MTK-вид AIO: навигация, пресеты из шаблона и методы под типовые задачи*.
 
 ## Категоризация — countries, languages, tags
 
 Момент, который регулярно понимают неправильно.
 
-**Поля `Countries`, `Languages`, `Tags` на лэнде не влияют на доступ трафика.** Это только метаданные. Если в `Countries` стоит AU — это не значит, что только AU-визиты увидят лэнд. Это значит:
+**Поля `Countries`, `Languages`, `Tags` на лэнде не влияют на доступ трафика.** Это метаданные, а не фильтр. Если в `Countries` стоит AU — это не значит, что только AU-визиты увидят лэнд. Это значит:
 - В UI можно фильтровать список лэндов по тегам / гео / языку.
 - Скрипты на лэнде могут читать `window.aio.landing.countries` / `window.aio.landing.languages` (типичный пример — шаблонный макрос `AIO Static Language Country for Form`, который форсит язык SDK-формы и страну телефона по метаданным лэнда вместо языка браузера и гео визита; в каких шаблонах он есть и с каким slug — [reference/sdk.md](../reference/sdk.md)).
+- Плейсхолдеры даты `{{aio.common.current_date_text}}`, `{{aio.common.current_date_iso}}` и `{{aio.common.current_year}}` берут язык и страну из `Languages` / `Countries` лэнда ([reference/placeholders.md](../reference/placeholders.md)).
 
-Фильтрация трафика по гео — на уровне флоу / фильтра / `Visit Country Code`, не на лэнде.
+Отсев трафика по гео — селектором стран `Allowed Countries` шага `Filter`, а разводка гео по разным лэндам — правилами вариантов шага `Content` (`Visit Country Code`). На лэнде гео не фильтруется.
 
 `Lander type` — отдельная история: его читает `Backfix` (через `lander_type_uuid` в `enabledBackFix`) и Flow при выборе Content-шага. Тоже не фильтр, но влияет на поведение SDK.
 
@@ -298,7 +299,7 @@ Manage landing → вкладка **CDN files** (или отдельная вк�
 Минимум, чтобы включить:
 - Добавить `id="vue"` на корневой элемент, в котором должны работать Vue-директивы: `<body id="vue">` или `<div id="vue">`.
 - К любому AIO-плейсхолдеру доступ через `{{vue.aio.visit.<...>}}` — например, `{{vue.aio.visit.country_code}}`.
-- Поддерживаемые директивы: `v-if`, `v-else-if`, `v-else`, `v-for`, `@click`.
+- Разметка внутри контейнера компилируется как шаблон Vue, поэтому работают директивы Vue — например `v-if`, `v-else-if`, `v-else`, `v-for`, `@click`.
 - Свои объекты для шаблонов — через `window.aioBus.push({type: "vue-data-object", data: {...}})`.
 
 Use cases: динамические переводы (`v-if` по `country_code`), условный рендер блоков, отрисовка списков из массива (`v-for`).
@@ -325,7 +326,7 @@ Use cases: динамические переводы (`v-if` по `country_code`
 
 В MTK нет панели `Content splits` и кнопки `Variants` для создания LP-сплитов. Уже записанные сплиты обрабатываются при показе лэнда; свои JS-паттерны в HTML также могут менять контент. `Content Library` как инструмент динамического контента в базовом MTK отсутствует — она появляется с платным модулем `Distribution` ([models/content-library.md](../models/content-library.md)).
 
-**MTK-метод A/B-ротации: целые лэнды весами.** В блоке `Landing` модалки `Edit Campaign` каждому лэнду задаётся вес — стратегии `First` (первый в списке) или `Weights` (весовая ротация). Трафик делится между лэндами целиком, не между элементами внутри одного.
+**MTK-метод A/B-ротации: целые лэнды весами.** В блоке `Landing` модалки `Edit campaign` лэнды ставятся вариантами шага, стратегия выбора — `First` (первый в списке), `Weights` (весовая ротация, каждому лэнду — вес) или AI-стратегии `Conversions AI` / `Metrics AI`. Трафик делится между лэндами целиком, не между элементами внутри одного.
 
 Если нужна подстановка динамического контента (оффер, заголовок, перевод), а модуля `Distribution` нет — через свои JS-макросы на лэнде, читающие поле визита (`{{aio.visit.fields.<slug>}}`). Это MTK-метод там, где в ERP стоят Content Distribution или Content Library.
 
@@ -375,7 +376,7 @@ Use cases: динамические переводы (`v-if` по `country_code`
 
 ### Лэнд с `Countries: AU` раздаёт трафик всем, не только AU
 
-Категории лэнда — **только метаданные**, не фильтр. Фильтрация трафика — на уровне флоу/кампании.
+Категории лэнда — **метаданные, а не фильтр трафика**. Фильтрация трафика — на уровне флоу/кампании.
 
 ## Смежные темы
 
@@ -404,7 +405,7 @@ Use cases: динамические переводы (`v-if` по `country_code`
 
 ### CDN-URL после загрузки — реальные файлы
 
-- После обработки ZIP относительные пути в HTML к локальным файлам (CSS/JS/картинкам) заменяются CDN-путями — это **реальное место файла**. Их часто принимают за мусор и удаляют — **не надо**. Свои ссылки на сторонние библиотеки, если ломают лэнд, можно удалять (AIO подгружает свои сверху).
+- После обработки ZIP относительные пути в HTML к локальным файлам (CSS/JS/картинкам) заменяются CDN-путями — это **реальное место файла**. Их часто принимают за мусор и удаляют — **не надо**. Свои подключения библиотек, которые SDK грузит сам, можно удалять, если они ломают лэнд: `intl-tel-input` для SDK-формы и Vue для контейнера `id="vue"`.
 
 ### Обновление лэнда у уже зашедших визитов
 
@@ -416,7 +417,7 @@ Use cases: динамические переводы (`v-if` по `country_code`
 
 ### Большое видео — не на агенте
 
-- Хостить большое видео на агенте — плохо: упираешься в bandwidth, хостеры банят. Рекомендация — выносить в спец. video-сервисы / Cloudflare-видео. Эвристика: дополнительный **редирект** в пути визита теряет **минимум ~5%** трафика.
+- Хостить большое видео на агенте — плохо: упираешься в канал сервера. Рекомендация — выносить в спец. video-сервисы / Cloudflare-видео. Каждый дополнительный **редирект** в пути визита теряет часть трафика.
 - Видео из файлов лэнда (`.mp4`, `.webm`, `.mov` и другие по пути `/_cdn`) агент отдаёт с поддержкой перемотки (`Range` → `206`) и с заголовком `Cache-Control: no-store`: Cloudflare его по умолчанию не кэширует, поэтому каждый просмотр идёт через сервер и его канал, даже когда агент отдаёт видео из своей копии на диске.
 
 ### Slug подстраницы прокидывается дальше
@@ -518,12 +519,12 @@ PWA в этой модалке нет — она создаётся в своё�
 
 ### Где открывается heatmap лэнда (пять мест)
 
-Heatmap лэнда есть только в ERP: входы 1–4 открываются при праве `Features: heatmaps`, вход 5 — при праве `Analytics: session analytics` (`analytics.session-analytics`). Heatmap одного лэнда открывается из пяти мест:
+Heatmap лэнда есть только в ERP: входы 1–4 открываются при праве `Features: heatmaps`, вход 5 — при праве `Analytics: sessions` (`analytics.session-analytics`). Heatmap одного лэнда открывается из пяти мест:
 
 1. `Content → Landings → ПКМ → Manage landing → Heatmap`-вкладка (переключатель `Scroll` / `Clicks`).
 2. Quick Preview (иконка-глаз) → вкладка Heatmap в окне Landing Quick Preview.
-3. `Tracker → Campaigns → Edit Campaign` → hover на Content-шаге (Preland / Offer) → Quick Preview → Heatmap.
-4. Раскрытие груперов по лэндам в `Tracker → Campaigns` или `Analytics → Roll Up Report` → иконка-глаз → Quick Preview → Heatmap.
+3. `Tracker → Campaigns → Edit campaign` → hover на Content-шаге (Preland / Offer) → Quick Preview → Heatmap.
+4. Раскрытие груперов по лэндам в `Tracker → Campaigns` или `Analytics → Roll Up report` → иконка-глаз → Quick Preview → Heatmap.
 5. `Analytics → Session Analytics → Map comparison` — карты нескольких лэндов показываются рядом и сравниваются по глубине дочитывания ([how-to/session-analytics.md](session-analytics.md)).
 
 ### Сколько сессий долистало до этой глубины — бегунок на scroll-карте
@@ -534,7 +535,7 @@ Heatmap лэнда есть только в ERP: входы 1–4 открыва
 
 - Переключатель типа карты — две кнопки: `Scroll` (scroll-map: карта глубины скролла, красных зон достигло больше записанных сессий) и `Clicks` (карта частых кликов). Дефолт — `Scroll`.
 - Два слайдера тонкой настройки, показываются **только для `Clicks`** (при `Scroll` скрыты). **`Heatmap blur`** — радиус пятна вокруг каждой точки клика: шкала 5 / 20 / 40 / 60 / 80, по умолчанию 20; больше радиус — шире и «размытее» пятно. **`Heatmap height`** — потолок числа кликов, при котором точка получает максимальный цвет: шкала 5 / 20 / 50 / 80 / 100, по умолчанию 20; меньше потолок — ярче редкие клики. В `Analytics → Session Analytics → Map comparison` те же слайдеры подписаны `Point size` / `Intensity` ([how-to/session-analytics.md](session-analytics.md)).
-- Переключатель устройства (`Scale`) — ряд иконок `Mobile` / `Tablet` / `Laptop` / `Desktop`; heatmap пересчитывается под выбранное. Дефолт — `Mobile`.
+- Переключатель устройства — ряд иконок `Mobile` / `Tablet` / `Laptop` / `Desktop` (подписи — в подсказках); heatmap пересчитывается под выбранное. Дефолт — `Mobile`.
 - Выбор лэнда (`Select land`) — если у лэнда несколько страниц, дропдаун переключает, по какой странице смотреть карту (активен от двух страниц).
 - Если активности мало — вместо карты выводится сообщение о нехватке данных (`Heatmap cannot be generated due to lack of scroll activity` / `... click activity`).
 
@@ -559,7 +560,7 @@ Heatmap лэнда есть только в ERP: входы 1–4 открыва
 
 ### AI-варианты для текстового сплита — кнопка `More variants`
 
-**На текстовом сплите кнопка `More variants` просит AI дописать варианты по текущим: в окне `AI variants` до 5 новых, все отмечены — сними лишние и нажми `Add to split`.** Как ещё спрашивают: «AI-генерация вариантов сплита», «где кнопка GenAI», «сгенерировать заголовки через ИИ». Тултип — `AI writes more variants based on the current ones — pick which to add`. Кнопка есть в `Content splits` лэнда и в сплитах кампании (`Use campaign splits` → `Edit splits` → окно `Personal MVT`).
+**На текстовом сплите кнопка `More variants` просит AI дописать варианты по текущим: в окне `AI variants` до 5 новых, все отмечены — сними лишние и нажми `Add to split`.** Как ещё спрашивают: «AI-генерация вариантов сплита», «где кнопка GenAI», «сгенерировать заголовки через ИИ». Тултип — `AI writes more variants based on the current ones — pick which to add`. Кнопка есть в `Content splits` лэнда и в сплитах кампании (`LP splits` → режим `Campaign` → `Edit splits` / `Set up campaign splits` → окно `Landing splits`).
 
 - Образец для AI — активные непустые варианты сплита, в `Content splits` лэнда ещё и текст страницы.
 - Повторы — между собой и с имеющимися вариантами — отсеиваются, поэтому вариантов может прийти меньше: `Only N of 5 variants are unique`.
@@ -582,7 +583,7 @@ Heatmap лэнда есть только в ERP: входы 1–4 открыва
 
 Быстрый перенос настроек между вариантами — **Copy condition & group** → **Paste condition & group**; очистить — иконка корзины.
 
-Color Groups работают и на уровне кампании (`Tracker → Campaigns → Edit Campaign`): напр. после Content-варианта с синей группой следующий Content-шаг выбирает среди синей группы и `Rainbow`. Рекомендация по стратегиям при связывании: первой группе — `Weights` или `AI` (рандом выбор для входящих визитов), второй — `First` (алгоритм сканирует сверху вниз и подбирает совпадающий цвет).
+Color Groups работают и на уровне кампании (`Tracker → Campaigns → Edit campaign`): напр. после Content-варианта с синей группой следующий Content-шаг выбирает среди синей группы и `Rainbow`. Рекомендация по стратегиям при связывании: первой группе — `Weights` или `AI` (рандом выбор для входящих визитов), второй — `First` (алгоритм сканирует сверху вниз и подбирает совпадающий цвет).
 
 См. [models/flow-model.md](../models/flow-model.md) §Split Groups.
 
@@ -594,16 +595,26 @@ Color Groups работают и на уровне кампании (`Tracker �
 
 В визуальном редакторе у такой картинки поле `Image` показывает не ссылку, а макрос `{{split.<key>}}` — так она записана в коде. Ссылку обычной картинки лэнда показывает поле `Image` в панели `Visual` ([how-to/landing-visual-editor.md](landing-visual-editor.md)). Пункта `Edit image` по правому клику на картинке в редакторе нет.
 
-### LP Splits на уровне кампании
+### LP splits на уровне кампании — режимы `Landing` и `Campaign`
 
 Когда: один лэнд, но в одной кампании нужны одни варианты сплитов, в другой — другие.
 
-**Путь:** `Edit Campaign → Content step с лэндом → LP Splits / LP Controls`.
+**Путь:** `Edit campaign → Content step с лэндом → LP splits`. Блок `Used splits:` показывает сплиты лэнда — у каждого ключ плейсхолдера (например `lp_header`) и тип — и переключатель режима:
 
-**Опции:**
+- **`Landing`** — кампания берёт варианты, заданные в `Manage landing`. Нет активных вариантов — `No active landing splits — defaults will be used.`: на лэнде остаётся текст по умолчанию.
+- **`Campaign`** — кампания берёт свои варианты, заданные только для неё; другие кампании с этим лэндом их не видят. Пока своих вариантов нет — `No campaign splits yet — landing defaults will be used.`: работают варианты лэнда. Кнопка `Set up campaign splits` (или иконка `Edit splits` в шапке блока) открывает окно `Landing splits`.
 
-- **`Use landing splits`** — использовать сплиты, заданные в Manage landing.
-- **`Use campaign splits`** — переопределить сплиты на уровне кампании (видны только в ней). Кнопка `Edit splits` открывает окно `Personal MVT`; на текстовых сплитах там та же кнопка AI-вариантов `More variants` (секция «AI-варианты для текстового сплита — кнопка `More variants`» этого документа).
+Сплит без вариантов в выбранном режиме подписан `No variants — defaults will be used.`
+
+### Окно `Landing splits` из кампании — что сохраняется и кому нужно право
+
+**Окно `Landing splits` (раньше называлось `Personal MVT`) правит сплиты самого лэнда, а не копию для кампании.** Плашка в окне: `Splits belong to the landing: changes apply to every campaign that uses it. Campaign-scoped variants only affect this campaign.` Правка общих вариантов меняет все кампании с этим лэндом; варианты, заведённые для кампании, действуют только в ней. Кнопки — `Close` и `Save`, после сохранения — тост `Landing splits saved`. На текстовых сплитах там та же кнопка AI-вариантов `More variants` (секция «AI-варианты для текстового сплита — кнопка `More variants`» этого документа).
+
+Кнопка и иконка видны в режиме `Campaign` при праве `tracker.campaigns.edit.landing-splits`; сохранение дополнительно требует доступа `Edit` к кампании и хотя бы `View` на сам лэнд — права на его правку не нужно ([models/permissions-model.md](../models/permissions-model.md)). Ошибки сохранения:
+
+- `This landing is not used in the campaign. Save the campaign first.` — лэнд добавили в кампанию, но кампанию ещё не сохранили; сохраните её и откройте окно снова.
+- `You don't have permission to edit this campaign` — нет доступа `Edit` к кампании.
+- `Campaign is required` — окно открыто без кампании.
 
 ### Поле визита `variant` для сплита
 
@@ -613,7 +624,7 @@ Color Groups работают и на уровне кампании (`Tracker �
 
 1. `Settings → Fields → +Field` → `Format = variant`, slug по образцу засеянных (`lp_<элемент>`).
 2. В Manage landing → Content Split → Split Key заменить на slug поля (`lp_header`). У сплита, созданного кнопкой `Variants` визуального редактора, `Split key` — UUID сплита; его тоже меняют на slug поля, а в коде лэнда макрос `{{split.<uuid>}}` заменяют на `{{split.<slug>}}` — иначе визуальный редактор перестанет узнавать сплит ([how-to/landing-visual-editor.md](landing-visual-editor.md)).
-3. В аналитике добавить `+Grouper` по полю (`LP Header`) — разбивка по сплитам. Готовый пресет DD Report под это тоже засеян: `LP Splits [Campaign → Header → Subheader]` в Finance, `LP Splits [Campaign → Header → Image]` в iGaming, `LP Splits [Campaign → Header]` в Nutra и Sweeps.
+3. В аналитике добавить `+Grouper` по полю (`LP Header`) — разбивка по сплитам. Готовый пресет DD Report под это тоже засеян: `LP splits [Campaign → Header → Subheader]` в Finance, `LP splits [Campaign → Header → Image]` в iGaming, `LP splits [Campaign → Header]` в Nutra и Sweeps.
 
 **Почему Split Key, а не дефолтные Variant-груперы.** По дефолту сплиты трекаются Variant-груперами — в каталоге групперов это одна строка `Variant` с выбором позиции (`First`…`Tenth`); как устроен каталог групперов — [how-to/analytics.md](analytics.md). Но **Variant — это позиция записанного варианта в пути визита**, и этот порядок **зависит от флоу**: один и тот же заголовок лэнда может быть `Variant #2` в одной кампании и `Variant #3` в другой. Поэтому для надёжной разбивки по конкретному элементу заводят именованный Split Key (`variant`-поле).
 
@@ -639,7 +650,7 @@ Color Groups работают и на уровне кампании (`Tracker �
 
 - Переключение **`Table`** / **`Grid`** — Grid показывает превью картинок, Table прячет превью и удобен при большом числе файлов. Table Settings — кнопка `Settings` → `Table settings` (вкл/выкл и порядок колонок; [reference/ui-common.md](../reference/ui-common.md)).
 - Поля файла: **UUID**, **Name** (из исходного имени файла), **URL** (расположение файла внутри AIO), **User** (владелец), **Created**, **Updated** (дата последних изменений). UUID / Name / URL копируются иконкой слева от значения.
-- **`Replace File`** (ПКМ → Action menu) — грузит замену файла через drag-and-drop или file explorer. Расширение файла-замены **должно совпадать** с исходным (`.jpg → .jpg`, `.txt → .txt`). Это отдельный от лэндового `Replace by ZIP` механизм — заменяет **одиночный** файл, а не весь лэнд.
+- **`Replace file`** (ПКМ → Action menu) — грузит замену файла через drag-and-drop или file explorer. Расширение файла-замены **должно совпадать** с исходным (`.jpg → .jpg`, `.txt → .txt`). Это отдельный от лэндового `Replace by ZIP` механизм — заменяет **одиночный** файл, а не весь лэнд.
 
 Используется в т.ч. при замене картинки на лэнде в режиме `Code`: загрузить картинку сюда, скопировать URL, вставить в `src` (секция «Редактирование (Manage landing)» этого документа). В `Visual` и `Split` картинку загружают прямо в окне `Edit image` — файл попадает сюда же ([reference/ui-common.md](../reference/ui-common.md)).
 
@@ -651,13 +662,13 @@ Color Groups работают и на уровне кампании (`Tracker �
 
 ### Manage landing types — каталог типов лэнда
 
-`+ Landing ▾ → Manage landing types` — таблица типов. Набор приезжает из шаблона тенанта и зависит от вертикали: Finance и Nutra — **Offer**, **Preland**, **White**, **Preland w/ Form**, **Thank-You Page**; Sweeps — те же без `Preland w/ Form`; iGaming — **Offer**, **Preland**, **White**, **PWA** (без `Preland w/ Form` и `Thank-You Page`). В ERP и MTK одной вертикали набор одинаков. Колонки: `Type`, `Description`, **`AIO Macros`**, **`Generate Events`**, **`Full CDN Used`**, **`Temp CDN Used`** (Yes/No-флаги), `Created`. Кнопка `+ Landing type` — создать свой тип.
+`+ Landing ▾ → Manage landing types` — таблица типов. Набор приезжает из шаблона тенанта и зависит от вертикали: Finance — **Offer**, **Preland**, **White**, **Preland w/ Form**, **Thank-You Page**; Nutra — те же плюс **VSL**; Sweeps — те же, что в Finance, без `Preland w/ Form`; iGaming — **Offer**, **Preland**, **White**, **PWA** (без `Preland w/ Form` и `Thank-You Page`). В ERP и MTK одной вертикали набор одинаков. Колонки: `UUID`, `Type`, `Description`, `PWA?`, **`AIO Macros`**, **`Generate Events`**, **`Full CDN Used`**, **`Temp CDN Used`** (Yes/No-флаги), `Created`, `Updated`. Кнопка `+ Landing type` — создать свой тип.
 
 **Флаги работают по-разному.** `Full CDN used` — неиспользуемая заготовка: рантайм-читателей у него нет, включение ничего не меняет. `Temp CDN used` **работает и влияет на отдачу лэнда**: у лэндов такого типа меняется то, по каким адресам браузер визитёра тянет файлы лэнда. Отдаются те же файлы: содержимое лэнда и трекинг флаг не меняет, править сам лэнд под него не нужно. Сами флаги как часть типа — [models/landing.md](../models/landing.md).
 
 Экшены (ПКМ по типу): **`Edit landing type`**, **`Landing type logs`**, `Freeze top` / `Freeze bottom`.
 
-**White отличается поведением.** У типа White все три флага = **No** (`AIO Macros: No`, `Generate events: No`, `Full CDN used: No`): при выключенном `AIO Macros` обычный Content-показ не подставляет SDK-макросы автоматически. Флаг `Generate events` не отключает запись пути визита: он определяет доступность роль-группера типа в аналитике. У Offer / Preland / Preland w/ Form / Thank-You Page (и у `PWA` в iGaming) все три флага = Yes.
+**White отличается поведением.** У типа White все три флага = **No** (`AIO Macros: No`, `Generate events: No`, `Full CDN used: No`): при выключенном `AIO Macros` обычный Content-показ не подставляет SDK-макросы автоматически. Флаг `Generate events` не отключает запись пути визита: он определяет доступность роль-группера типа в аналитике. У Offer / Preland / Preland w/ Form / Thank-You Page (и у `PWA` в iGaming, `VSL` в Nutra) все три флага = Yes.
 
 ### Edit landing type — из чего состоит тип
 
@@ -721,7 +732,7 @@ Color Groups работают и на уровне кампании (`Tracker �
 
 Выбранный в переключателе тип **запоминается в браузере** на пару пользователь+тенант и переживает перезагрузку: в другом браузере страница снова откроется на `All`. Если сохранённый тип удалили — при следующем заходе выбор тихо сбрасывается на `All`. Как спрашивают: «список лэндов открылся отфильтрованным», «почему показывает только офферы», «в другом браузере всё по-другому» — проверить, что стоит в кнопке слева в тулбаре.
 
-В ERP переключатель есть только на странице обычных лэндов (`Content → Landings`); на `Content → PWA` его нет. В MTK он стоит на странице лэндов всегда, если у тенанта есть типы. В меню переключателя попадают только типы с включённым `Generate events` — у типа с выключенным флагом роль-группера нет, поэтому и в меню его не будет (колонка `Generate events` в `+ Landing ▾ → Manage landing types`).
+В ERP переключатель есть только на странице обычных лэндов (`Content → Landings`); на `Content → PWA` его нет. В MTK он стоит на странице лэндов всегда, если у тенанта есть типы. В меню переключателя попадают только типы с включённым `Generate events` — у типа с выключенным флагом роль-группера нет, поэтому и в меню его не будет (колонка `Generate Events` в `+ Landing ▾ → Manage landing types` в ERP).
 
 ### У лэнда в списке нули, хотя трафик идёт — метрики `Content → Landings` считаются по позиции `#N`
 
@@ -745,7 +756,7 @@ Color Groups работают и на уровне кампании (`Tracker �
 Копию отличают от оригинала три признака:
 
 - **Иконка у имени лэнда** — в ячейке лэнда рядом с именем стоит иконка с тултипом `Version`. У оригинала её нет.
-- **Свои `UUID` и `Human ID`** — при копировании они выдаются заново, поэтому номер у копии и оригинала разный. При отображении `Human ID` дополняется нулями как минимум до шести цифр.
+- **Свои `UUID` и `Human ID`** — при копировании они выдаются заново, поэтому номер у копии и оригинала разный. В списке `Human ID` дополняется нулями как минимум до пяти цифр.
 - **Колонка `Version From`** — показывает лэнд, с которого сделана копия (тултип колонки — `From what lander it was copied`); у копии, снятой с копии, там стоит исходный оригинал, а не промежуточная копия. По умолчанию скрыта, включается чекбоксом в `Settings → Table settings → Columns` ([reference/ui-common.md](../reference/ui-common.md)).
 
 Имя копии диалог `Copy landing` подставляет от имени оригинала с суффиксом ` copy` (`Main Offer` → `Main Offer copy`), но поле `Name` редактируется до сохранения — на имя как на признак копии полагаться нельзя.

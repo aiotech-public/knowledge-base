@@ -1,12 +1,12 @@
 ---
 id: destinations
 title: Destinations / Advertisers / Caps (How-to)
-description: Создание Advertiser-ов, Destination через By Advertiser / By Integration / Simple Redirect / Telegram, своей CRM нет в списке интеграций (`Search by parameters`, запрос новой), поле `Proxy to communicate`, капы, PWA-destinations; реферер (Referrer-Policy same-origin), `#` и списковые плейсхолдеры в URL Parameters; колонки списка Destinations (`Rate` и другие метрики тенанта, `Destination logs`, позиция `#1`).
+description: Создание Advertiser-ов, Destination через By advertiser / By integration / Simple Redirect / Telegram, своей CRM нет в списке интеграций (`Search by parameters`, запрос новой), поле `Proxy to communicate`, капы, PWA-destinations; реферер (Referrer-Policy same-origin), `#` и списковые плейсхолдеры в URL Parameters; колонки списка Destinations (`Rate` и другие метрики тенанта, `Destination logs`, позиция `#1`).
 doc_type: how-to
 builds: [erp, mtk]
-related: [conversion-model, placeholders, flow-model, visit-lifecycle, how-to-pwa, push-notifications, glossary, architecture, permissions-model, ui-common, destination, metric, user-fields, virtual-metrics, distributions-model, api, mcp-server, flow-editor, notification-center, landings, user, mechanics-pwa, source-trackers, custom-pwa, advertiser]
+related: [conversion-model, placeholders, flow-model, visit-lifecycle, how-to-pwa, push-notifications, glossary, architecture, permissions-model, ui-common, destination, metric, user-fields, virtual-metrics, distributions-model, api, mcp-server, flow-editor, notification-center, mechanics-pwa, source-trackers, custom-pwa, landings, advertiser]
 language: ru
-updated: 2026-10-28
+updated: 2026-11-09
 ---
 
 # Destinations / Advertisers / Caps (How-to)
@@ -21,12 +21,12 @@ updated: 2026-10-28
 
 - **Advertiser** = рекламодатель / партнёрка. Создаётся в `Settings → Advertisers`.
 - **Destination** = точка выхода визита: редирект или API-пуш. Создаётся на странице `Destinations`.
-- **`+Destination` — 2 метода:** `By Advertiser` (через сохранённого Advertiser; разбивка по нему в аналитике) и `By Integration` (готовый шаблон интеграции без Advertiser). Для редирект-офферов рекомендуется `By Advertiser`, для прямого API — `By Integration`.
+- **`+Destination` — 2 метода:** `By advertiser` (через сохранённого Advertiser; разбивка по нему в аналитике) и `By integration` (готовый шаблон интеграции без Advertiser). Для редирект-офферов рекомендуется `By advertiser`, для прямого API — `By integration`.
 - **В модалке предусмотрены 4 варианта**, доступность зависит от прав:
   - `By advertiser` — через сохранённого Advertiser.
   - `By integration` — выбор готовой интеграции.
-  - `Simple redirect` — пресет `By Integration` с типом `Simple Redirect`: редирект без Advertiser и API-пуша, без автологина. Подходит и для перехода в TG-бота или разового URL.
-  - `Telegram` — пресет `By Integration` с типом `Telegram Destination`: переход в бот или канал; нужен Telegram Sender Provider и `Behaviour`. Конверсии на старт бота и вступление в канал настраиваются в Sender Provider.
+  - `Simple redirect` — пресет `By integration` с типом `Simple Redirect`: редирект без Advertiser и API-пуша, без автологина. Подходит и для перехода в TG-бота или разового URL.
+  - `Telegram` — пресет `By integration` с типом `Telegram Destination`: переход в бот или канал; нужен Telegram Sender Provider и `Behaviour`. Конверсии на старт бота и вступление в канал настраиваются в Sender Provider.
 - **Cap** — лимит конверсий выбранного типа у дестинейшена (`Conversion Cap`). В ERP: `Destination → ПКМ → Caps → Edit conversion cap`. Четыре типа: `Unlimited`, `Daily`, `Monthly`, `Lifetime`.
 - **PWA** — два пути: сторонний PWA-сервис как Destination или AIO Builder как Landing.
 
@@ -42,14 +42,14 @@ updated: 2026-10-28
 
 1. **Name** — имя (обязательно).
 2. **Advertiser type** — тип Advertiser (опционально, для группировки в UI; см. «Как сгруппировать Advertiser-ов по типу» ниже). Для адвертайзеров под обычные редирект-URL обычно `Offer`.
-3. **Integration type** (обяз.) — конкретная партнёрка/сеть из **большого каталога интеграций** (`AdCombo`, `Adbrt`, `Adpulse`, `Adw`, `Aff1`, `AffBay`, `AffGenius`, `AffScale`, … — десятки CPA/affiliate-сетей, каждая = свой постбэк/API-шаблон). Выбирается в форме. Помимо каталога есть значение **`Simple Redirect`** — для адвертайзеров под обычные редирект-URL без API. Для raw-шаблонов вроде `Bridge`/`IREV Lite` см. Destination → `By Integration`.
-4. **URL Parameters** — параметры адвертайзера. Поле лежит в блоке `Settings` и есть только у `Integration type` = `Simple Redirect`; заданные в нём параметры **автоматически дописываются** к URL каждого Destination, созданного `By Advertiser` для этого адвертайзера (список AIO-плейсхолдеров — по иконке-шестиграннику).
+3. **Integration type** (обяз.) — конкретная партнёрка/сеть из **большого каталога интеграций** (`AdCombo`, `Adbrt`, `Adpulse`, `Adw`, `Aff1`, `AffBay`, `AffGenius`, `AffScale`, … — десятки CPA/affiliate-сетей, у каждой свой шаблон отправки лида). Выбирается в форме. Помимо каталога есть значение **`Simple Redirect`** — для адвертайзеров под обычные редирект-URL без API. Для raw-шаблонов вроде `Bridge`/`IREV Lite` см. Destination → `By integration`.
+4. **URL Parameters** — параметры адвертайзера. Поле лежит в блоке `Settings` и есть только у `Integration type` = `Simple Redirect`; заданные в нём параметры **автоматически дописываются** к URL каждого Destination, созданного `By advertiser` для этого адвертайзера (список AIO-плейсхолдеров — по иконке-шестиграннику).
 5. **Image** — опционально (для UI). Картинку можно загрузить **с компьютера**, указать её URL или выбрать из недавних; **Content Library** доступна в ERP.
 6. `Save` / `Confirm`.
 
 ### Как выглядит готовый Advertiser под редирект-офферы — `Example Advertiser` из шаблона Sweeps
 
-В шаблонах Sweeps (ERP и MTK) адвертайзер под редирект-офферы уже заведён: `Example Advertiser` с `Advertiser type` = `Offer`, `Integration type` = `Simple Redirect` и `URL Parameters` = `click_id={{aio.visit.uuid}}`. Его три дестинейшена созданы `By Advertiser` (`SweepNet #10442 | iPhone 17 | US | $2.20 SOI`, `SweepNet #10517 | $1000 Gift Card | DE | $1.80 SOI`, `DirectBrand #sample-box | Sample Box | GB | $3.40 DOI`) — у каждого свой `Redirect URL`, а `click_id` к нему дописывает адвертайзер. В iGaming два адвертайзера типа `Offer` — `Partners Platform Example` и `Example Direct Brand` — собраны иначе: `URL Parameters` у них пустые, а `clickid={{aio.visit.uuid}}` стоит прямо в `Redirect URL` каждого из шести офферов-примеров (`Example Partners | Alpha Casino | BR | slots | CPA 25$` и подобные); девять PWA-сервисов там же — см. «PWA-Destination через сторонний сервис» ниже. В Nutra под партнёрки заведены адвертайзеры с интеграциями API (`AdCombo Example`, `AlterCpa Example`, `LeadBit Example`, `LemonAd Example`), в Finance примеров адвертайзеров нет.
+В шаблонах Sweeps (ERP и MTK) адвертайзер под редирект-офферы уже заведён: `Example Advertiser` с `Advertiser type` = `Offer`, `Integration type` = `Simple Redirect` и `URL Parameters` = `click_id={{aio.visit.uuid}}`. Его три дестинейшена созданы `By advertiser` (`SweepNet #10442 | iPhone 17 | US | $2.20 SOI`, `SweepNet #10517 | $1000 Gift Card | DE | $1.80 SOI`, `DirectBrand #sample-box | Sample Box | GB | $3.40 DOI`) — у каждого свой `Redirect URL`, а `click_id` к нему дописывает адвертайзер. В iGaming два адвертайзера типа `Offer` — `Partners Platform Example` и `Example Direct Brand` — собраны иначе: `clickid={{aio.visit.uuid}}` стоит прямо в `Redirect URL` каждого из шести офферов-примеров (`Example Partners | Alpha Casino | BR | slots | CPA 25$` и подобные). `URL Parameters` у `Example Direct Brand` пустые, а у `Partners Platform Example` в них `clickd_id={{aio.visit.uuid}}` — этот параметр дописывается к ссылкам его офферов отдельно от `clickid`. Девять PWA-сервисов там же — см. «PWA-Destination через сторонний сервис» ниже. В Nutra под партнёрки заведены адвертайзеры с интеграциями API (`AdCombo Example`, `AlterCpa Example`, `LeadBit Example`, `LemonAd Example`), под редирект-офферы — `ClickBank Example`, `Digistore24 Example` и `Everflow Network Example` (`Simple Redirect`); в Finance примеров адвертайзеров нет.
 
 ### Параметр из `URL Parameters` не подставился в ссылку оффера
 
@@ -85,19 +85,19 @@ AIO сохраняет символы имени параметра в гото�
 
 ### Почему у разных Advertiser-ов разные поля (settings)
 
-**Общие поля Advertiser-а — `Name`, `Description`, `Tags`, `Advertiser type`, `Integration type`, `Image`; для `Simple Redirect` в `Settings` добавляется `URL Parameters`.** Схема `Settings` приходит от выбранной интеграции. У API-интеграций, в том числе `AdCombo` и `IREV Lite`, эта схема Advertiser-а пустая: API-ключи, эндпоинты и маппинг заполняют в карточке Destination, а не Advertiser-а. Наборы полей Destination — секция «Обязательные поля популярных интеграций» ниже.
+**Общие поля Advertiser-а — `Name`, `Description`, `Tags`, `Advertiser type`, `Integration type`, `Image` и секция `User fields`; для `Simple Redirect` в `Settings` добавляется `URL Parameters`.** Схема `Settings` приходит от выбранной интеграции. У API-интеграций, в том числе `AdCombo` и `IREV Lite`, эта схема Advertiser-а пустая: API-ключи, эндпоинты и маппинг заполняют в карточке Destination, а не Advertiser-а. Наборы полей Destination — секция «Обязательные поля популярных интеграций» ниже.
 
 ### Как сгруппировать Advertiser-ов по типу (Advertiser Types)
 
-Advertiser Types — группировка Advertiser-ов под одной категорией. Из коробки в каждом шаблоне тенанта два типа: `Offer` (партнёрки и прямые рекламодатели, `Metrics Event Group` = `Offer`) и `PWA` (сторонние PWA-сервисы, `Metrics Event Group` = `PWA`); свои типы добавляются рядом (`Manage Types`, см. «Завести свой PWA-сервис как Advertiser» ниже).
+Advertiser Types — группировка Advertiser-ов под одной категорией. Из коробки в каждом шаблоне тенанта два типа: `Offer` (партнёрки и прямые рекламодатели, `Metrics event group` = `Offer`) и `PWA` (сторонние PWA-сервисы, `Metrics event group` = `PWA`); свои типы добавляются рядом (`Manage types`, см. «Завести свой PWA-сервис как Advertiser» ниже).
 
-В ERP типы создают через `Settings → Advertisers` → стрелка у `+Advertiser` → `Manage Types` → `+Advertiser Type`. Затем тип выбирают в поле `Advertiser type` формы Advertiser-а. В MTK пункта `Manage Types` на странице нет.
+В ERP типы создают через `Settings → Advertisers` → стрелка у `+Advertiser` → `Manage types` → `+ Advertiser type`. Затем тип выбирают в поле `Advertiser type` формы Advertiser-а. В MTK пункта `Manage types` на странице нет.
 
-## Destination через By Advertiser
+## Destination через By advertiser
 
-**Для редирект-офферов рекомендуется By Advertiser.** Привязка даёт разбивку по Advertiser; `Offer Visits` требует типа Advertiser с `Metrics Event Group` = `Offer`. При `Integration type` = `Simple Redirect` параметры Advertiser-а автоматически добавляются к URL.
+**Для редирект-офферов рекомендуется By advertiser.** Бейджи на карточках модалки `+Destination` — про частоту и сложность, не про рекомендацию: у `Simple redirect` — `Most used`, у `By advertiser` и `By integration` — `Advanced`. Привязка даёт разбивку по Advertiser; `Offer Visits` требует типа Advertiser с `Metrics event group` = `Offer`. При `Integration type` = `Simple Redirect` параметры Advertiser-а автоматически добавляются к URL.
 
-**Путь:** `Tracker → Destinations → +Destination → By Advertiser → выбрать Advertiser`.
+**Путь:** `Tracker → Destinations → +Destination → By advertiser → выбрать Advertiser`.
 
 **Атрибуты:**
 
@@ -107,23 +107,23 @@ Advertiser Types — группировка Advertiser-ов под одной к
 - **Redirect URL** — основной URL у интеграции `Simple Redirect`; у API-интеграций вместо него свои поля.
 - При `Simple Redirect` хвостик из `URL Parameters` Advertiser-а добавляется **автоматически**.
 
-### Почему именно By Advertiser
+### Почему именно By advertiser
 
 Полная эвристика — [models/conversion-model.md](../models/conversion-model.md).
 
 ## Destination типа Simple Redirect
 
-Голый редирект-URL без адвертайзера, без API-интеграции, без автологина. Без Advertiser нет разбивки по нему и событий его `Metrics Event Group`, по которым считается `Offer Visits`. Для редирект-офферов рекомендуется `By Advertiser`: так удобнее группировать офферы и анализировать их вместе. `Simple Redirect` подходит и для быстрого перехода в TG-бота или разового URL.
+Голый редирект-URL без адвертайзера, без API-интеграции, без автологина. Без Advertiser нет разбивки по нему и событий его `Metrics event group`, по которым считается `Offer Visits`. Для редирект-офферов рекомендуется `By advertiser`: так удобнее группировать офферы и анализировать их вместе. `Simple Redirect` подходит и для быстрого перехода в TG-бота или разового URL.
 
-**`Simple Redirect` создаётся БЕЗ выбора Advertiser** — это его отличие от `By Advertiser`: Advertiser не назначается, поэтому нет автоматического «хвостика» параметров и привязки к Advertiser в аналитике. Задаётся только сам redirect-URL (с плейсхолдерами визита).
+**`Simple Redirect` создаётся БЕЗ выбора Advertiser** — это его отличие от `By advertiser`: Advertiser не назначается, поэтому нет автоматического «хвостика» параметров и привязки к Advertiser в аналитике. Задаётся только сам redirect-URL (с плейсхолдерами визита).
 
-**Путь:** `+Destination → Simple Redirect → задать Redirect URL` (без выбора Advertiser).
+**Путь:** `+Destination → Simple redirect → задать Redirect URL` (без выбора Advertiser).
 
-Для редирект-оффера рекомендуется `By Advertiser`, для прямой API-интеграции — `By Integration` (см. эвристику в [models/conversion-model.md](../models/conversion-model.md)). Для `Offer Visits` у Advertiser-а нужен тип с `Metrics Event Group` = `Offer`.
+Для редирект-оффера рекомендуется `By advertiser`, для прямой API-интеграции — `By integration` (см. эвристику в [models/conversion-model.md](../models/conversion-model.md)). Для `Offer Visits` у Advertiser-а нужен тип с `Metrics event group` = `Offer`.
 
 ## Какой реферер уезжает рекламодателю — `Referrer-Policy: same-origin` на редиректах и лэндах AIO
 
-**AIO ставит `Referrer-Policy: same-origin` на редиректах через Destination (`301` по умолчанию и `302`) и на HTML лэнда, прослойки и `Field verification`: на другой домен — оффер, партнёрку, рекламодателя — реферер не уходит, а запросы в пределах того же домена (подстраницы, файлы лэнда, SDK) идут с реферером.** Прежнее значение заголовка — `no-referrer`: тогда реферер не уходил и внутри домена, для рекламодателя на другом домене смена ничего не поменяла. Это относится к редиректам `Simple Redirect`, `By Advertiser` и `By Integration`. На обычном лэнде политику задаёт документ, включая переходы по `{{link}}` и `location.href`; настройки отключения заголовка нет. Ограничение Safari на прямых 30x-редиректах описано ниже. Для внешнего лэнда через `Reflect` / `Proxy Reflect` политика зависит от отражаемого сайта.
+**AIO ставит `Referrer-Policy: same-origin` на редиректах через Destination (`301` по умолчанию и `302`) и на HTML лэнда, прослойки и `Field verification`: на другой домен — оффер, партнёрку, рекламодателя — реферер не уходит, а запросы в пределах того же домена (подстраницы, файлы лэнда, SDK) идут с реферером.** Прежнее значение заголовка — `no-referrer`: тогда реферер не уходил и внутри домена, для рекламодателя на другом домене смена ничего не поменяла. Это относится к редиректам `Simple Redirect`, `By advertiser` и `By integration`. На обычном лэнде политику задаёт документ, включая переходы по `{{link}}` и `location.href`; настройки отключения заголовка нет. Ограничение Safari на прямых 30x-редиректах описано ниже. Для внешнего лэнда через `Reflect` / `Proxy Reflect` политика зависит от отражаемого сайта.
 
 На sub-параметры это не влияет: они уезжают параметрами URL / полями payload, и если передавать их не нужно — убираются из ссылки или из настроек Destination.
 
@@ -145,7 +145,7 @@ Safari/WebKit не учитывает `Referrer-Policy` на 30x-ответах 
 
 **Путь:** `Tracker → Destinations → +Destination` → плитка `Telegram` (у созданного Destination `Integration type` = `Telegram Destination`). Два обязательных поля — `Sender Provider` и `Behaviour`.
 
-- **Sender Provider** — заранее созданный провайдер типа `Telegram` (бот). Тот же Telegram Sender Provider обслуживает и маркетинг-рассылки, и Telegram Destination. Поведение бота (приветствие, приглашение в канал, типы конверсий) настраивается **внутри Sender Provider** — см. [how-to/push-notifications.md](push-notifications.md) → Telegram Sender Provider.
+- **Sender Provider** — заранее созданный провайдер типа `Telegram` (бот); в списке поля — все Sender Provider тенанта, выбирать нужно Telegram-бота. Тот же Telegram Sender Provider обслуживает и маркетинг-рассылки, и Telegram Destination. Поведение бота (приветствие, приглашение в канал, типы конверсий) настраивается **внутри Sender Provider** — см. [how-to/push-notifications.md](push-notifications.md) → Telegram Sender Provider.
 
 ### Как визит попадает в Telegram (Behaviour)
 
@@ -154,13 +154,13 @@ Safari/WebKit не учитывает `Referrer-Policy` на 30x-ответах 
 | Behaviour | Что происходит |
 |---|---|
 | **`Bot -> Channel`** | Визит сначала попадает в **бота**. Приветствие отправляется, если оно задано в Sender Provider; приглашение с кнопкой — если настроен канал и Telegram выдал ссылку. Текст и кнопка настраиваются в Sender Provider. |
-| **`Channel`** | Визит **редиректится сразу в канал**, без промежуточного бота. |
+| **`Channel`** | Визит **редиректится сразу в канал**, без промежуточного бота. Ссылка-приглашение одноразовая и действует 10 минут — как и приглашение, которое бот присылает при `Bot -> Channel`. |
 
 **Бот должен быть админом канала.** Иначе Telegram не отдаёт боту событие вступления, и **конверсия подписки на канал не зафиксируется** — обратная петля конверсии ломается. Это требование Telegram к правам бота, не специфика AIO.
 
 ### Лёгкий путь в TG-бота — через Simple Redirect
 
-Если нужно просто загнать трафик в Telegram-бота (без приглашения в канал и фиксации подписки), полный `Telegram Destination` с Sender Provider **не нужен**. Достаточно обычного `Simple Redirect` Destination (или `By Advertiser`, если завёл отдельный Advertiser под Telegram). В поле `Redirect URL` — deep-link бота со start-параметром, передающим UUID визита:
+Если нужно просто загнать трафик в Telegram-бота (без приглашения в канал и фиксации подписки), полный `Telegram Destination` с Sender Provider **не нужен**. Достаточно обычного `Simple Redirect` Destination (или `By advertiser`, если завёл отдельный Advertiser под Telegram). В поле `Redirect URL` — deep-link бота со start-параметром, передающим UUID визита:
 
 ```
 https://t.me/<bot_username>?start={{aio.visit.uuid}}
@@ -168,19 +168,19 @@ https://t.me/<bot_username>?start={{aio.visit.uuid}}
 
 UUID в `start` позволяет сопоставить визит, но бот должен отправлять конверсии в AIO постбэком: один редирект их не создаёт. `Telegram Destination` через Sender Provider (`Behaviour` `Bot -> Channel` / `Channel`) даёт встроенное приглашение в **канал** и фиксацию подписки; провайдер также может создавать конверсию на `/start` — см. «Destination типа Telegram (Telegram Destination)» выше и [how-to/push-notifications.md](push-notifications.md).
 
-## Destination типа By Integration
+## Destination типа By integration
 
-`By Integration` — создание Destination на основе готовой интеграции, встроенной в AIO, без привязки к Advertiser. Помимо API-шаблонов в списке есть редиректные и тестовые типы.
+`By integration` — создание Destination на основе готовой интеграции, встроенной в AIO, без привязки к Advertiser. Помимо API-шаблонов в списке есть редиректные и тестовые типы.
 
-**Путь:** `+Destination → By Integration → выбрать тип интеграции из списка`. После выбора открывается окно **Create new destination** с базовыми полями (Name, Description, Tags, Countries, Languages, `Cap monitoring user`).
+**Путь:** `+Destination → By integration → выбрать тип интеграции из списка`. После выбора открывается окно **Create new destination** с базовыми полями (Name, Description, Tags, Countries, Languages, `Cap monitoring user`).
 
 **Остальные поля payload зависят от выбранной платформы** — у каждой интеграции свой набор. Что и как заполнять — смотреть в **API-документации платформы**, с которой интегрируешься. Список AIO-плейсхолдеров для маппинга — по иконке-шестиграннику. Click ID в AIO = Visit UUID, плейсхолдер `{{aio.visit.uuid}}`.
 
 Если нужной интеграции в списке не видно — поищите её по имени и кнопкой `Search by parameters`, а если её нет, запросите новую (секция «Своей CRM нет в списке интеграций» ниже).
 
-### Какие примеры `By Integration` уже есть в шаблоне тенанта
+### Какие примеры `By integration` уже есть в шаблоне тенанта
 
-Из коробки дестинейшены без адвертайзера (`By Integration`) лежат в шаблонах Finance (ERP и MTK) и Nutra: `Example Bridge Integration` (`Bridge`), `Example IREV Integration` (`IREV Lite`) и тестовый дестинейшн на интеграции `DummyApi` (в Finance — `Dummy API [ DEBUG ]`, в Nutra — `Dummy API - Flow Testing`, в Sweeps — `Dummy API`; это тот самый `Dummy Destination` для прогона формы без отправки лидов в партнёрку — [reference/glossary.md](../reference/glossary.md)). Примеры под партнёрские API `AdCombo`, `AlterCpa`, `LeadBit`, `LemonAd` в Nutra (`AdCombo Example | Diabetes Support | RO | 9 EUR CPA` и подобные, с заполненным маппингом полей) привязаны к своим адвертайзерам — см. «Как выглядит готовый Advertiser под редирект-офферы». В iGaming все примеры дестинейшенов — редиректы (`Simple Redirect`), примеров API-интеграций там нет. Что клонируется из шаблона — [context/architecture.md](../context/architecture.md).
+Из коробки дестинейшены без адвертайзера (`By integration`) лежат в шаблонах Finance (ERP и MTK) и Nutra: `Example Bridge Integration` (`Bridge`), `Example IREV Integration` (`IREV Lite`) и тестовый дестинейшн на интеграции `DummyApi` (в Finance — `Dummy API [ DEBUG ]`, в Nutra — `Dummy API - Flow Testing`, в Sweeps — `Dummy API`; это тот самый `Dummy Destination` для прогона формы без отправки лидов в партнёрку — [reference/glossary.md](../reference/glossary.md)). Примеры под партнёрские API `AdCombo`, `AlterCpa`, `LeadBit`, `LemonAd` в Nutra (`AdCombo Example | Diabetes Support | RO | 9 EUR CPA` и подобные, с заполненным маппингом полей) привязаны к своим адвертайзерам — см. «Как выглядит готовый Advertiser под редирект-офферы». В iGaming все примеры дестинейшенов — редиректы (`Simple Redirect`), примеров API-интеграций там нет. Что клонируется из шаблона — [context/architecture.md](../context/architecture.md).
 
 ### Обязательные поля популярных интеграций
 
@@ -220,19 +220,19 @@ UUID в `start` позволяет сопоставить визит, но бо�
 
 **Новую интеграцию добавляет команда AIO: передайте в поддержку API-документацию CRM и тестовые доступы для пробного пуша.** Кнопки запроса в окне создания нет — запрос идёт через чат поддержки (*уточните у поддержки* → «Payload, который мы шлём»).
 
-Без интеграции остаётся только `Simple redirect`: он уводит браузер визитёра на ваш URL, данные визита подставляются в адрес плейсхолдерами (`{{aio.visit.fields.phone}}` и т.п.). Это переход, а не серверный пуш: запрос шлёт браузер, ответа CRM AIO не читает, пуш всегда считается принятым. `Bridge` в списке — тоже не универсальный HTTP: это интеграция одного сервиса с фиксированными путём и форматом (адрес по умолчанию — `lbridge.app`).
+Без интеграции остаётся только `Simple redirect`: он уводит браузер визитёра на ваш URL, данные визита подставляются в адрес плейсхолдерами (`{{aio.visit.fields.phone}}` и т.п.). Это переход, а не серверный пуш: запрос шлёт браузер, ответа CRM AIO не читает, и если капа дестинейшена не заполнена, пуш считается принятым. `Bridge` в списке — тоже не универсальный HTTP: это интеграция одного сервиса с фиксированными путём и форматом (адрес по умолчанию — `lbridge.app`).
 
 ## Редактор Destination (Edit destination)
 
 Созданный Destination виден в таблице `Tracker → Destinations`, а также доступен через `Tracker → Campaigns` (внутри кампаний, где он используется).
 
-В таблице `Tracker → Destinations` дестинейшн ищется по **имени, номеру или UUID**, либо быстрыми фильтрами **`Advertiser`** и **`Geo`** (в MTK тоже). Фильтр Advertiser требует права `tracker.destinations.view.advertiser`. `Geo` смотрит на `Countries`, а при пустом списке стран — на гео, определённое по трафику.
+В таблице `Tracker → Destinations` дестинейшн ищется по **имени, номеру или UUID**, либо быстрыми фильтрами **`Advertiser`** и **`Geo`** (в MTK тоже). В ERP фильтр Advertiser требует права `tracker.destinations.view.advertiser`. `Geo` смотрит на `Countries`, а при пустом списке стран — на гео, определённое по трафику.
 
 `Tracker → Destinations` → правый клик → **Edit destination**. Поля:
 
 - Name, Description, Tags, Countries, Languages.
 - **Cap monitoring user** — кому летят алерты по капам.
-- **Integration type** — шаблон интеграции получателя (`Bridge`, `IREV Lite` и др.). От него зависят поля payload ниже. У дестинейшена без адвертайзера в строке таблицы стоит бейдж: `Simple Redirect` у редиректа, `API integration` у остальных — это пометка, а не тип интеграции.
+- **Integration type** — шаблон интеграции получателя (`Bridge`, `IREV Lite` и др.). От него зависят поля payload ниже. У дестинейшена, созданного `By advertiser`, вместо него в форме поле `Advertiser`: интеграция берётся у адвертайзера. У дестинейшена без адвертайзера в строке таблицы стоит бейдж: `Simple Redirect` у редиректа, `API integration` у остальных — это пометка, а не тип интеграции.
 - **Поля payload** (зависят от Integration type) — маппинг данных визита в запрос к получателю через плейсхолдеры: `Token`, `Buyer UTM` = `{{aio.visit.fields.buyer_utm}}`, `Country Code` = `{{aio.visit.country_code}}`, `Language Code` = `{{aio.visit.language_code}}` и т.д.
 
 **Экшены (правый клик):** `Edit destination`, `Copy destination`, `Destination logs`, `Switch archive`, `Show visits`, `Show conversions`. В ERP также есть `Change domains`, `Build Roll Up report`, в группе `Caps` — `Edit conversion cap` / `Reset cap`, в `Folders` — `Assign to folder` / `Unassign from folder`; в MTK этих пунктов нет.
@@ -266,7 +266,7 @@ Revenue / Payout в аналитике считаются дистрибуция
 
 ### Где в карточке дестинейшена задаются User fields
 
-В формах создания и правки есть секция `User fields` с полями типа `Destination`. При пуше они добавляются в поля визита до подстановки плейсхолдеров. У `By Advertiser` есть также поля родителя; в `By Integration` — только свои. Механика — [how-to/user-fields.md](user-fields.md).
+В формах создания и правки есть секция `User fields` с полями типа `Destination`. При пуше они добавляются в поля визита до подстановки плейсхолдеров. У `By advertiser` есть также поля родителя; в `By integration` — только свои. Механика — [how-to/user-fields.md](user-fields.md).
 
 ### `Change domains` — замена host в Redirect URL дестинейшена
 
@@ -303,7 +303,7 @@ Revenue / Payout в аналитике считаются дистрибуция
 - **Периоды капы — сутки (`Daily`), календарный месяц (`Monthly`) или всё время жизни дестинейшена (`Lifetime`)**; недельного и произвольного периода нет.
 - **Под-кап на один оффер под разных байеров — нет**.
 - Механика подсчёта и блокирующая логика кап — [models/conversion-model.md](../models/conversion-model.md).
-- При переполнении капы со стратегией `Reject traffic` — алерт в Telegram назначенному `Cap monitoring user` (доставка требует привязки аккаунта к Telegram, как у любого Monitoring User; 2FA через Google Authenticator привязку не даёт).
+- При переполнении капы со стратегией `Reject traffic` — алерт в Telegram назначенному `Cap monitoring user` на каждый отклонённый по капе пуш (доставка требует привязки аккаунта к Telegram, как у любого Monitoring User; 2FA через Google Authenticator привязку не даёт).
 
 ### Fallback при переполнении капы (Destination Full)
 
@@ -376,11 +376,11 @@ Fallback при переполнении со стратегией `Reject traff
 
 **Шаги:**
 
-1. **Получить ссылку из AIO:** открыть `Link Generator` у кампании (`Campaigns → ПКМ → Link Generator`), выбрать домен и Source `3rd Party PWA Link Generator`, нажать `Generate Link` и скопировать ссылку нужного сервиса. В шаблонах iGaming source `3rd Party PWA Link Generator` уже заведён (по ссылке на каждый из девяти сервисов); в шаблонах других вертикалей его нет — источник добавляется отдельно через `Sources → +Source`.
+1. **Получить ссылку из AIO:** открыть `Link generator` у кампании (`Campaigns → ПКМ → Link generator`), выбрать домен и Source `3rd Party PWA Link Generator`, нажать `Generate link` и скопировать ссылку нужного сервиса. В шаблонах iGaming source `3rd Party PWA Link Generator` уже заведён (по ссылке на каждый из девяти сервисов); в шаблонах других вертикалей его нет — источник добавляется отдельно через `Sources → +Source`.
 2. **В сервисе:** создать пвашку → вставить ссылку из AIO → получить домен пвашки от сервиса.
-3. **Создать Destination в AIO:** `Tracker → Destinations → +Destination → By Advertiser → выбрать PWA-сервис → вставить домен пвашки`.
+3. **Создать Destination в AIO:** `Tracker → Destinations → +Destination → By advertiser → выбрать PWA-сервис → вставить домен пвашки`.
 
-**Поля PWA-Destination** (`By Advertiser`): Name, Description, Tags, Countries, Languages, `Cap monitoring user`, сам `Advertiser` и поля его интеграции — среди них `Redirect URL`, куда вставляется домен пвашки (параметры advertiser-а допишутся к URL автоматически). Капа в форме создания не задаётся. Настройка капы в ERP — в секции «Капы у дестинейшена» выше.
+**Поля PWA-Destination** (`By advertiser`): Name, Description, Tags, Countries, Languages, `Cap monitoring user`, сам `Advertiser` и поля его интеграции — среди них `Redirect URL`, куда вставляется домен пвашки (параметры advertiser-а допишутся к URL автоматически). Капа в форме создания не задаётся. Настройка капы в ERP — в секции «Как ограничить число конверсий на дестинейшн (Conversion Cap)» выше.
 
 Также см. [mechanics/pwa.md](../mechanics/pwa.md) → 3rd Party PWA.
 
@@ -390,12 +390,12 @@ Fallback при переполнении со стратегией `Reject traff
 
 Если нужного PWA-сервиса нет среди заведённых в шаблоне advertiser-ов (или вертикаль не iGaming), его можно добавить вручную.
 
-1. **Проверить Advertiser Type `PWA`.** Тип `PWA` с `Metrics Event Group` = `PWA` заведён в каждом шаблоне тенанта.
+1. **Проверить Advertiser Type `PWA`.** Тип `PWA` с `Metrics event group` = `PWA` заведён в каждом шаблоне тенанта.
 
 Если типа нет, создайте его: `Settings → Advertisers → стрелка у +Advertiser → Manage Types → +Advertiser Type`. Поля: `Name` (можно `PWA`), `Color`, `Icon`, `Description` и **`Metrics Event Group = PWA`** — эта группа нужна для событий, по которым считаются PWA-метрики.
 
 2. **Создать Advertiser:** `+Advertiser` с `Advertiser type` = `PWA`, `Integration type` = `Simple Redirect`. Заполнить `URL Parameters` (параметры, что допишутся к Destination URL; список плейсхолдеров — по иконке-шестиграннику), `Image`/`Description`/`Tags`.
-3. **Создать Destination:** через `By Advertiser`, выбрав этот Advertiser (поля — как в списке выше).
+3. **Создать Destination:** через `By advertiser`, выбрав этот Advertiser (поля — как в списке выше).
 
 ### Как настроить постбэк-трекер для стороннего PWA-сервиса
 
@@ -411,7 +411,7 @@ Fallback при переполнении со стратегией `Reject traff
 
 ### Как собрать кампанию и ссылки под сторонний PWA-сервис
 
-После того как Destination-ы (PWA + Offer) и постбэк-трекер готовы — собирается кампания. В шаблонах iGaming (ERP и MTK) под PWA уже есть три флоу, выбираются в `Select flow` при создании кампании, у каждого — кампания-пример с меткой `AIO EXAMPLE`: `PWA / OneLink` (`AIO Filter` → шаг `PWA / AIO PWA / Onelink` → `Offer`; пример `Default Flow - PWA Campaign Example`), `PWA / OneLink w/ Landing` (после PWA-шага — `Spawn Install` и прелэнд `Landing`, потом `Offer`; пример `PWA w/ Landing Flow - Campaign Example`) и `Advanced - PWA / OneLink` (разводка Android / iOS, всё остальное — на `Fallback Offer`; пример `Advanced Flow - Campaign Example`). Состав флоу и кампаний-примеров — [mechanics/pwa.md](../mechanics/pwa.md); в шаблонах Finance, Nutra и Sweeps PWA-флоу нет.
+После того как Destination-ы (PWA + Offer) и постбэк-трекер готовы — собирается кампания. В шаблонах iGaming (ERP и MTK) под PWA уже есть три флоу, выбираются в `Select flow` при создании кампании, у каждого — кампания-пример (ищите по имени): `PWA / OneLink` (`AIO Filter` → шаг `PWA / AIO PWA / Onelink` → `Offer`; пример `Default Flow - PWA Campaign Example`), `PWA / OneLink w/ Landing` (после PWA-шага — `Spawn Install` и прелэнд `Landing`, потом `Offer`; пример `PWA w/ Landing Flow - Campaign Example`) и `Advanced - PWA / OneLink` (разводка Android / iOS, всё остальное — на `Fallback Offer`; пример `Advanced Flow - Campaign Example`). Состав флоу и кампаний-примеров — [mechanics/pwa.md](../mechanics/pwa.md); в шаблонах Finance, Nutra и Sweeps PWA-флоу нет.
 
 **Campaign steps:** на PWA-шаге в примерах стоит сплит из лэнда `AIO PWA Example w/ Splits` и партнёрских PWA-дестинейшенов (`Example ZMApps PWA`, `Example AppsHeroes PWA`) — сюда ставится ваш PWA-Destination; на `Offer` — Offer-Destination либо `Offer Distribution`.
 
@@ -423,7 +423,7 @@ Fallback при переполнении со стратегией `Reject traff
 
 ### Какие две ссылки генерятся под сторонний PWA-сервис
 
-Под сторонний PWA-сервис генерируются **две разные ссылки** (обе через `Link Generator`):
+Под сторонний PWA-сервис генерируются **две разные ссылки** (обе через `Link generator`):
 
 1. **PWA-ссылка** — Source = `3rd Party PWA Link Generator`; вставляется в сам PWA-сервис как offer link.
 2. **Трекинговая ссылка** под твой реальный Source (например, FB) — вставляется в рекламный источник. Если FB — выбирается source **`FB w/ CAPI`** (заведён в каждом шаблоне тенанта; в iGaming его replace-поля включают и событие установки — `fb_action_i` → `fb_install_action`).
@@ -448,7 +448,7 @@ Fallback при переполнении со стратегией `Reject traff
 
 ## Типичные ошибки
 
-- **Destination сделан через Simple Redirect без Advertiser.** Разбивки по Advertiser нет; чтобы группировать офферы по нему, создайте Destination через `By Advertiser`.
+- **Destination сделан через Simple Redirect без Advertiser.** Разбивки по Advertiser нет; чтобы группировать офферы по нему, создайте Destination через `By advertiser`.
 - **Капа в `Daily`, ждали сброс по локальному времени.** Сброс — в полночь зоны `Reset timezone`; если поле пустое — в **0:00 UTC** (секция про `Daily` выше).
 - **Месячная капа обнулилась не через 30 дней.** `Monthly` сбрасывается в полночь 1-го числа календарного месяца (по `Reset timezone`), а не через месяц от создания.
 - **Перевели капу в `Lifetime`, а она сразу полная.** Смена `Cap type` счётчик не обнуляет — расход переносится. В ERP обнулить можно через `Reset counter` в диалоге или экшен `Reset cap`.
@@ -460,7 +460,7 @@ Fallback при переполнении со стратегией `Reject traff
 
 - [models/destination.md](../models/destination.md) — концепт Destination (выход флоу, push≠conversion, капы).
 - [models/advertiser.md](../models/advertiser.md) — концепт Advertiser (контейнер Destination-ов, Revenue, offer name for_advertiser).
-- [models/conversion-model.md](../models/conversion-model.md) — модель конверсий, Reward, Business Models, эвристики (Destination = By Advertiser, Uniqueness Strategy).
+- [models/conversion-model.md](../models/conversion-model.md) — модель конверсий, Reward, Business Models, эвристики (Destination = By advertiser, Uniqueness Strategy).
 - [mechanics/pwa.md](../mechanics/pwa.md) — PWA в AIO, AIO внутренние vs сторонние.
 - [models/flow-model.md](../models/flow-model.md) — Destination как Flow State.
 - [how-to/flow-editor.md](flow-editor.md) — Destination Full fallback transition.

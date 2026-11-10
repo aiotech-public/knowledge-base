@@ -6,7 +6,7 @@ doc_type: model
 builds: [erp, mtk]
 related: [destinations, ui-map, flow-model, conversion-model, distributions-model, debug-with-logs, visit-lifecycle, analytics, ui-common, push-notifications, placeholders, sdk, user-fields, source, business-model]
 language: ru
-updated: 2026-10-16
+updated: 2026-11-09
 ---
 
 # Destination — концепт
@@ -15,15 +15,15 @@ updated: 2026-10-16
 
 ## Что такое Destination и как он замыкает воронку
 
-**Destination — это конечная точка, куда AIO уводит визит: выход флоу и точка монетизации.** Когда визит доходит до шага `Destination`, AIO отправляет накопленные данные визита (поля визита → параметры получателя) в эту точку — рекламодателя, партнёрку, CRM или просто целевой URL. Часто это лид с формы, но **не всегда**: есть вертикали без формы и без автологина — но и они обычно идут через `By Advertiser` (редирект к рекламодателю), просто без шага формы. Если получатель — интеграция/партнёрка, он дальше **присылает постбэк**, и так рождается **Conversion**. Поэтому Destination двунаправлен: он и «выход» (визит наружу), и место, *откуда стартует* обратная петля денег (конверсии → Revenue/Payout).
+**Destination — это конечная точка, куда AIO уводит визит: выход флоу и точка монетизации.** Когда визит доходит до шага `Destination`, AIO отправляет накопленные данные визита (поля визита → параметры получателя) в эту точку — рекламодателя, партнёрку, CRM или просто целевой URL. Часто это лид с формы, но **не всегда**: есть вертикали без формы и без автологина — но и они обычно идут через `By advertiser` (редирект к рекламодателю), просто без шага формы. Если получатель — интеграция/партнёрка, он дальше **присылает постбэк**, и так рождается **Conversion**. Поэтому Destination двунаправлен: он и «выход» (визит наружу), и место, *откуда стартует* обратная петля денег (конверсии → Revenue/Payout).
 
 ## Как соотносятся Advertiser и Destination — компания и канал пуша
 
 Две связанные, но разные сущности:
-- **Advertiser** — *кому* мы льём (рекламодатель / партнёрка / CRM как организация). **Опциональна:** участвует **только** в пути `By Advertiser`. В `By Integration` (raw API-интеграция) и в `Simple Redirect` адвертайзер **не используется** вовсе.
-- **Destination** — *конкретный канал пуша* (URL/интеграция + маппинг полей визита в параметры получателя). В пути `By Advertiser` привязан к адвертайзеру; в `Simple Redirect` — самостоятельный редирект-URL без адвертайзера.
+- **Advertiser** — *кому* мы льём (рекламодатель / партнёрка / CRM как организация). **Опциональна:** в интерфейсе привязывается только в пути `By advertiser`. Дестинейшн, созданный плиткой `By integration` (raw API-интеграция), `Simple redirect` или `Telegram`, создаётся без адвертайзера.
+- **Destination** — *конкретный канал пуша* (URL/интеграция + маппинг полей визита в параметры получателя). В пути `By advertiser` привязан к адвертайзеру; в `Simple Redirect` — самостоятельный редирект-URL без адвертайзера.
 
-У одного Advertiser может быть несколько Destination. В модалке `+Destination` — четыре варианта; доступность `By advertiser` / `By integration` зависит от прав: **`By advertiser`** (выбираешь сервис, AIO подтягивает преднастройки интеграции), **`Simple redirect`** (redirect-URL **без адвертайзера и внешнего API-пуша**, в том числе для офферной ссылки; аналитики по Advertiser у него нет), **`Telegram`** (интеграция типа `Telegram Destination`), **`By integration`** (raw API-интеграция без адвертайзера). Процедура и отличие `Simple Redirect` от `By Advertiser` — [how-to/destinations.md](../how-to/destinations.md). `Integration type` у интеграционных дестинейшнов — например `Bridge` / `IREV Lite` (в шаблонах Finance и Nutra под них лежат примеры `Example Bridge Integration` и `Example IREV Integration` — [how-to/destinations.md](../how-to/destinations.md)).
+У одного Advertiser может быть несколько Destination. В модалке `+Destination` — четыре варианта; доступность `By advertiser` / `By integration` зависит от прав: **`By advertiser`** (выбираешь сервис, AIO подтягивает преднастройки интеграции), **`Simple redirect`** (redirect-URL **без адвертайзера и внешнего API-пуша**, в том числе для офферной ссылки; аналитики по Advertiser у него нет), **`Telegram`** (интеграция типа `Telegram Destination`), **`By integration`** (raw API-интеграция без адвертайзера). Процедура и отличие `Simple Redirect` от `By advertiser` — [how-to/destinations.md](../how-to/destinations.md). `Integration type` у интеграционных дестинейшнов — например `Bridge` / `IREV Lite` (в шаблонах Finance и Nutra под них лежат примеры `Example Bridge Integration` и `Example IREV Integration` — [how-to/destinations.md](../how-to/destinations.md)).
 
 **Telegram Destination** — особый выход: трафик уходит не на форму получателя, а в **TG-бот/канал**, целевое действие — подписка на канал. Требует Sender Provider типа `Telegram` + `Behaviour` (`Bot -> Channel` — визит сначала попадает в бота, тот шлёт приглашение вступить в канал; `Channel` — редирект сразу в канал). Бот **должен быть админом канала**, иначе Telegram не отдаёт событие вступления и конверсия подписки не вернётся (обратная петля не замкнётся) — это требование Telegram к правам бота, не специфика AIO. Процедура — [how-to/destinations.md](../how-to/destinations.md) → Destination типа Telegram.
 
@@ -47,7 +47,7 @@ updated: 2026-10-16
 
 - **`Error`** — любой другой реджект (невалидные данные, кредосы, ответ не в ожидаемом формате, таймаут).
 
-Оба поля видны колонками в ERP `Tracker → Visits` и доступны плейсхолдерами `{{aio.visit.last_rejection_reason}}` / `{{aio.visit.last_rejection_type}}`; в логах `Destination Handler` отклонённый пуш оставляет ту же строку причины, полный обмен пишется только у принятого.
+Оба поля есть в ERP `Tracker → Visits` скрытыми колонками (включаются в настройках таблицы) и доступны плейсхолдерами `{{aio.visit.last_rejection_reason}}` / `{{aio.visit.last_rejection_type}}`; в логах `Destination Handler` отклонённый пуш оставляет ту же строку причины, полный обмен пишется только у принятого.
 
 ## Почему лид и конверсия — разные события: обратная петля постбэка
 
@@ -77,7 +77,7 @@ Fallback по переполнению уходит на `Destination Full` **т
 
 ## Повторный пуш на тот же визит в течение 5 секунд — зарейтлимичен
 
-Повторный пуш на **тот же визит + тот же Destination** в течение 5 секунд блокируется: AIO эмитит реджект-переход (как при `Destination-rejected`) и второго пуша в получателя **не делает**. Это защита от гонки/дабл-сабмита — например, когда пользователь быстро жмёт сабмит дважды.
+Повторный пуш на **тот же визит + тот же Destination** в течение 5 секунд блокируется: второго пуша в получателя AIO **не делает**, повторный запрос получает отказ (форма — `success:false`, SDK показывает `rejectedMessage`), а сохранённое состояние визита этот запрос не меняет. Это защита от гонки/дабл-сабмита — например, когда пользователь быстро жмёт сабмит дважды.
 
 Симптом для дебага: «быстрый повторный сабмит не запушился / показал реджект без ответа получателя» — это сработавший 5-секундный rate-limit, а не отказ рекламодателя. Спустя 5 секунд этот rate-limit перестаёт блокировать повтор; остальные проверки и ответ получателя действуют по-прежнему.
 
@@ -137,13 +137,15 @@ Fallback по переполнению уходит на `Destination Full` **т
 
 Привязать адвертайзера к дестинейшену, созданному плиткой `Simple redirect`, `Telegram` или `By integration`, потом нельзя: такой дестинейшн правится формой без поля `Advertiser`.
 
+Группу решает привязанный адвертайзер, а не способ создания: у части примеров-офферов шаблона iGaming метод создания `By integration`, но адвертайзер с типом `Offer` у них задан, поэтому их группа — `Offer`.
+
 ### Что считают `Redirected Visits`, `Offer Visits` и `PWA Visits` в шаблонах тенанта
 
 **Базовые метрики переходов в шаблонах — `Data feed metric` с источником `Events By Group Count` по группам `Visit Destination Arrived`; суммарные метрики могут быть формулами. Почти все они скрыты по умолчанию.** Колонка включается в настройках таблицы ([reference/ui-common.md](../reference/ui-common.md)).
 
 | Шаблон | Как собраны метрики |
 |---|---|
-| Finance и Sweeps (ERP и MTK), Nutra (ERP) | `Redirected Visits` = `Redirected Visits Default` (группа `Default`) + `Redirected Visits Offer` (группа `Offer`); все три скрыты |
+| Finance, Nutra и Sweeps (ERP и MTK) | `Redirected Visits` = `Redirected Visits Default` (группа `Default`) + `Redirected Visits Offer` (группа `Offer`); все три скрыты |
 | iGaming (ERP и MTK) | `Redirected Visits` — группа `Default`; `Offer Visits` — группа `Offer`, видима; `PWA Visits` — группа `PWA`; `Total Redirected Visits` = `PWA Visits` + `Offer Visits` + `Redirected Visits` |
 
 Отсюда две ловушки. В Finance, Nutra и Sweeps переходы в дестинейшены с типом адвертайзера `PWA` в `Redirected Visits` не попадают. В iGaming редирект в Telegram-бота через `Simple redirect` (группа `Default`) не виден в `Offer Visits` — только в скрытых `Redirected Visits` и `Total Redirected Visits`.
@@ -205,7 +207,7 @@ Fallback по переполнению уходит на `Destination Full` **т
 
 ## Куда идти за деталями — смежные темы Destination
 
-- **Процедуры** → [how-to/destinations.md](../how-to/destinations.md) (Advertiser, создание By Advertiser/Simple/Telegram/By integration, капы, PWA).
+- **Процедуры** → [how-to/destinations.md](../how-to/destinations.md) (Advertiser, создание By advertiser/Simple/Telegram/By integration, капы, PWA).
 - **Конверсии, которые возвращаются** → [models/conversion-model.md](conversion-model.md).
 - **Зеркальный вход воронки** → [models/source.md](source.md) (Source — откуда трафик, что ловим).
 - **Деньги за конверсии** → [models/distributions-model.md](distributions-model.md) (Revenue/Payout), [models/business-model.md](business-model.md) (формула Revenue/Payout).

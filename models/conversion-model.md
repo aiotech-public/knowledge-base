@@ -4,9 +4,9 @@ title: Модель конверсий в AIO
 description: Как устроены Conversion Types — single/multiple (дедупликация повторного события задаётся Uniqueness Strategy типа, а не источником события), три формата постбэк-URL (path, query, conversion-by-key), параметры delay / revenue / destination_uuid, поля визита через postback, Correction type, капы; какие Conversion Types засеяны шаблоном тенанта в каждой вертикали (Finance / iGaming / Nutra / Sweeps) и что их спавнит во флоу. Полный цикл длинной воронки Lead → статус-апдейты → финальная конверсия целевого действия.
 doc_type: model
 builds: [erp, mtk]
-related: [flow-model, visit-lifecycle, glossary, destination, tracker, architecture, postback-generator, source-trackers, business-model, debug-with-logs, ui-common, analytics, distributions-model, notifications-flow, remarketing-campaigns, destinations, conversion-ai-testing, campaigns, meta-spend-allocation, sdk, api, metric, marketing-flow]
+related: [flow-model, visit-lifecycle, glossary, destination, tracker, architecture, postback-generator, source-trackers, business-model, debug-with-logs, ui-common, analytics, permissions-model, distributions-model, notifications-flow, remarketing-campaigns, destinations, conversion-ai-testing, campaigns, meta-spend-allocation, sdk, api, metric, marketing-flow]
 language: ru
-updated: 2026-10-28
+updated: 2026-11-09
 ---
 
 # Модель конверсий в AIO
@@ -19,7 +19,7 @@ updated: 2026-10-28
 
 1. **Внешний постбэк (основной)** — внешняя система (рекламодатель, партнёрка) присылает нам постбэк о том, что по этому визиту у неё что-то произошло (зарегистрировался, оплатил, статус изменился).
 2. **Изнутри AIO во флоу** — шагом `Spawn conversion` во Flow либо JS-макросом с лэнда. Так фиксируют событие на стороне AIO без ожидания постбэка от Destination. Конверсия от шага `Spawn conversion` появляется не сразу, а примерно через минуту: шаг откладывает её создание. Задержка не проверяет, завершён ли Flow. Визит при этом идёт по флоу дальше сразу.
-3. **Вручную из UI** — экшен `Trigger Conversion` по правому клику на визите (см. раздел «Trigger Conversion — ручное создание конверсии на визит из UI» ниже). Отдельный путь: не постбэк и не шаг флоу.
+3. **Вручную из UI (в ERP)** — экшен `Trigger Conversion` по правому клику на визите (см. раздел «Trigger Conversion — ручное создание конверсии на визит из UI» ниже). Отдельный путь: не постбэк и не шаг флоу.
 
 Конверсия фиксируется только если в тенанте есть `Conversion Type`, на UUID или slug которого пришёл постбэк. Иначе постбэк теряется (нет куда писать).
 
@@ -31,7 +31,7 @@ updated: 2026-10-28
 
 ## Trigger Conversion — ручное создание конверсии на визит из UI
 
-`Trigger Conversion` — экшен по **правому клику на визите**, создаёт конверсию на этот визит вручную, без постбэка. Нужен, когда конверсию надо проставить руками: рекламодатель не прислал постбэк, тестовая отбивка, разовая ручная фиксация события.
+`Trigger Conversion` — экшен по **правому клику на визите** в `Tracker → Visits`, создаёт конверсию на этот визит вручную, без постбэка. Нужен, когда конверсию надо проставить руками: рекламодатель не прислал постбэк, тестовая отбивка, разовая ручная фиксация события.
 
 Как выглядит: ПКМ на визите → `Trigger Conversion` → открывается диалог с одним обязательным полем `Conversion Type` (дропдаун типов тенанта) → `Confirm`. Диалог отправляет только два параметра — `visit_uuid` (выбранный визит) и `conversion_type_uuid` (выбранный тип); revenue / payout / прочие поля в этом окне не задаются (правятся потом через экшены `Update revenue` / `Update payout`, см. раздел «Conversions-таблица»). Конверсия создаётся по правилам `Uniqueness Strategy` выбранного типа, как и любая другая.
 
@@ -54,7 +54,7 @@ updated: 2026-10-28
 
 ## Что такое Conversion Type и зачем он нужен
 
-Conversion Type — конфиг, определяющий, как записывать и считать событие-конверсию. Создаётся через `+Conversion Type` в `Settings → Conversion Types`.
+Conversion Type — конфиг, определяющий, как записывать и считать событие-конверсию. Создаётся кнопкой `+ Conversion type` в `Settings → Conversion Types`.
 
 ### Основные поля Conversion Type (Name, Slugs, Strategy, Business Value)
 
@@ -64,14 +64,14 @@ Conversion Type — конфиг, определяющий, как записы�
 | **Slugs** | Один или несколько slug'ов, перечисленных через запятую **без пробелов**: `purchase,sale`. В URL постбэка `conversion_type_uuid` принимает UUID либо точный slug этого типа: `?conversion_type_uuid=purchase`, `?conversion_type_uuid=sale`, `?conversion_type_uuid=<UUID>`. |
 | **Uniqueness Strategy** | Сколько раз конверсия этого типа может быть на одном визите (`Single Conversion` / `Multiple Infinity` / `Multiple By Unique`). |
 | **Business Value** | `Good` / `Neutral` / `Bad` (напр. `Lead` → `Good`, `Lead Rejected` → `Bad`, `Sale Status Update` → `Neutral`). Влияет на `Reward` в AI-оптимизации. |
-| **Reward Weight** | Числовой вес для алгоритма, когда тип участвует в AI-сплитах Campaigns / Landings. В форме создания нужно указать значение; `1` — базовый вес. |
+| **Reward Weight** | Обязательное число — вес конверсии этого типа для AI-сплитов (шаги кампаний, лэнды, ноды дистрибуций). `0` — тип варианты сплитов не награждает. |
 
 ### Дополнительные поля Conversion Type (Correction type, Payout/Revenue, Notification Flow)
 
 | Атрибут | Что значит |
 |---|---|
 | **Correction type** | Механизм корректировки revenue уже созданной конверсии через спавн коррекционной конверсии с разницей. Детально — раздел «Correction type — как поправить revenue уже созданной конверсии» ниже. |
-| **Payout Settings** / **Revenue Settings** | Привязка к `Payout Distribution` / `Revenue Distribution`: в `Payout Settings` выбирается `Payout Tree`, в `Revenue Settings` — `Revenue Tree` (оба из дропдаунов). |
+| **Payout settings** / **Revenue settings** | Привязка к денежному дереву: в `Payout settings` выбирается дерево `Payout Distribution`, в `Revenue settings` — дерево `Revenue Distribution` (оба поля — необязательные дропдауны). |
 | **Notification Flow** | Поле `Notification flow` (тултип — `Notifications run when conversion spawn`): выбранное флоу типа `Notifications` сеется на визит при каждой конверсии этого типа. Кастомный путь для точечных алертов; штатный запуск рассылки по конверсии — триггер ремаркетинг-кампании, см. раздел «Как запустить рассылку при получении конверсии». |
 
 ### Correction type — как поправить revenue уже созданной конверсии
@@ -101,9 +101,9 @@ Conversion Type — конфиг, определяющий, как записы�
 
 `Install` (`Single Conversion`, slug `install`, `Install Conversion for PWA / iOS` — в PWA-флоу `PWA / OneLink`, `Advanced - PWA / OneLink` и `Deeplink Android` его спавнит нода `Offer` при пуше, во флоу `PWA / OneLink w/ Landing` — отдельная нода `Spawn Install`); `Open PWA` (`Single Conversion`, slug `open`, `Opened PWA`); `Registration` (`Single Conversion`, slug `registration`, `Registered lead`); `Push Subscribe` (`Single Conversion`, слаги `push`, `subscribe`); `Correction` (`Multiple Infinity`, `Neutral`, `Revenue corrections from the partner`); плюс два типа целевого действия у партнёра — первое событие (`Single Conversion`, у него `Correction type = Correction`) и его повторы (`Multiple Infinity`, `every postback counts`). У всех семи привязаны засеянные `Payout Distribution` / `Revenue Distribution`. Тип реджекта в этом шаблоне не заведён.
 
-### Nutra — Lead, Approved, Rejected, Trash, Push Subscribe
+### Nutra — Lead, Approved, Rejected, Trash, Upsell, Push Subscribe
 
-Четыре статусных типа, все `Single Conversion`, с длинными списками слагов под таксономии CPA-сетей: `Lead` (`lead`, `new`, `hold`, `pending`, `processing`, `wait`, `raw`… — `Registered lead`; его же спавнит нода `Destination` при успешном пуше), `Approved` (`approved`, `confirmed`, `sale`, `paid`, `shipped`… — `Sale/Approved Lead Status`), `Rejected` (`rejected`, `cancel`, `declined`, `fail`, `return`… — `Rejected Leads Status`, `Reward Weight = -1`), `Trash` (`trash`, `spam`, `invalid`… — `Trash Lead Status`, `Reward Weight = -1`; его спавнят нода `Destination` на реджекте пуша и нода `Spawn Trash Lead` на ветке `rejected` антифрода). Плюс `Push Subscribe` (`Single Conversion`, `push` / `subscribe`). Статус сети здесь маппится слагом на **разные типы**, а не на один тип с полем, как в паттерне `Sale Status Update`; полные списки слагов — в карточках типов.
+Четыре статусных типа, все `Single Conversion`, с длинными списками слагов под таксономии CPA-сетей: `Lead` (`lead`, `new`, `hold`, `pending`, `processing`, `wait`, `raw`… — `Registered lead`; его же спавнит нода `Destination` при успешном пуше), `Approved` (`approved`, `confirmed`, `sale`, `paid`, `shipped`… — `Sale/Approved Lead Status`), `Rejected` (`rejected`, `cancel`, `declined`, `fail`, `return`… — `Rejected Leads Status`, `Reward Weight = -1`), `Trash` (`trash`, `spam`, `invalid`… — `Trash Lead Status`, `Reward Weight = -1`; его спавнят нода `Destination` на реджекте пуша и нода `Spawn Trash Lead` на ветке `rejected` антифрода). Плюс `Upsell` (`Multiple Infinity`, слаги `upsell`, `upsale` — оплаченный апсейл после основной продажи, отдельным постбэком сети; на визите их может быть несколько) и `Push Subscribe` (`Single Conversion`, `push` / `subscribe`). Статус сети здесь маппится слагом на **разные типы**, а не на один тип с полем, как в паттерне `Sale Status Update`; полные списки слагов — в карточках типов.
 
 ### Sweeps — Lead, Registration, Fraud Lead, Push Subscribe, Lead Rejected
 
@@ -151,7 +151,7 @@ Use case: нужно ровно одну конверсию на одно биз
 
 Два компонента:
 
-1. **Conversion Type `Sale Status Update`** (`Multiple Infinity`, `Business Value = Neutral`) — каждый постбэк создаёт новую конверсию с полем `sale_status=<значение>`. В шаблонах Finance (ERP и MTK) тип уже заведён с описанием `CRM status change sent by the advertiser via postback - approve, reject, hold, call later. One type for every status: the status text lives in the conversion fields`, **без слага** — постбэк адресуется по UUID типа, пока слаг (например `sale_status`) не добавлен руками; в шаблонах iGaming / Nutra / Sweeps типа нет.
+1. **Conversion Type `Sale Status Update`** (`Multiple Infinity`, `Business Value = Neutral`) — каждый постбэк создаёт новую конверсию; значение `sale_status=<значение>` сохраняется в ней, если в тенанте заведено поле конверсии со slug `sale_status` (шаблоны его не засевают — раздел «Поле `current_sale_status` — как добавить» ниже). В шаблонах Finance (ERP и MTK) тип уже заведён с описанием `CRM status change sent by the advertiser via postback - approve, reject, hold, call later. One type for every status: the status text lives in the conversion fields`, **без слага** — постбэк адресуется по UUID типа, пока слаг (например `sale_status`) не добавлен руками; в шаблонах iGaming / Nutra / Sweeps типа нет.
 2. **Поле визита `current_sale_status`** — обновляется постбэком через `visit[current_sale_status]=<значение>`. В нём остаётся значение последнего обработанного постбэка, записавшего это поле; AIO не сравнивает время смены статуса в CRM.
 
 ### Как выглядит постбэк рекламодателя на Sale Status Update
@@ -167,7 +167,7 @@ https://app.aio.tech/api/v1/trigger/conversion-request
 
 При получении такого URL AIO:
 - Создаёт новую конверсию типа `Sale Status Update`.
-- В поле конверсии `sale_status` пишет значение из параметра `sale_status` (без префикса `visit[]`).
+- В поле конверсии `sale_status` пишет значение из параметра `sale_status` (без префикса `visit[]`) — если такое поле конверсии в тенанте есть; без поля параметр не сохраняется.
 - В поле визита `current_sale_status` пишет значение из параметра `visit[current_sale_status]`.
 
 ### Что даёт паттерн Sale Status Update
@@ -207,7 +207,7 @@ https://<любой_домен_тенанта>/api/v1/trigger/conversion-request
   ```
   https://<домен>/api/v1/trigger/conversion-request?visit_uuid={CLICK_ID}&conversion_type_uuid={conversion_type_uuid}&arrived_revenue={revenue}
   ```
-- **`conversion-by-key`** (`Query with custom parameter names`): имена параметров задаёт рекламодатель — разбор в секции про формат `conversion-by-key`.
+- **`conversion-by-key`**: имена параметров задаёт рекламодатель — разбор в секции про формат `conversion-by-key`. В генераторе постбэка этого формата нет.
 
 Slug типа конверсии работает вместо UUID во всех трёх форматах, в том числе в path-style: `.../conversion/{CLICK_ID}/purchase`.
 
@@ -249,9 +249,9 @@ https://<домен>/api/v1/trigger/conversion-by-key
 
 Сумму постбэка в USD конвертирует `usd(...)` в формуле Business Model: засеянные `Arrived Revenue` / `Arrived Payout` используют `usd({{aio.conversion.fields.arrived_revenue}})` ([models/business-model.md](business-model.md)), валюта берётся из `currency`. Формула без `usd()` и готовое `revenue=` сами сумму не конвертируют. При обработке используется курс за текущий час. Если актуальный курс получить не удалось, берётся последний сохранённый; если курса нет вовсе, формула даёт `0`.
 
-### Конверсия «не записалась» после завершения флоу — отложи обработку через `&delay=N`
+### Конверсия пришла без Destination — отложи обработку через `&delay=N`
 
-Флоу уже завершён, а конверсия по постбэку **не записалась** — типичная причина это гонка по времени: постбэк пришёл раньше, чем Destination успел зафиксировать событие на своей стороне. **Основной фикс со стороны рекламодателя** — добавить `&delay=N` (напр. `&delay=10`) в свой постбэк-URL, чтобы AIO взял постбэк в работу на N секунд позже. Это **штатный** приём тайминга постбэка. Больше 300 секунд ставить бессмысленно: приёмник превратит такое значение в 10 секунд и отложит меньше, чем было задумано.
+Рекламодатель отбивает постбэк сразу в момент пуша, и конверсия создаётся **без Destination** (или с прежним Destination визита) — это гонка по времени: AIO обработал постбэк раньше, чем Destination пуша записан на визит. Конверсия берёт Destination с визита в момент обработки постбэка. **Основной фикс со стороны рекламодателя** — добавить `&delay=N` (напр. `&delay=10`) в свой постбэк-URL, чтобы AIO взял постбэк в работу на N секунд позже. Это **штатный** приём тайминга постбэка; привязать конверсию к Destination явно можно и параметром `destination_uuid`. Больше 300 секунд ставить бессмысленно: приёмник превратит такое значение в 10 секунд и отложит меньше, чем было задумано.
 
 Диагностика самой пропажи конверсии (лид ушёл, подтверждения нет); разбор прихода постбэка по логам — [how-to/debug-with-logs.md](../how-to/debug-with-logs.md).
 
@@ -362,7 +362,7 @@ https://<домен>/api/v1/trigger/conversion-by-key
 **HTTP-ответ, который видит рекламодатель, зависит от того, на какой домен он шлёт постбэк:**
 
 - **Домен панели (`app.aio.tech`)** — приёмник отвечает по-настоящему: `200 {"status":"catch"}` на приём, синхронный `400 {"status":"error","message":"…"}` при пустом или отсутствующем параметре. **Для проверки постбэка и чтения текста ошибки шлите сюда.**
-- **Трекерный / контентный домен тенанта** — HTTP-статус ответа **результат постбэка не показывает**: код не зависит от того, принят запрос или отклонён, и синхронной ошибки (`visit uuid not found` и т.п.) в ответе не видно. Успех определяйте по тому, **появилась ли конверсия в AIO** (`Tracker → Visits` / Conversions, логи), а не по коду ответа. Сам постбэк при этом обрабатывается так же, как на домене панели, — отличается только ответ.
+- **Трекерный / контентный домен тенанта** — HTTP-статус ответа **результат постбэка не показывает**: принятый запрос и запрос с ошибкой параметров получают один и тот же ответ, синхронной ошибки (`visit uuid not found` и т.п.) в нём не видно. Успех определяйте по тому, **появилась ли конверсия в AIO** (`Tracker → Visits` / Conversions, логи), а не по коду ответа. Сам постбэк при этом обрабатывается так же, как на домене панели, — отличается только ответ.
 
 ### В логах рекламодателя `200`, а конверсии нет — `200` не значит «конверсия создана»
 
@@ -387,7 +387,7 @@ https://<домен>/api/v1/trigger/conversion-by-key
 
 Проверь, что в постбэке рекламодатель передаёт `visit[current_sale_status]=...`, а не только `sale_status=...` без префикса. Без `visit[]` обновляется только сама конверсия, поле визита остаётся как было.
 
-### Не создавать `+Conversion Type` под каждый статус рекламодателя
+### Не создавать `+ Conversion type` под каждый статус рекламодателя
 
 Если статус — это апдейт в цикле обработки (No Answer, Recall, Hot Lead, и т.п.) — он идёт через **один** Conversion Type `Sale Status Update` с разными значениями `sale_status`.
 
@@ -401,7 +401,7 @@ https://<домен>/api/v1/trigger/conversion-by-key
 
 ### Conversions-таблица (`Tracker → Conversions`) — колонки и экшены
 
-Зелёная кнопка в шапке таблицы — `Postback generator` (собирает ссылку постбэка для рекламодателя, ничего не сохраняет — [how-to/postback-generator.md](../how-to/postback-generator.md)). Отдельной кнопки `+ Conversion type` на странице больше нет: создание типов и бизнес-моделей уехало в шеврон-дропдаун рядом с кнопкой, пункты `Business models` и `Manage types`. В MTK кнопка та же, а дропдауна на этой странице нет вовсе. Сама таблица — список конверсий. Колонки: **Type** (configured — напр. `Lead` / `Registration` / `Sale Status Update`), `Geo` (by IP), `Visit Date` / `Conversion Date`, **`Delta`** (время визит → конверсия), `Revenue`, `Campaign`, `Source`, `Last destination`, `Currency`, `Offer name` (+ скролл вправо — поля визита/конверсии). `Offer Visit` и `Autologin` — не системные типы, а вручную созданные Conversion Types (частный кейс).
+Зелёная кнопка в шапке таблицы — `Postback generator` (собирает ссылку постбэка для рекламодателя, ничего не сохраняет — [how-to/postback-generator.md](../how-to/postback-generator.md)). Отдельной кнопки `+ Conversion type` на странице больше нет: создание типов и бизнес-моделей уехало в шеврон-дропдаун рядом с кнопкой, пункты `Business models` и `Manage types`. В MTK кнопка та же, а дропдауна на этой странице нет вовсе. Сама таблица — список конверсий. Колонки: **Type** (configured — напр. `Lead` / `Registration` / `Sale Status Update`), `Geo` (by IP), `Visit Date` / `Conversion Date`, **`Delta`** (время визит → конверсия), `Revenue`, `Campaign`, `Source`, `Last destination`, `Currency`, `Offer name` (+ скролл вправо — поля визита/конверсии). В MTK колонок `Last destination` и `Currency` нет: колонка `Destination` показывает Destination визита. `Offer Visit` и `Autologin` — не системные типы, а вручную созданные Conversion Types (частный кейс).
 
 `Visit Date` и `Conversion Date` показываются давностью — например, `11m ago`; полная дата и время — в подсказке при наведении, зелёная точка перед числом — не старше 10 минут. В CSV-выгрузке обе колонки остаются полной датой.
 
@@ -411,7 +411,7 @@ https://<домен>/api/v1/trigger/conversion-by-key
 
 **Экшены (правый клик по конверсии):**
 - **Show visit** — перейти к визиту, породившему конверсию.
-- **Show nearby visits** — показать другие конверсии того же визита.
+- **Show nearby visits** — показать другие конверсии того же визита. Колонки `Revenue` / `Payout` (и их `Business Model`) там видны только при правах `features.conversions-revenue` / `features.conversions-payout`, как в самой таблице ([models/permissions-model.md](permissions-model.md)).
 - **Re trigger trackers** — переотправить конверсию в Source с актуальными значениями (механика — [models/tracker.md](tracker.md)).
 - **Update revenue** / **Update payout** — вручную задать revenue / payout конверсии.
 
@@ -477,7 +477,7 @@ https://<домен>/api/v1/trigger/conversion-by-key
 
 ## Reject-tracking как отдельный Conversion Type
 
-Реджект push можно считать отдельным `Conversion Type`: выберите его в `Reject conversion spawn` ноды `Destination`. Конверсию запускает неуспешный результат push; наличие перехода `destination-rejected` для этого не требуется ([models/flow-model.md](flow-model.md)). В шаблонах Finance и Sweeps такой тип уже заведён и прописан в ноде: `Lead Rejected` (`Multiple Infinity`, `Business Value = Bad`, без revenue; в Sweeps слаги `reject`, `rejected`, `lead_rejected`). Стратегия именно `Multiple Infinity`, а не `Single`: лид может быть отклонён, а на повторном пуше принят, поэтому реджекты считаются событиями, а не признаком визита (описание типа в шаблоне Finance: `A lead can be rejected first and pushed successfully on a retry, so rejects are counted as events`; в Sweeps — `One lead can collect several rejects and still be pushed by a retry`). В шаблоне Nutra в этой роли стоит тип `Trash` (`Single Conversion`); в iGaming нода `Offer` реджект-тип не спавнит. Метрика `Rejected Leads` в шаблонах Finance и Sweeps считает этот тип через `Once Conversions By Type Count` — один реджект на визит, сколько бы их ни пришло.
+Реджект push можно считать отдельным `Conversion Type`: выберите его в `Reject conversion spawn` ноды `Destination`. Конверсию запускает неуспешный результат push; наличие перехода `destination-rejected` для этого не требуется ([models/flow-model.md](flow-model.md)). В шаблонах Finance и Sweeps такой тип уже заведён и прописан в ноде: `Lead Rejected` (`Multiple Infinity`, `Business Value = Bad`, деревья Revenue / Payout не привязаны; в Sweeps слаги `reject`, `rejected`, `lead_rejected`). Стратегия именно `Multiple Infinity`, а не `Single`: лид может быть отклонён, а на повторном пуше принят, поэтому реджекты считаются событиями, а не признаком визита (описание типа в шаблоне Finance: `A lead can be rejected first and pushed successfully on a retry, so rejects are counted as events`; в Sweeps — `One lead can collect several rejects and still be pushed by a retry`). В шаблоне Nutra в этой роли стоит тип `Trash` (`Single Conversion`); в iGaming нода `Offer` реджект-тип не спавнит. Метрика `Rejected Leads` в шаблонах Finance и Sweeps считает этот тип через `Once Conversions By Type Count` — один реджект на визит, сколько бы их ни пришло.
 
 ## Что происходит, если визит зареджектился в Destination
 
@@ -487,8 +487,8 @@ https://<домен>/api/v1/trigger/conversion-by-key
 
 Когда рекламодатель шлёт в постбэке денежную сумму, которую нужно завести в Payout (например, `OrderValue` — размер целевого действия), собирается связка из **4 шагов**. Слаг типа вы называете сами — здесь `OrderValue` для примера:
 
-1. Поле конверсии `OrderValue`.
-2. `Conversion Type OrderValue` с этим полем, обязательно **Multiple** (не Single — это серия событий).
+1. Поле конверсии `OrderValue` (`Type = Conversion`). К конкретному Conversion Type поле не привязывается: значение по его slug принимает любая конверсия тенанта.
+2. `Conversion Type OrderValue`, обязательно **Multiple** (не Single — это серия событий).
 3. `Business Model OrderValue`, мапящая «поле постбэка → Payout».
 4. В `Payout Distribution` папка с правилом `Conversion Type = OrderValue → Business Model OrderValue`.
 
@@ -500,7 +500,7 @@ https://<домен>/api/v1/trigger/conversion-by-key
 
 ## Постбэк-трекер — обязательные поля при создании
 
-При создании исходящего постбэк-трекера (`Tracker → Trackers` в ERP; `Settings → Trackers` в MTK) указывают `Source`, тип конверсии и URL. В поле `Delay` выберите задержку или `No delay`.
+При создании исходящего трекера (`Tracker → Trackers` в ERP; `Settings → Trackers` в MTK) сначала выбирают интеграцию, затем обязательны `Name`, `Sources`, `Conversion type`, `Delay in seconds` (`No delay` или задержка) и обязательные поля выбранной интеграции; `Url` задаётся у трекера `HTTP Get`. Поля по интеграциям — [how-to/source-trackers.md](../how-to/source-trackers.md).
 
 ## FB CAPI и FB Catalogs — как разделить
 
@@ -508,13 +508,13 @@ https://<домен>/api/v1/trigger/conversion-by-key
 
 Если за аккаунт платят процент со спенда, комиссия задаётся у привязанного `Facebook Supplier`; без поставщика — полем `Commission` соц-профиля в `Meta`. AIO прибавляет действующую комиссию к спенду при пуллинге (`Total Spend` = `Raw Spend + Commission`). Настройка — [how-to/campaigns.md](../how-to/campaigns.md), аллокация — [mechanics/meta-spend-allocation.md](../mechanics/meta-spend-allocation.md).
 
-## FB CAPI source — Dynamic Actions
+## FB CAPI source — какие FB-события выбирают при генерации ссылки
 
-Для source `FB CAPI` при генерации ссылки указывают пиксель, токен и **Dynamic Actions** — выбор, какое FB-событие на каждый тип конверсии (`Lead`, `Purchase`).
+Для источника по шаблону `Meta` в генераторе ссылки указывают пиксель (`FB Pixel`), токен (`FB CAPI Token`) и стандартные события FB (`Lead`, `Purchase` и т.д.): отдельный селект для регистрации (`FB Registration Action ( CAPI )`) и отдельный для целевого действия. Выбранные события записываются в поля визита (`fb_lead_action` и парное поле целевого действия); подставить их в событие трекера можно плейсхолдером ([models/tracker.md](tracker.md)).
 
 ## Destination External ID — что это за поле визита
 
-`destination_external_id` (в UI — `Destination External ID`) — поле визита с внешним идентификатором, который вернула интеграция при push. В API-интеграции это может быть ID лида рекламодателя; `Simple Redirect` генерирует UUID. Поле видно в `Tracker → Visits` и используется для поиска по этому идентификатору. Имена `external_id` / `Destination External UUID` не являются отдельными полями визита.
+`destination_external_id` (в UI — `Destination External ID`) — поле визита с внешним идентификатором, который вернула интеграция при push. В API-интеграции это может быть ID лида рекламодателя; `Simple Redirect` генерирует UUID. В `Tracker → Visits` это скрытая колонка `Destination External ID`; поиск таблицы визитов идёт по UUID визита, а не по этому полю. Имена `external_id` / `Destination External UUID` не являются отдельными полями визита.
 
 ## 3rd party PWA — Sub-параметр для конверсий
 
@@ -631,11 +631,11 @@ Account ID нужен не только для разделения конвер
 
 Также см. раздел «Подписочная модель (mobile apps) — три Conversion Type под Install / Trial / Subscription» и [mechanics/visit-lifecycle.md](../mechanics/visit-lifecycle.md).
 
-### Destination: штатно — By Advertiser (ссылки) или By Integration (интеграции)
+### Destination: штатно — By advertiser (ссылки) или By integration (интеграции)
 
 **Когда:** создание нового оффера через `Tracker → Destinations`.
 
-**Делай:** для ссылочного оффера удобно использовать `By Advertiser`: Destination получает интеграцию рекламодателя и участвует в аналитике по нему. `By Integration` создаёт самостоятельный Destination выбранной интеграции; поля `Advertiser` в этой форме нет.
+**Делай:** для ссылочного оффера удобно использовать `By advertiser`: Destination получает интеграцию рекламодателя и участвует в аналитике по нему. `By integration` создаёт самостоятельный Destination выбранной интеграции; поля `Advertiser` в этой форме нет.
 
 `Simple Redirect` без Advertiser подходит и для офферной ссылки. Без привязки нельзя собрать её под конкретным Advertiser в отчёте. Счётчик посещений группы `Offer` зависит от поля `Metrics event group` типа Advertiser; обычный редирект без него не попадает в эту группу. Это причина рекомендовать Advertiser для офферов, а не запрет самостоятельных редиректов. Настройка и замена Destinations — [how-to/destinations.md](../how-to/destinations.md).
 
@@ -647,7 +647,7 @@ Account ID нужен не только для разделения конвер
 
 ### Создать Conversion Type
 
-**Путь:** `Settings → Conversion Types → +Conversion Type`.
+**Путь:** `Settings → Conversion Types → + Conversion type`.
 
 **Поля:**
 
@@ -655,9 +655,9 @@ Account ID нужен не только для разделения конвер
 - **Color** (обязательно); **Slugs** / **Description** (опционально).
 - **Uniqueness Strategy** — `Single Conversion` / `Multiple Infinity` / `Multiple By Unique` (см. раздел о стратегии выше).
 - **Business Value** — `Good` / `Neutral` / `Bad` (напр. `Lead` → `Good`, `Fraud Lead` / `Lead Rejected` → `Bad`).
-- **Reward Weight** — обязательное числовое значение для веса в AI-сплитах Campaigns / Landings; для базового веса укажите `1`.
-- **Payout Settings / Revenue Settings** — выбор `Payout Tree` / `Revenue Tree` из дропдаунов (привязка к Payout / Revenue Distribution).
-- Для отдельного счётчика типа создайте `Conversions Count`: `Settings → Metrics → +Metric → Conversions Count` → выберите Conversion Type. Сам лог `Tracker → Conversions` доступен независимо от отдельного счётчика. См. [models/metric.md](metric.md).
+- **Reward Weight** — обязательное число: вес конверсии этого типа в AI-сплитах (шаги кампаний, лэнды, ноды дистрибуций); `0` — без награды вариантам.
+- **Payout settings / Revenue settings** — необязательный выбор дерева `Payout Distribution` / `Revenue Distribution` из дропдаунов.
+- Для отдельного счётчика типа создайте метрику `Conversions count`: `Settings → Metrics → +Metric → Conversions count` → выберите Conversion Type. Сам лог `Tracker → Conversions` доступен независимо от отдельного счётчика. См. [models/metric.md](metric.md).
 - **Notification Flow** — поле для точечного алерта на конверсию этого типа; рассылку им не настраивают (см. раздел «Как запустить рассылку при получении конверсии» ниже).
 
 ### Папка с Business Model «если Conversion Type = X»

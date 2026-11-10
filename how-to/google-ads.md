@@ -6,18 +6,18 @@ doc_type: how-to
 builds: [erp]
 related: [meta-ads, meta-spend-allocation, permissions]
 language: ru
-updated: 2026-10-28
+updated: 2026-11-09
 ---
 
 # Как в AIO смотрят рекламу Google Ads — модуль Google (кабинет Google Ads внутри платформы)
 
-**Google-модуль — это рекламный кабинет Google Ads прямо внутри AIO: он тянет из Google Ads иерархию (ad account → campaign → ad group → ad / keyword) со статистикой, чтобы смотреть её, не заходя в интерфейс Google Ads.** Модуль **читает** данные из Google Ads через подключённый аккаунт — иерархию сущностей и их метрики (показы, клики, расход). Это второй рекламный источник наравне с Meta: подключается как `Money Stream Application`, а его расход учитывается в аналитике как рекламный спенд.
+**Google-модуль — это рекламный кабинет Google Ads прямо внутри AIO: он тянет из Google Ads иерархию (ad account → campaign → ad group → ad / keyword) со статистикой, чтобы смотреть её, не заходя в интерфейс Google Ads.** Модуль **читает** данные из Google Ads через подключённый аккаунт — иерархию сущностей и их метрики (показы, клики, расход). Подключается через Google-приложение AIO (`Money Stream Application`). Расход Google из модуля не раскладывается на визиты и не попадает в `Cost` кампаний: его показывают только таблицы раздела `Google`.
 
-В навигации ERP раздел называется `Google` (путь `/app/google`), рядом с Meta-модулем (`Facebook`). Модуль существует только в билде ERP.
+В навигации ERP раздел называется `Google` (путь `/app/google`), рядом с Meta-модулем (`Meta`) и `TikTok`. Модуль существует только в билде ERP.
 
 **Ключевое отличие от Meta-модуля: Google-модуль работает только на чтение.** Управления кампаниями из AIO — старта/стопа доставки, смены бюджетов, правки ставок — здесь нет (в отличие от Meta, где это есть — [meta-ads.md](meta-ads.md)). Действия модуля — подключить аккаунт, выбрать интервал пуллинга и подтянуть данные. Всё остальное — просмотр подтянутой статистики в таблицах.
 
-Это **не** про то, как рекламный расход раскладывается по трафику в отчётах — механика report-time аллокации спенда (`Meta Spend`) описана в [meta-spend-allocation.md](../mechanics/meta-spend-allocation.md). Google подключается тем же способом (источник спенда), но детали разноса Google-расхода по визитам в этом доке не описаны.
+Это **не** про то, как рекламный расход раскладывается по трафику в отчётах — механика report-time аллокации спенда (`Meta Spend`) описана в [meta-spend-allocation.md](../mechanics/meta-spend-allocation.md). Расход Google в этот разнос не входит: `Meta Spend` считает только расход Meta, а у `Cost Update Strategy` кампании нет Google-варианта.
 
 ## Раздел Google работает? Да — подключите Google-аккаунт, и статистика подтянется
 
@@ -41,32 +41,32 @@ updated: 2026-10-28
 Порядок подключения:
 
 1. **Create Google account** (экшен `Create Google account`, «Create an account via the connected Google app») — завести аккаунт под подключённым Google-приложением. В форме выбираешь `Money stream application` (какое Google-приложение использовать), `Pulling interval`, `Commission` и `Name`.
-2. **Connect account** (`Connect account`) — пройти авторизацию Google (OAuth): по возврату из Google аккаунт привязывается и начинает тянуть данные. Статус связи — поле `is_connected`.
+2. **Connect account** (`Connect account`) — пройти авторизацию Google (OAuth): по возврату из Google аккаунт привязывается и начинает тянуть данные. Статус связи — колонка `Connected`.
 3. При `Auto 30 Minutes` данные обновляются фоном; при `Manually` повторное обновление запускают экшеном `Pull data`.
 
-Отвязать аккаунт — экшен `Disconnect account` (`Disconnect this Google account`). `Connect account`, `Disconnect account` и `Pull data` — пункты меню правого клика на строке аккаунта: `Connect account` виден, пока аккаунт не подключён (`is_connected` выключен), `Disconnect account` и `Pull data` — только у подключённого.
+Отвязать аккаунт — экшен `Disconnect account` (`Disconnect this Google account`). `Connect account`, `Disconnect account` и `Pull data` — пункты меню правого клика на строке аккаунта: `Connect account` виден, пока аккаунт не подключён (колонка `Connected` выключена), `Disconnect account` и `Pull data` — только у подключённого.
 
 ### Статус Google-аккаунта: Fine, Issues, Down, Pulling
 
-Статус аккаунта — поле `status`, четыре значения:
+Статус аккаунта — значок в ячейке `Google Account`, текст статуса — в подсказке при наведении. Значений четыре:
 
 - **`Fine`** — подключение или последнее обновление завершилось успешно.
 - **`Pulling`** — обновление запрошено или выполняется; статус ставится сразу при запросе, ещё до начала обновления.
-- **`Issues`** — аккаунт, например, ждёт подключения или отключён вручную; детали в `status_text`.
-- **`Down`** — подтяжка аккаунта завершилась ошибкой или таймаутом; причина — в `status_text`.
+- **`Issues`** — аккаунт, например, ждёт подключения или отключён вручную; детали — в тексте статуса.
+- **`Down`** — подтяжка аккаунта завершилась ошибкой или таймаутом; причина — в тексте статуса.
 
-Здоровье синка видно по двум полям: `failed_pulls_count` (счётчик неудачных подтяжек аккаунта, который сбрасывается после успешного обновления) и `successfully_pulled_at` (когда последний раз успешно подтянули). Если `failed_pulls_count` растёт, а `successfully_pulled_at` давно не обновлялся — проверьте `status_text`. При ошибке авторизации переподключите аккаунт (`Disconnect account` → `Connect account`); другие причины разбираются по сообщению.
+Здоровье синка видно по двум колонкам: `Failed Pulls` (скрыта по умолчанию; неудачные подтяжки аккаунта, счётчик сбрасывается после успешного обновления) и `Last Sync` (когда последний раз успешно подтянули). Если `Failed Pulls` растёт, а `Last Sync` давно не менялся — проверьте текст статуса. При ошибке авторизации переподключите аккаунт (`Disconnect account` → `Connect account`); другие причины разбираются по сообщению.
 
 ### Интервал пуллинга и Commission
 
 Два поля задаются при заведении аккаунта и правятся у него же:
 
-- **`Pulling interval`** (`pulling_interval`) — как часто тянуть данные: `Auto 30 Minutes` (фоновый автосинк: список кабинетов — раз в ~30 минут, статистика кабинетов — каждые 5–10 минут, несмотря на название опции) или `Manually` (только вручную через `Pull data`).
-- **`Commission`** (`commission`, «Commission %») — процент комиссии аккаунта; учитывается при сведении расхода.
+- **`Pulling interval`** (в таблице аккаунтов — колонка `Sync Interval`) — как часто тянуть данные: `Auto 30 Minutes` (фоновый автосинк: список кабинетов — раз в ~30 минут, статистика кабинетов — каждые 5–10 минут, несмотря на название опции) или `Manually` (только вручную через `Pull data`).
+- **`Commission`** («Commission %») — процент, который AIO прибавляет к расходу аккаунта при подтяжке: `Total Spend` = расход + расход × `Commission` / 100.
 
 ### Организация аккаунтов: папки, теги, шаринг
 
-Google-аккаунты организуют папками (`Assign to folder` / `Unassign from folder`, право `google.accounts.edit.assign-folder`; сами папки — `google.accounts.folders.view` / `.edit`), тегами и шарингом на других пользователей тенанта. Архивирование — `google.accounts.edit.archive` (поле `is_archived`). Удобно, когда аккаунтов много и их надо группировать по вертикали/команде.
+Google-аккаунты организуют папками (`Assign to folder` / `Unassign from folder`, право `google.accounts.edit.assign-folder`; сами папки — `google.accounts.folders.view` / `.edit`), тегами и шарингом на других пользователей тенанта. Архивирование — `google.accounts.edit.archive`. Удобно, когда аккаунтов много и их надо группировать по вертикали/команде.
 
 **Google-аккаунт шарится только поштучно: в контекстном меню строки есть одиночный `Share`, массовых `Share also` / `Force share` / `Unshare` на странице аккаунтов нет.** Шаринг проверяется по праву `google.accounts.share`, передача владельца и `Access type` — одиночным `Change ownership`, с доступом `Own` к аккаунту и правом `google.accounts.share.ownership`, массового `Mass change ownership` здесь тоже нет. Пошарить разом несколько аккаунтов можно через папку: шаринг папки Google-аккаунтов раздаёт доступ её содержимому, как у папок других разделов. Как работают роли шары, папки и `Change ownership` — [how-to/permissions.md](permissions.md).
 
@@ -74,31 +74,31 @@ Google-аккаунты организуют папками (`Assign to folder` 
 
 **Ad Account — рекламный кабинет Google Ads (customer-аккаунт) с его статусом и метриками, подтянутыми через Google-аккаунт.** Кабинеты подтягиваются автоматически после подключения аккаунта.
 
-Статус кабинета: `ENABLED` (активен), `SUSPENDED`, `CANCELED`, `CLOSED`, плюс `UNKNOWN` / `UNSPECIFIED` (Google не вернул однозначный статус). Тестовый кабинет помечается отдельным флагом (`google_test_account`).
+Статус кабинета — колонка `Account Status`: `Enabled` (подсказка `Everything is fine`), `Suspended` (`Deactivated by Google (policy violation)`), `Canceled` (`Deactivated by the user`), `Closed` (`Irreversibly closed`), плюс `Unknown` / `Unspecified` (Google не вернул однозначный статус). Тестовый кабинет отмечен в скрытой по умолчанию колонке `Test Account`.
 
 Экшены кабинета:
 
-- **`Edit Google ad account`** (`google.ad-accounts.edit`, «Change the pull strategy of the Google ad account») — правит стратегию подтяжки данных, поле `pull_strategy`: `Default` или `Light`. Выбор сохраняется в кабинете; объём выполняемой подтяжки от этой настройки не меняется.
+- **`Edit Google ad account`** (`google.ad-accounts.edit`, «Change the pull strategy of the Google ad account») — правит стратегию подтяжки данных, поле `Pull strategy`: `Default` или `Light`. Выбор сохраняется в кабинете; объём выполняемой подтяжки от этой настройки не меняется.
 - **`Pull data`** (`google.ad-accounts.edit.pull-data`) — подтянуть данные кабинета из Google вручную.
 
 ## Кампании, группы объявлений, объявления и ключевые слова
 
 **Иерархию Google Ads (campaign → ad group → ad / keyword) смотрят в таблицах AIO — каждый уровень своей вкладкой со своим статусом и справочными полями.** Это данные на чтение: статусы, типы, стратегии ставок приходят из Google как есть.
 
-Статус объектов на всех уровнях (кампания, группа, объявление) — `ENABLED` / `PAUSED` / `REMOVED` (плюс `UNKNOWN` / `UNSPECIFIED`). У кампании дополнительно есть serving-статус (`SERVING` / `PENDING` / `ENDED` / `SUSPENDED` / `NONE`) — фактическое состояние показа.
+Статус объектов на всех уровнях (кампания, группа, объявление) — колонка `Status`: `Enabled` / `Paused` / `Removed` (плюс `Unknown` / `Unspecified`). У кампании дополнительно есть колонка `Serving` (`Serving` / `Pending` / `Ended` / `Suspended` / `None`) — фактическое состояние показа.
 
 ### Тип канала и стратегия ставок кампании
 
-Кампания несёт два справочных поля из Google Ads, по которым её фильтруют и читают:
+Кампания несёт справочные поля из Google Ads — колонки таблицы `Campaigns`:
 
-- **Channel type** — тип кампании: `SEARCH`, `DISPLAY`, `SHOPPING`, `VIDEO`, `PERFORMANCE_MAX`, `DEMAND_GEN`, `MULTI_CHANNEL`, `LOCAL`, `SMART`, `DISCOVERY` и другие. Есть и подтип канала (напр. `VIDEO_ACTION`, `APP_CAMPAIGN`).
-- **Bidding strategy** — стратегия ставок: `MANUAL_CPC`, `MAXIMIZE_CONVERSIONS`, `MAXIMIZE_CONVERSION_VALUE`, `TARGET_CPA`, `TARGET_ROAS`, `TARGET_SPEND`, `ENHANCED_CPC` и другие.
+- **`Channel`** — тип кампании: `Search`, `Display`, `Shopping`, `Video`, `Performance Max`, `Demand Gen`, `App (UAC)`, `Local`, `Smart`, `Discovery` и другие. Подтип — колонка `Channel Sub-type` (напр. `Video Action`, `App`).
+- **`Bidding`** — стратегия ставок: `Manual CPC`, `Maximize Conversions`, `Maximize Conversion Value`, `Target CPA`, `Target ROAS`, `Maximize Clicks (Target Spend)`, `Enhanced CPC` и другие.
 
-Неизвестное значение (Google прислал то, чего нет в справочнике) отображается nice-case из исходного `UPPER_SNAKE` — таблица типов не строго закрыта.
+Неизвестное значение (Google прислал то, чего нет в справочнике) показывается словами из исходного кода Google (`SOME_VALUE` → `Some Value`) — список типов не закрыт.
 
 ### Ключевые слова (Keywords)
 
-Вкладка `Keywords` (`google.keywords.view`) — подтянутые ключевые слова Google Ads с их статусом и метриками. У Search-аккаунта ключевиков могут быть сотни тысяч, поэтому это самый объёмный уровень иерархии.
+Вкладка `Keywords` (`google.keywords.view`) — подтянутые ключевые слова Google Ads с их статусом и метриками. У Search-аккаунта это обычно самый объёмный уровень иерархии.
 
 ## Как часто обновляются данные Google: автопулл каждые 5–10 минут + ручной Pull data
 

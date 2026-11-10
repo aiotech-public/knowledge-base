@@ -6,7 +6,7 @@ doc_type: how-to
 builds: [erp]
 related: [visit, visit-field, debug-with-logs, conversion-model, visit-lifecycle]
 language: ru
-updated: 2026-10-16
+updated: 2026-11-09
 ---
 
 # Visit timeline — хронология событий визита
@@ -61,7 +61,7 @@ updated: 2026-10-16
 - **`Condition`** помечает отклонённый визит, если включён `Trash when Rejected`.
 - **Нет записей переходов по флоу** — проверь, не установлен ли `is_trash` ещё на регистрации, до первого шага флоу. Системные логи при этом могут присутствовать.
 
-Проверка — колонка `Trash` у визита в `Tracker → Visits`. Поэтому короткая или обрывающаяся лента — **не всегда «визит только что пришёл»**: сначала смотри флаг `Trash`. Конкретную причину показывает поле визита `Trash Reason` ([mechanics/visit-lifecycle.md](../mechanics/visit-lifecycle.md)).
+Проверка — колонка `Trash` у визита в `Tracker → Visits`. Поэтому короткая или обрывающаяся лента — **не всегда «визит только что пришёл»**: сначала смотри флаг `Trash`. Конкретную причину показывает поле визита `Trash reason` ([mechanics/visit-lifecycle.md](../mechanics/visit-lifecycle.md)).
 
 ## Как открыть Visit timeline
 
